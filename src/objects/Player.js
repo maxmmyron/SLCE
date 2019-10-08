@@ -1,10 +1,14 @@
+
+
 export default class Player {
     constructor(game, inputHandler) {
-  
+
         this.game = game;
 
         this.gameWidth = game.gameWidth;
         this.gameHeight = game.gameHeight;
+
+        this.keyBuffer = [];
 
         this.size = {
             width: 25,
@@ -37,9 +41,8 @@ export default class Player {
             d: false
         };
     }
- //refactor VVVVVVVVVVVVVVVVV
 
-    move(buffer){
+    checkMove(buffer){
         if(buffer[87]){
             if(this.velocity.y >= -this.constraints.maxSpeed) {
                 this.velocity.y--;
@@ -66,7 +69,7 @@ export default class Player {
         }
     }
 
-    stop(buffer){
+    checkStop(buffer){
         if(!buffer[87]){
                 this.interacted.w = false;
         }
@@ -87,6 +90,8 @@ export default class Player {
     }
 
     update(delta){
+        this.checkMove(this.keyBuffer);
+        this.checkStop(this.keyBuffer);
         if(!delta) return;
         
         if(this.interacted.w == false && this.interacted.s == false) this.velocity.y = this.velocity.y * 0.8;
