@@ -1,43 +1,24 @@
 export default class InputHandler {
     constructor(player){
-        document.addEventListener("keydown", event => {
-            switch(event.keyCode){
-                case 87: //W
-                    player.moveUp();
-                    break;
+        var keyBuffer = [];
 
-                case 83: //S
-                    player.moveDown();
-                    break;
-                
-                case 65: //A
-                    player.moveLeft();
-                    break;
+        document.body.addEventListener("keydown", function (e) {
+            keyBuffer[e.keyCode] = true;
+            player.move(keyBuffer);
+        });
 
-                case 68: //D
-                    player.moveRight();
-                    break;
-            }
+        document.body.addEventListener("keyup", function (e) {
+            keyBuffer[e.keyCode] = false;
+            player.stop(keyBuffer);
+        });
+
+        /*document.addEventListener("keydown", event => {
+            this.keyBuffer[event.keyCode] = true;
+            player.move(this.keyBuffer);
         });
 
         document.addEventListener("keyup", event => {
-            switch(event.keyCode){
-                case 87: //W
-                    player.moveWStop();
-                    break;
-
-                case 83: //S
-                    player.moveSStop();
-                    break;
-
-                case 65: //A
-                    player.moveAStop();
-                    break;
-
-                case 68: //D
-                    player.moveDStop();
-                    break;
-            }
-        });
+            
+        });*/
     }
 }

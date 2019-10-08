@@ -38,7 +38,7 @@ let lastTime = 0;
 function gameLoop(timestamp){
     let deltaTime = timestamp - lastTime;
     lastTime = timestamp;
-
+    
     let fps = 1000/deltaTime;
 
     ctx.clearRect(0, 0, WORLD_CONSTRAINTS.DIM.WIDTH, WORLD_CONSTRAINTS.DIM.HEIGHT);

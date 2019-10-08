@@ -1,5 +1,5 @@
 export default class Player {
-    constructor(game) {
+    constructor(game, inputHandler) {
   
         this.game = game;
 
@@ -37,31 +37,49 @@ export default class Player {
             d: false
         };
     }
+ //refactor VVVVVVVVVVVVVVVVV
 
-    moveUp(){
-        this.interacted.w = true;
-        this.velocity.y = -this.constraints.maxSpeed;
+    move(buffer){
+        if(buffer[87]){
+            if(this.velocity.y >= -this.constraints.maxSpeed) {
+                this.velocity.y--;
+                this.interacted.w = true;
+            }
+        }
+        if(buffer[83]){
+            if(this.velocity.y < this.constraints.maxSpeed) {
+                this.velocity.y++;
+                this.interacted.s = true;
+            }
+        }
+        if(buffer[65]){
+            if(this.velocity.x >= -this.constraints.maxSpeed) {
+                this.velocity.x--;
+                this.interacted.a = true;
+            }
+        }
+        if(buffer[68]){
+            if(this.velocity.x <= this.constraints.maxSpeed) {
+                this.velocity.x++;
+                this.interacted.d = true;
+            }
+        }
     }
 
-    moveDown(){
-        this.interacted.s = true;
-        this.velocity.y = this.constraints.maxSpeed;
+    stop(buffer){
+        if(!buffer[87]){
+                this.interacted.w = false;
+        }
+        if(!buffer[83]){
+                this.interacted.s = false;
+        }
+        if(!buffer[65]){
+                this.interacted.a = false;
+        }
+        if(!buffer[68]){
+                this.interacted.d = false;
+        }
     }
-
-    moveLeft(){
-        this.interacted.a = true;
-        this.velocity.x = -this.constraints.maxSpeed;
-    }
-
-    moveRight(){
-        this.interacted.d = true;
-        this.velocity.x = this.constraints.maxSpeed;
-    }
-
-    moveWStop(){this.interacted.w = false;}
-    moveSStop(){this.interacted.s = false;}
-    moveAStop(){this.interacted.a = false;}
-    moveDStop(){this.interacted.d = false;}
 
     draw(ctx) {
         ctx.fillStyle = this.style.color;
@@ -70,12 +88,10 @@ export default class Player {
 
     update(delta){
         if(!delta) return;
-
-        if(this.interacted.w == false && this.interacted.s == false) this.velocity.y = this.velocity.y * 0.8;
-        //if(this.interacted.s == false) this.velocity.y = this.velocity.y * 0.8;
-        if(this.interacted.a == false && this.interacted.d == false) this.velocity.x = this.velocity.x * 0.8;
-        //if(this.interacted.d == false) this.velocity.x = this.velocity.x * 0.8;
         
+        if(this.interacted.w == false && this.interacted.s == false) this.velocity.y = this.velocity.y * 0.8;
+        if(this.interacted.a == false && this.interacted.d == false) this.velocity.x = this.velocity.x * 0.8;
+       
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
     }
