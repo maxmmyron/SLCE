@@ -1,18 +1,17 @@
 export default class rigidSurface {
-    constructor(game, bottomOffset, color) {
-  
+    constructor(game) {
         this.game = game;
 
         this.gameWidth = game.gameWidth;
         this.gameHeight = game.gameHeight;
 
         this.style = {
-            color: color
+            color: game.surface_settings.color
         };
 
         this.position = {
             x: 0,
-            y: this.gameHeight - bottomOffset
+            y: this.gameHeight - game.surface_settings.height
         };
     }
 
@@ -25,4 +24,4 @@ export default class rigidSurface {
         if(!delta) return;
         
     }
-}  
+} 
