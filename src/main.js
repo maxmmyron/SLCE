@@ -17,8 +17,6 @@ function fix_dpi() {
 
     canvas.setAttribute('width', w); //set canvas width to scaled width
     canvas.setAttribute('height', h); //set canvas height to scaled height
-
-	var rect = canvas.getBoundingClientRect();
 }
 
 fix_dpi();
@@ -27,7 +25,15 @@ let WORLD_CONSTRAINTS = {
     DIM: {
         WIDTH: Math.ceil(getComputedStyle(canvas).getPropertyValue("width").slice(0, -2)),
         HEIGHT: Math.ceil(getComputedStyle(canvas).getPropertyValue("height").slice(0, -2))
+    },
+    SURFACE_SETTINGS: {
+        COLOR: "#121425",
+        HEIGHT: "50"
+    },
+    DEFAULT_STYLES: {
+        FILL_STYLE: "#000000"
     }
+    
 };
 
 let game = new Game(WORLD_CONSTRAINTS);
@@ -45,6 +51,7 @@ function gameLoop(timestamp){
 
     game.update(deltaTime);
     game.draw(fps, ctx);
+    
 
     requestAnimationFrame(gameLoop);
 }
