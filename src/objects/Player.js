@@ -1,14 +1,19 @@
-
-
 export default class Player {
-    constructor(game, inputHandler) {
+    constructor(game) {
 
         this.game = game;
+        console.log(this.game);
 
         this.gameWidth = game.gameWidth;
         this.gameHeight = game.gameHeight;
 
         this.keyBuffer = [];
+
+        //default values for W,S,A,D
+        this.keyBuffer[87] = false;
+        this.keyBuffer[83] = false;
+        this.keyBuffer[65] = false;
+        this.keyBuffer[68] = false;
 
         this.size = {
             width: 25,
@@ -33,54 +38,34 @@ export default class Player {
             x: this.gameWidth / 2 - this.size.width / 2,
             y: this.gameHeight / 2 - this.size.height / 2
         };
-
-        this.interacted = {
-            w: false,
-            s: false,
-            a: false,
-            d: false
-        };
     }
 
     checkMove(buffer){
-        if(buffer[87]){
-            if(this.velocity.y >= -this.constraints.maxSpeed) {
-                this.velocity.y--;
-                this.interacted.w = true;
-            }
-        }
-        if(buffer[83]){
-            if(this.velocity.y < this.constraints.maxSpeed) {
-                this.velocity.y++;
-                this.interacted.s = true;
-            }
-        }
-        if(buffer[65]){
-            if(this.velocity.x >= -this.constraints.maxSpeed) {
-                this.velocity.x--;
-                this.interacted.a = true;
-            }
-        }
-        if(buffer[68]){
-            if(this.velocity.x <= this.constraints.maxSpeed) {
-                this.velocity.x++;
-                this.interacted.d = true;
-            }
-        }
+        if(buffer[87] && this.velocity.y >= -this.constraints.maxSpeed) this.velocity.y--;
+        if(buffer[83] && this.velocity.y < this.constraints.maxSpeed) this.velocity.y++;
+        if(buffer[65] && this.velocity.x >= -this.constraints.maxSpeed) this.velocity.x--;
+        if(buffer[68] && this.velocity.x <= this.constraints.maxSpeed) this.velocity.x++;
     }
 
-    checkStop(buffer){
-        if(!buffer[87]){
-                this.interacted.w = false;
+    checkWallHit(){
+        if(this.position.y < 0){
+            this.velocity.y = 0;
+            this.position.y = 0;
         }
-        if(!buffer[83]){
-                this.interacted.s = false;
+
+        if(this.position.y > this.gameHeight - this.size.height - this.game.surface_settings.height){
+            this.velocity.y = 0;
+            this.position.y = this.gameHeight - this.size.height - this.game.surface_settings.height;
         }
-        if(!buffer[65]){
-                this.interacted.a = false;
+
+        if(this.position.x < 0){
+            this.velocity.x = 0;
+            this.position.x = 0;
         }
-        if(!buffer[68]){
-                this.interacted.d = false;
+
+        if(this.position.x > this.gameWidth - this.size.width){
+            this.velocity.x = 0;
+            this.position.x = this.gameWidth - this.size.width;
         }
     }
 
@@ -90,12 +75,13 @@ export default class Player {
     }
 
     update(delta){
-        this.checkMove(this.keyBuffer);
-        this.checkStop(this.keyBuffer);
         if(!delta) return;
-        
-        if(this.interacted.w == false && this.interacted.s == false) this.velocity.y = this.velocity.y * 0.8;
-        if(this.interacted.a == false && this.interacted.d == false) this.velocity.x = this.velocity.x * 0.8;
+
+        if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.velocity.y = this.velocity.y * 0.8;
+        if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.velocity.x = this.velocity.x * 0.8;
+
+        this.checkMove(this.keyBuffer);
+        this.checkWallHit();
        
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
