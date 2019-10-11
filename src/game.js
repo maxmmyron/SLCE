@@ -1,6 +1,8 @@
 import RigidSurface from "./objects/RigidSurface.js";
+import RigidObject from "./objects/RigidObject.js";
 import InputHandler from "./inputHandler.js";
 import Player from "./objects/Player.js";
+import objectCollision from "./physics/objectCollision.js";
 
 export default class Game {
     constructor(WORLD_CONSTRAINTS){
@@ -20,17 +22,21 @@ export default class Game {
     start(){
         this.surface = new RigidSurface(this);
         this.player = new Player(this);
+        this.rigidObject = new RigidObject(this);
 
         this.gameObjects = [
             this.surface, 
-            this.player
+            this.player,
+            this.rigidObject
         ];
 
         new InputHandler(this.player);
+        this.objectCollider = new objectCollision(this.player, this.rigidObject);
     }
 
     update (deltaTime){
         this.gameObjects.forEach(object => object.update(deltaTime));
+        this.objectCollider.checkCollision();
     }
 
     draw(fps, ctx){
