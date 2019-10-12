@@ -2,7 +2,8 @@ import RigidSurface from "./objects/RigidSurface.js";
 import RigidObject from "./objects/RigidObject.js";
 import InputHandler from "./inputHandler.js";
 import Player from "./objects/Player.js";
-import objectCollision from "./physics/objectCollision.js";
+import ObjectCollision from "./physics/objectCollision.js";
+import CircleObject from "./objects/CircleObject.js";
 
 export default class Game {
     constructor(WORLD_CONSTRAINTS){
@@ -21,22 +22,31 @@ export default class Game {
 
     start(){
         this.surface = new RigidSurface(this);
-        this.player = new Player(this);
         this.rigidObject = new RigidObject(this);
+        this.player = new Player(this);
 
-        this.gameObjects = [
-            this.surface, 
+        this.circle1 = new CircleObject(this, 15, "#00FFAC", 700, 400);
+        this.circle2 = new CircleObject(this, 25, "#A0C34F", 500, 600);
+
+        this.gameObjects = [ //renders in order from [0] => [gameObjects.length]. Place always on top objects at end of array.
+            this.rigidObject,
+            this.circle1,
+            this.circle2,
             this.player,
-            this.rigidObject
+            this.surface
         ];
 
+        //creates a new input handler hooked to the object set in the arguments
         new InputHandler(this.player);
-        this.objectCollider = new objectCollision(this.player, this.rigidObject);
+
+        //creates a new collision system.
+        this.rigidCollider = new ObjectCollision();
     }
 
     update (deltaTime){
         this.gameObjects.forEach(object => object.update(deltaTime));
-        this.objectCollider.checkCollision();
+        this.rigidCollider.checkBoxCollision(this.player, this.rigidObject);
+        this.rigidCollider.checkCircleCollision(this.circle1, this.circle2);
     }
 
     draw(fps, ctx){
