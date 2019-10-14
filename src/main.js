@@ -1,7 +1,7 @@
 import Game from "./game.js";
 
 let canvas = document.getElementById('gameCanvas');
-let body = document.querySelector('body');
+//let body = document.querySelector('body');
 
 let ctx = canvas.getContext('2d');
 
@@ -30,11 +30,12 @@ var WORLD_CONSTRAINTS = {
 
 var world_variables = {
     physics_variables: {
-        air_thickness: 0.001,
+        air_density: 0.001225,
         wind: {
             x: 0,
             y: 0
-        }
+        },
+        water_density: 0.997
     }
 };
 
@@ -55,7 +56,7 @@ function fix_dpi() {
 fix_dpi();
 
 let game = new Game(WORLD_CONSTRAINTS);
-game.start();
+game.start(ctx);
 
 let lastTime = 0;
 
@@ -71,9 +72,8 @@ function gameLoop(timestamp){
 
     ctx.clearRect(0, 0, WORLD_CONSTRAINTS.DIM.WIDTH, WORLD_CONSTRAINTS.DIM.HEIGHT);
 
-    game.update(deltaTime);
     game.draw(fps, ctx);
-    
+    game.update(deltaTime);
 
     requestAnimationFrame(gameLoop);
 }
