@@ -9,7 +9,7 @@ export default class rigidSurface {
             color: game.surface_settings.color
         };
 
-        this.position = {
+        this.pos = {
             x: 0,
             y: this.gameHeight - game.surface_settings.height
         };
@@ -17,7 +17,7 @@ export default class rigidSurface {
 
     draw(ctx) {
         ctx.fillStyle = this.style.color;
-        ctx.fillRect(this.position.x, this.position.y, this.gameWidth, this.gameHeight);
+        ctx.fillRect(this.pos.x, this.pos.y, this.gameWidth, this.gameHeight);
     }
 
     update(delta){
