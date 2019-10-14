@@ -1,4 +1,4 @@
-import Controller from "./Controller.js";
+import Controller from "../handlers/Controller.js";
 
 export default class circleObject extends Controller{
     constructor(game, radius, color, posX, posY) {
@@ -23,7 +23,7 @@ export default class circleObject extends Controller{
             friction: 0.5  
         };
 
-        this.position = {
+        this.pos = {
             x: posX,
             y: posY
         };
@@ -32,7 +32,7 @@ export default class circleObject extends Controller{
     draw(ctx) {
         ctx.fillStyle = this.style.color;
         ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.size.radius, 0, Math.PI * 2, false);
+        ctx.arc(this.pos.x, this.pos.y, this.size.radius, 0, Math.PI * 2, false);
         ctx.fill();
     }
 
@@ -45,8 +45,8 @@ export default class circleObject extends Controller{
         this.checkMove(this.keyBuffer);
         this.checkWallHit();
        
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
+        this.pos.x += this.velocity.x;
+        this.pos.y += this.velocity.y;
 
     }
 } 
