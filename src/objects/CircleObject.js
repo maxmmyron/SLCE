@@ -10,9 +10,7 @@ export default class circleObject extends Controller{
         this.gameWidth = game.gameWidth;
         this.gameHeight = game.gameHeight;
 
-        this.size = {
-            radius: radius
-        };
+        this.radius = radius;
 
         this.style = {
             color: color
@@ -23,30 +21,28 @@ export default class circleObject extends Controller{
             friction: 0.5  
         };
 
-        this.pos = {
-            x: posX,
-            y: posY
-        };
+        this.x = posX;
+        this.y = posY;
     }
 
     draw(ctx) {
         ctx.fillStyle = this.style.color;
         ctx.beginPath();
-        ctx.arc(this.pos.x, this.pos.y, this.size.radius, 0, Math.PI * 2, false);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         ctx.fill();
     }
 
     update(delta){
         if(!delta) return;
         
-        if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.velocity.y = this.velocity.y * 0.8;
-        if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.velocity.x = this.velocity.x * 0.8;
+        if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.vel.y = this.vel.y * 0.8;
+        if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * 0.8;
 
         this.checkMove(this.keyBuffer);
-        this.checkWallHit();
+        //this.checkWallHit();
        
-        this.pos.x += this.velocity.x;
-        this.pos.y += this.velocity.y;
+        this.x += this.vel.x;
+        this.y += this.vel.y;
 
     }
 } 
