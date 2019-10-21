@@ -80,17 +80,19 @@ export default class Shape extends Controller{
         ctx.restore();
     }
 
-    update(delta){
+    update(CONSTRAINTS, delta){
         if(!delta) return;
 
-        if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.vel.y = this.vel.y * 0.8;
+        //if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.vel.y = this.vel.y * 0.8;
         if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * 0.8;
 
-        this.checkMove(this.keyBuffer);
-        //this.checkWallHit();
-       
         this.x += this.vel.x;
         this.y += this.vel.y;
+        this.vel.y += CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
+        console.log(this.vel.y);
+
+        this.checkMove(this.keyBuffer);
+        this.checkWallHit(this);
     }
     drawNormals(ctx) {
         var m = this.medians,
