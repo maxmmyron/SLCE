@@ -17,7 +17,7 @@ export default class circleObject extends Controller{
         };
 
         this.constraints = {
-            maxSpeed: 5,
+            maxSpeed: 30,
             friction: 0.5  
         };
 

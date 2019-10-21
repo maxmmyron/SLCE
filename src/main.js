@@ -16,7 +16,7 @@ var WORLD_CONSTRAINTS = {
     PHYSICS_SETTINGS: {
         ACCELERATION: {
             x: 0,
-            y: -9.8
+            y: 2
         }
     },
     SURFACE_SETTINGS: {
