@@ -6,6 +6,8 @@ import RigidShape from "./objects/RigidShape.js";
 
 export default class Game {
     constructor(WORLD_CONSTRAINTS){
+        this.WORLD_CONSTRAINTS = WORLD_CONSTRAINTS;
+
         this.gameWidth = WORLD_CONSTRAINTS.DIM.WIDTH;
         this.gameHeight = WORLD_CONSTRAINTS.DIM.HEIGHT;
 
@@ -38,7 +40,7 @@ export default class Game {
             this.triangle1,
             this.pentagon1,
             this.player,
-            this.surface
+            //this.surface
         ];
 
         //creates a new input handler hooked to the object set in the arguments
@@ -49,7 +51,7 @@ export default class Game {
     }
 
     update (deltaTime){
-        this.gameObjects.forEach(object => object.update(deltaTime));
+        this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, deltaTime));
         //this.rigidCollider.rectCollision(this.player, this.rigidObject);
         //this.rigidCollider.circleCollision(this.circle1, this.circle2);
         //this.rigidObject.collideRectangle(this.player);
