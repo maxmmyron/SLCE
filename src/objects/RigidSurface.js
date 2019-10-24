@@ -22,6 +22,5 @@ export default class rigidSurface {
 
     update(delta){
         if(!delta) return;
-        
     }
 } 
