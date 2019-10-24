@@ -1,20 +1,23 @@
 import Controller from "../handlers/Controller.js";
 
 export default class Shape extends Controller{
-    constructor(game, points, x, y, fill, useOutline, outline){
+    constructor(game, points, posX, posY, fill, useOutline, outline, mass, velX, velY){
 
-        super(game);
+        super(game, posX, posY, velX || 0, velY || 0);
+        this.game = game;
 
+        //points of the object, expressed as dual arrays of points for x and y values.
         this.points = points.map(function(el){
             return {x: el[0], y: el[1]};
         });
 
-        this.x = x || 0;
-        this.y = y || 0;
+        //mass of the object, expressed in kilos.
+        this.mass = mass;
 
+        //constraints for the object.
         this.constraints = {
             maxSpeed: 5,
-            friction: 0.5  
+            friction: 0.5,  
         };
 
         this.color = fill ||  "rgba(0,0,0,1)";
@@ -84,12 +87,19 @@ export default class Shape extends Controller{
         if(!delta) return;
 
         //if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.vel.y = this.vel.y * 0.8;
-        if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * 0.8;
+        if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * 0.8; //replace for better friction values that factor in mass and relative frictions.
 
+        /*this.dragX = -0.5 * this.constraints.cD * this.frontalArea * this.game.world_variables.physics_variables.air_density * (this.vel.x ^ 2);
+        this.dragY = -0.5 * this.constraints.cD * this.frontalArea * this.game.world_variables.physics_variables.air_density * (this.vel.y ^ 2);*/
+
+        //get drag forces for x and y component
+        //integrate onto x and y velocity
+
+
+        //integrate mass into velocities, inertia
         this.x += this.vel.x;
         this.y += this.vel.y;
         this.vel.y += CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
-        console.log(this.vel.y);
 
         this.checkMove(this.keyBuffer);
         this.checkWallHit(this);
