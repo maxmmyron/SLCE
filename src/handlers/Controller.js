@@ -1,5 +1,5 @@
 export default class Controller {
-    constructor(game){
+    constructor(game, posX, posY, velX, velY){
         this.game = game;
 
         this.keyBuffer = [];
@@ -11,9 +11,12 @@ export default class Controller {
         this.keyBuffer[68] = false;
 
         this.vel = {
-            x: 0,
-            y: 0
+            x: velX,
+            y: velY
         };
+
+        this.x = posX || game.gameWidth / 2;
+        this.y = posY || game.gameHeight / 2;
 
         this.touching = false;
     }
@@ -24,8 +27,8 @@ export default class Controller {
             this.touching = false;
         }
         if(buffer[83] && this.vel.y < this.constraints.maxSpeed) this.vel.y++;
-        if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 10;
-        if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 10;
+        if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 20;
+        if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 20;
     }
 
     checkWallHit(obj){
