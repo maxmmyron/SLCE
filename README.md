@@ -1,8 +1,8 @@
-#SLCE
-######(pronounced "slice")
+# SLCE
+###### (pronounced "slice")
 ### a **s**weet **l**ittle **c**anvas **e**ngine created by mmyron
 
-##What is SLCE?
+## What is SLCE?
 SLCE is a pure-javascript canvas engine. It was formed with a few basic principles in mind:
     - [Organization](#organization)
     - [Iteration](#iteration)
@@ -31,7 +31,7 @@ It is one thing to tell you that SLCE is built on these priciples, but how do th
 
 
 
-    ###Organization
+    ### Organization
 
 
 
@@ -54,7 +54,7 @@ It is one thing to tell you that SLCE is built on these priciples, but how do th
 
 
 
-    ###Iteration
+    ### Iteration
 
 
 
@@ -76,7 +76,7 @@ It is one thing to tell you that SLCE is built on these priciples, but how do th
 
 
 
-    ###Stability
+    ### Stability
 
 
 
@@ -98,7 +98,7 @@ It is one thing to tell you that SLCE is built on these priciples, but how do th
 
 
 
-    ###Accessability
+    ### Accessability
 
-##How do I use SLCE?
+## How do I use SLCE?
 
