@@ -16,7 +16,7 @@ var WORLD_CONSTRAINTS = {
     PHYSICS_SETTINGS: {
         ACCELERATION: {
             x: 0,
-            y: 2
+            y: 1
         }
     },
     SURFACE_SETTINGS: {
@@ -30,7 +30,7 @@ var WORLD_CONSTRAINTS = {
 
 var world_variables = {
     physics_variables: {
-        air_density: 0.001225,
+        air_density: 1.22, //measured in kg/m^3
         wind: {
             x: 0,
             y: 0
@@ -55,7 +55,7 @@ function fix_dpi() {
 
 fix_dpi();
 
-let game = new Game(WORLD_CONSTRAINTS);
+let game = new Game(WORLD_CONSTRAINTS, world_variables);
 game.start(ctx);
 
 let lastTime = 0;
