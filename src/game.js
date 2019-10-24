@@ -5,7 +5,7 @@ import Shape from "./objects/Shape.js";
 import RigidShape from "./objects/RigidShape.js";
 
 export default class Game {
-    constructor(WORLD_CONSTRAINTS){
+    constructor(WORLD_CONSTRAINTS, world_variables){
         this.WORLD_CONSTRAINTS = WORLD_CONSTRAINTS;
 
         this.gameWidth = WORLD_CONSTRAINTS.DIM.WIDTH;
@@ -19,13 +19,25 @@ export default class Game {
         this.default_styles = {
             fillStyle: WORLD_CONSTRAINTS.DEFAULT_STYLES.FILL_STYLE
         };
+
+        this.world_variables = {
+            physics_variables: {
+                air_density: world_variables.physics_variables.air_density,
+                wind: {
+                    x: world_variables.physics_variables.wind.x,
+                    y: world_variables.physics_variables.wind.x
+                },
+                water_density: world_variables.physics_variables.water_density
+            }
+        };
+
     }
 
     start(ctx){
         this.surface = new RigidSurface(this);
 
-        this.circle1 = new CircleObject(this, 15, "#00FFAC", 700, 400);
-        this.circle2 = new CircleObject(this, 25, "#A0C34F", 500, 600);
+        this.circle1 = new CircleObject(this, 15, "#00FFAC", 700, 400, 3);
+        this.circle2 = new CircleObject(this, 25, "#A0C34F", 500, 600, 3);
 
         this.rigidObject = new RigidShape([[0,0], [0,55], [505,55], [505,0]], 300, 100, "#A0C3F0");
         this.player = new Shape(this, [[0,0],[0,50],[25,50],[25,0]], 500, 600, "#FF00FF");
@@ -39,12 +51,19 @@ export default class Game {
             this.circle2,
             this.triangle1,
             this.pentagon1,
-            this.player,
+            this.player
+            
             //this.surface
         ];
 
+        var pL = this.gameObjects.length;
+
+        for(var i = 0; i<= 500; i++){
+            this.gameObjects[i + pL] = new CircleObject(this, Math.floor(Math.random() * 25 + 5), this.getRandomColor() , Math.random() * this.gameWidth, Math.random() * this.gameHeight, Math.floor(Math.random() * 50), Math.floor(Math.random() * 100) - 50, Math.floor(Math.random() * 100) - 50);
+        }
+
         //creates a new input handler hooked to the object set in the arguments
-        new InputHandler(this.player);
+        new InputHandler(this.circle1);
 
         //creates a new collision system.
         //this.rigidCollider = new ObjectCollision(ctx);
@@ -52,9 +71,6 @@ export default class Game {
 
     update (deltaTime){
         this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, deltaTime));
-        //this.rigidCollider.rectCollision(this.player, this.rigidObject);
-        //this.rigidCollider.circleCollision(this.circle1, this.circle2);
-        //this.rigidObject.collideRectangle(this.player);
     }
 
     draw(fps, ctx){
@@ -62,5 +78,14 @@ export default class Game {
         if(isNaN(fps) == false) ctx.fillText("FPS: " + Math.ceil(fps), 5, 15);
     
         this.gameObjects.forEach(object => object.draw(ctx));
+    }
+
+    getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     }
 }
