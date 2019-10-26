@@ -1,6 +1,5 @@
 export default class RigidShape{
     constructor(points, x, y, fill, useOutline, outline){
-
         this.points = points.map(function(el){
             return {x: el[0], y: el[1]};
         });
@@ -13,9 +12,11 @@ export default class RigidShape{
             friction: 0.5  
         };
 
-        this.color = fill ||  "rgba(0,0,0,1)";
-        this.useOutline = useOutline || true;
-        this.outline = outline || "rbga(0,0,0,0)";
+        this.style = {
+            color: fill ||  "rgba(0,0,0,1)",
+            useOutline: useOutline || true,
+            outline: outline || "rbga(0,0,0,0)"
+        };
 
         this.getNormals();
         this.getMedians();
@@ -55,7 +56,7 @@ export default class RigidShape{
         var p = this.points;
 
         ctx.save();
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = this.style.color;
         ctx.strokeStyle = 'rgba(0,0,0,0)';
 
         ctx.translate(this.x, this.y);
