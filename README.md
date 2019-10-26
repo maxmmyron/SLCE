@@ -9,11 +9,7 @@ SLCE is a pure-javascript canvas engine. It was formed with a few basic principl
 - [Stability](#stability)
 - [Accessability](#accessability)
 
-[//]: #It is one thing to tell you that SLCE is built on these priciples, but how do they play into SLCE itself? 
-[//]: #### Organization
-[//]: #### Iteration
-[//]: #### Stability
-[//]: #### Accessability
+
 
 ## How do I use SLCE?
 However you'd like, really. SLCE is meant to be a capable engine that is versatile enough to use in multiple application.
