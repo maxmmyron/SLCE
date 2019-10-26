@@ -3,8 +3,14 @@ import InputHandler from "./handlers/inputHandler.js";
 import CircleObject from "./objects/CircleObject.js";
 import Shape from "./objects/Shape.js";
 import RigidShape from "./objects/RigidShape.js";
+//^^required imports
 
+/**
+ * the main game source code. Mainly houses implementation of the world variables set in main.js, creates the game objects, and houses the default draw() and update() functions.
+ * 
+ */
 export default class Game {
+    //creates a new constructor with obligatory env. variables.
     constructor(WORLD_CONSTRAINTS, world_variables){
         this.WORLD_CONSTRAINTS = WORLD_CONSTRAINTS;
 
@@ -33,6 +39,7 @@ export default class Game {
 
     }
 
+    //start() helps to populate the world environment by creating objects.
     start(ctx){
         this.surface = new RigidSurface(this);
 
@@ -57,29 +64,32 @@ export default class Game {
         ];
 
         var pL = this.gameObjects.length;
-
-        for(var i = 0; i<= 500; i++){
+        for(var i = 0; i<= 100; i++){
             this.gameObjects[i + pL] = new CircleObject(this, Math.floor(Math.random() * 25 + 5), this.getRandomColor() , Math.random() * this.gameWidth, Math.random() * this.gameHeight, Math.floor(Math.random() * 50), Math.floor(Math.random() * 100) - 50, Math.floor(Math.random() * 100) - 50);
         }
 
-        //creates a new input handler hooked to the object set in the arguments
-        new InputHandler(this.circle1);
-
-        //creates a new collision system.
-        //this.rigidCollider = new ObjectCollision(ctx);
+        
+        /*it would be nice to be able to have dual inputhandlers. 
+        maybe pass an array with all objects to be assigned input 
+        handlers, then give each one a seperate set of movement bindings?*/
+        new InputHandler(this.pentagon1); //creates a new input handler hooked to the object set in the arguments. This input handler is able to be controlled by the player.
     }
 
+    //the update loop. Actual object updating is done by each object to keep the game file clean.
     update (deltaTime){
         this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, deltaTime));
     }
 
+    //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.
     draw(fps, ctx){
-        ctx.fillStyle= this.default_styles.fillStyle;
-        if(isNaN(fps) == false) ctx.fillText("FPS: " + Math.ceil(fps), 5, 15);
-    
+        
         this.gameObjects.forEach(object => object.draw(ctx));
+        
+        ctx.fillStyle = this.default_styles.fillStyle; //set cts fillstyle to the fillstyle assigned in the env. variables
+        if(isNaN(fps) == false) ctx.fillText("FPS: " + Math.ceil(fps), 5, 15); //display the fps. this should be last so the FPS are always drawn on top of all objects.
     }
 
+    //mainly debug code, just used in tandem with the for loop above for creating a bunch of random spheres.
     getRandomColor() {
         var letters = '0123456789ABCDEF';
         var color = '#';

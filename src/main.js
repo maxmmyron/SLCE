@@ -1,12 +1,18 @@
+/**
+ * The main source code.
+ * This implements the basic structure of the page, and mostly serves to size the canvas to a proper size, 
+ * implement some obligatory DPI fixes, and initalizing the game to run. The world settings are also defined
+ * here, which should probably be moved one day into it's own World class. :/
+ */
+
 import Game from "./game.js";
 
+//define a new canvas variable from which the game is crafted upon
 let canvas = document.getElementById('gameCanvas');
-//let body = document.querySelector('body');
 
 let ctx = canvas.getContext('2d');
 
 let dpi = window.devicePixelRatio;
-
 
 var WORLD_CONSTRAINTS = {
     DIM: {
@@ -30,7 +36,7 @@ var WORLD_CONSTRAINTS = {
 
 var world_variables = {
     physics_variables: {
-        air_density: 1.22, //measured in kg/m^3
+        air_density: 2.5, //measured in kg/m^3
         wind: {
             x: 0,
             y: 0
@@ -39,6 +45,7 @@ var world_variables = {
     }
 };
 
+//obligatory DPI fix. prevents crummy, faded, or ugly rendering.
 function fix_dpi() {
     var style_width = getComputedStyle(canvas).getPropertyValue("width").slice(0, -2); //get width attribute
     var style_height = getComputedStyle(canvas).getPropertyValue("height").slice(0, -2); //get height attribute
@@ -55,9 +62,12 @@ function fix_dpi() {
 
 fix_dpi();
 
+//create a new game given the world constrains and variables.
 let game = new Game(WORLD_CONSTRAINTS, world_variables);
-game.start(ctx);
+game.start(ctx); //start the game.
 
+
+//the gameloop! ensures smooth running draws and updates objects on the canvas. this should probably be moved one day into it's own, seperate class (or into game.js)
 let lastTime = 0;
 
 function gameLoop(timestamp){

@@ -1,3 +1,8 @@
+/**
+ * This is currently unused. Eventually, it will house the code for object collision, and possible object collision response. I still need a good SAT-based object collision response. :/
+ * 
+ */
+
 export default class objectCollision{
     constructor(ctx){
         this.ctx = ctx;

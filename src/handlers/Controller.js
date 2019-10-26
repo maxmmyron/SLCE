@@ -1,3 +1,7 @@
+/**
+ * Creates a new controller. This controller class is what is used to take control of an object and manupulate it around the screen.
+ */
+
 export default class Controller {
     constructor(game, posX, posY, velX, velY){
         this.game = game;
@@ -26,11 +30,12 @@ export default class Controller {
             this.vel.y = -30;
             this.touching = false;
         }
-        if(buffer[83] && this.vel.y < this.constraints.maxSpeed) this.vel.y++;
+        if(buffer[83] && this.vel.y < this.constraints.maxSpeed) this.vel.y++; //this doesn't really do anything, given that every object is immutably responsive to gravity.
         if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 20;
         if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 20;
     }
 
+    //this block of code sorts the x values and y values of each point on a polygon, and then checks if the max and min of those values are touching the hardcoded canvas boundaries.
     checkWallHit(obj){
         let xPoints = [], yPoints = [];
         for(var i = 0; i < obj.points.length; i++){
@@ -39,9 +44,9 @@ export default class Controller {
         }
 
         xPoints.sort(); 
-        let sX = xPoints[0], mX = xPoints[xPoints.length - 1];
+        let mX = xPoints[xPoints.length - 1];
         yPoints.sort();
-        let sY = yPoints[0], mY = yPoints[yPoints.length - 1];
+        let mY = yPoints[yPoints.length - 1];
         
 
         if(obj.x < 0){
