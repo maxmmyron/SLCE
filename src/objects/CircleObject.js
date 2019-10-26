@@ -17,8 +17,6 @@ export default class circleObject extends Controller{
         
         this.radius = radius;
 
-        
-
         this.style = {
             color: color || "rgba(0,0,0,1)"
         };
@@ -28,9 +26,9 @@ export default class circleObject extends Controller{
         this.density = density || 5;
         this.mass = this.density * (Math.PI * (this.radius ** 2));
 
-        this.cD = 0.15; 
+        this.cD = 0.47; 
         this.rho = this.game.world_variables.physics_variables.air_density;
-        this.A = Math.PI * (radius ** 2) / (10000);
+        this.A = (Math.PI * (radius ** 2) / 1000) / (radius * 3);
         this.acc = game.WORLD_CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
     }
 
@@ -44,25 +42,20 @@ export default class circleObject extends Controller{
     update(CONSTRAINTS, delta){
         if(!delta) return;
 
-        //if(this.keyBuffer[87] == false && this.keyBuffer[83] == false) this.vel.y = this.vel.y * 0.8;
-        //if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * 0.9; //replace for better friction values that factor in mass and relative frictions.
-        //if(this.keyBuffer[65] == false && this.keyBuffer[68] == false) this.vel.x = this.vel.x * (-0.5 * this.A * this.rho * this.vel.x * this.vel.x / Math.abs(this.vel.x));
-
-        // Drag force: Fd = -1/2 * Cd * A * rho * v * v
-        var Fx = -0.5 * this.A * this.rho * this.vel.x * this.vel.x / this.vel.x;
-        var Fy = -0.5 * this.A * this.rho * this.vel.y * this.vel.y / this.vel.y;
+        // Drag force: Fd = -0.5 * Cd * A * rho * v * v
+        var Fx = -0.5 * this.cD * this.A * this.rho * this.vel.x * this.vel.x / this.vel.x;
+        var Fy = -0.5 * this.cD * this.A * this.rho * this.vel.y * this.vel.y / this.vel.y;
 
         //ternary operator. checks if force is NaN, and if it is, then replace NaN with 0. Otherwise, continue with force.
         Fx = (isNaN(Fx) ? 0 : Fx);
         Fy = (isNaN(Fy) ? 0 : Fy);
 
-        //console.log(Fx, Fy);
-
+        //because mass isn't correctly implemented into an object, this does not have the intended effect.
         //var aX = Fx / this.mass;
         //var aY = (Fy / this.mass);
 
         if(this.touching){
-            this.vel.x += Fx;
+            this.vel.x += Fx * 1.7;
         }
         else{
             this.vel.x += Fx / 10;
