@@ -3,6 +3,7 @@ import InputHandler from "./handlers/inputHandler.js";
 import CircleObject from "./objects/CircleObject.js";
 import Shape from "./objects/Shape.js";
 import RigidShape from "./objects/RigidShape.js";
+import nBody from "./physics/nBody.js";
 //^^required imports
 
 /**
@@ -11,7 +12,7 @@ import RigidShape from "./objects/RigidShape.js";
  */
 export default class Game {
     //creates a new constructor with obligatory env. variables.
-    constructor(WORLD_CONSTRAINTS, world_variables){
+    constructor(WORLD_CONSTRAINTS, world_variables, ctx){
         this.WORLD_CONSTRAINTS = WORLD_CONSTRAINTS;
 
         this.gameWidth = WORLD_CONSTRAINTS.DIM.WIDTH;
@@ -25,6 +26,8 @@ export default class Game {
         this.default_styles = {
             fillStyle: WORLD_CONSTRAINTS.DEFAULT_STYLES.FILL_STYLE
         };
+
+        this.time_factor = WORLD_CONSTRAINTS.TIME_FACTOR;
 
         this.world_variables = {
             physics_variables: {
@@ -53,31 +56,41 @@ export default class Game {
         this.pentagon1 = new Shape(this, [[25,0], [0,25], [10,50], [40,50], [50,25]], 700, 700, "#71A84F");
 
         this.gameObjects = [ //renders in order from [0] => [gameObjects.length]. Place always on top objects at end of array.
-            this.rigidObject,
+            /*this.rigidObject,
             this.circle1,
             this.circle2,
             this.triangle1,
             this.pentagon1,
             this.player
             
-            //this.surface
+            this.surface*/
         ];
 
         var pL = this.gameObjects.length;
-        for(var i = 0; i<= 100; i++){
-            this.gameObjects[i + pL] = new CircleObject(this, Math.floor(Math.random() * 25 + 5), this.getRandomColor() , Math.random() * this.gameWidth, Math.random() * this.gameHeight, Math.floor(Math.random() * 50), Math.floor(Math.random() * 100) - 50, Math.floor(Math.random() * 100) - 50);
+        for(var i = 0; i<= 50; i++){
+            this.gameObjects[i + pL] = new CircleObject(
+                this, //canvas context 
+                Math.floor(Math.random() * 5) + 20, //radius
+                this.getRandomColor(), //color
+                Math.random() * this.gameWidth, //starting x pos
+                Math.random() * this.gameHeight, //starting y pos
+                Math.floor(Math.random() * 10), //density
+                Math.floor(Math.random() * 20) - 10, //starting x vel
+                Math.floor(Math.random() * 20) - 10 //starting y vel
+            ); 
         }
 
+        console.log(this.gameObjects);
         
         /*it would be nice to be able to have dual inputhandlers. 
         maybe pass an array with all objects to be assigned input 
         handlers, then give each one a seperate set of movement bindings?*/
-        new InputHandler(this.pentagon1); //creates a new input handler hooked to the object set in the arguments. This input handler is able to be controlled by the player.
+        //new InputHandler(this.pentagon1); //creates a new input handler hooked to the object set in the arguments. This input handler is able to be controlled by the player.
     }
 
     //the update loop. Actual object updating is done by each object to keep the game file clean.
     update (deltaTime){
-        this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, deltaTime));
+        this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, this.gameObjects, deltaTime));
     }
 
     //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.
