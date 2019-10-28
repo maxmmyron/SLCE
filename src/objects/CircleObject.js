@@ -19,7 +19,8 @@ export default class circleObject extends Controller{
         super(game, posX, posY, velX || 0, velY || 0, color);
 
         this.radius = radius;
-        this.density = density || 1;
+        this.density = density;
+        if(this.density == 0) this.density = 1;
         this.mass = ( Math.PI * (this.radius ** 2) ) * this.density;
 
         this.ax = 0; 
