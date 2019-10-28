@@ -1,4 +1,5 @@
 import Controller from "../handlers/Controller.js";
+import objectCollision from "../physics/objectCollision.js";
 
 
 /**CircleObject.js
@@ -12,24 +13,17 @@ import Controller from "../handlers/Controller.js";
  */
 export default class circleObject extends Controller{
     constructor(game, radius, color, posX, posY, density, velX, velY) {
-        //pass arguments to superclass
-        super(game, posX, posY, velX || 0, velY || 0);
-        
+        /** pass arguments to superclass
+         * Inherits game arguments, current x and y pos, and current x and y velocity.
+         */
+        super(game, posX, posY, velX || 0, velY || 0, color);
+
         this.radius = radius;
+        this.density = density || 1;
+        this.mass = ( Math.PI * (this.radius ** 2) ) * this.density;
 
-        this.style = {
-            color: color || "rgba(0,0,0,1)"
-        };
-
-        this.constraints = {maxSpeed: 30};
-
-        this.density = density || 5;
-        this.mass = this.density * (Math.PI * (this.radius ** 2));
-
-        this.cD = 0.47; 
-        this.rho = this.game.world_variables.physics_variables.air_density;
-        this.A = (Math.PI * (radius ** 2) / 1000) / (radius * 3);
-        this.acc = game.WORLD_CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
+        this.ax = 0; 
+        this.ay = 0;
     }
 
     draw(ctx) {
@@ -39,28 +33,24 @@ export default class circleObject extends Controller{
         ctx.fill();
     }
 
-    update(CONSTRAINTS, delta){
+    update(CONSTRAINTS, gameObjects, delta){
         if(!delta) return;
 
         // Drag force: Fd = -0.5 * Cd * A * rho * v * v
-        var Fx = -0.5 * this.cD * this.A * this.rho * this.vel.x * this.vel.x / this.vel.x;
-        var Fy = -0.5 * this.cD * this.A * this.rho * this.vel.y * this.vel.y / this.vel.y;
+        var Fx = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.world_variables.physics_variables.air_density * this.vel.x * this.vel.x / this.vel.x;
+        var Fy = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.world_variables.physics_variables.air_density * this.vel.y * this.vel.y / this.vel.y;
 
         //ternary operator. checks if force is NaN, and if it is, then replace NaN with 0. Otherwise, continue with force.
         Fx = (isNaN(Fx) ? 0 : Fx);
         Fy = (isNaN(Fy) ? 0 : Fy);
 
-        //because mass isn't correctly implemented into an object, this does not have the intended effect.
-        //var aX = Fx / this.mass;
-        //var aY = (Fy / this.mass);
-
         if(this.touching){
-            this.vel.x += Fx * 1.7;
+            this.vel.x += (Fx * 1.7) + this.ax;
         }
         else{
-            this.vel.x += Fx / 10;
+            this.vel.x += (Fx / 10) + this.ax;
         }
-        this.vel.y += Fy / 2.5;
+        this.vel.y += (Fy / 2.5) + this.ay;
 
         //integrate mass into velocities, inertia
 
@@ -68,7 +58,14 @@ export default class circleObject extends Controller{
         this.y += this.vel.y;
         
         this.checkSphereWallHit(this);
+        
         this.vel.y += CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
+
+        gameObjects.forEach(element => {
+            if(this != element){
+                new objectCollision(CONSTRAINTS.ctx).circleCollision(this, element);
+            }
+        });
 
         this.checkMove(this.keyBuffer);
     }
@@ -103,5 +100,9 @@ export default class circleObject extends Controller{
         else{
             obj.vel.x = obj.vel.x * -0.75;
         }
+    }
+
+    getMass(){
+        return this.mass;
     }
 } 
