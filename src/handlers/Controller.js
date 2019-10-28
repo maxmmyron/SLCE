@@ -3,7 +3,7 @@
  */
 
 export default class Controller {
-    constructor(game, posX, posY, velX, velY){
+    constructor(game, posX, posY, velX, velY, color){
         this.game = game;
 
         this.keyBuffer = [];
@@ -21,6 +21,12 @@ export default class Controller {
 
         this.x = posX || game.gameWidth / 2;
         this.y = posY || game.gameHeight / 2;
+
+        this.style = {
+            color: color || "rgba(0,0,0,1)"
+        };
+
+        this.constraints = {maxSpeed: 30};
 
         this.touching = false;
     }
