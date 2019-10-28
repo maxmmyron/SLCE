@@ -22,7 +22,7 @@ var WORLD_CONSTRAINTS = {
     PHYSICS_SETTINGS: {
         ACCELERATION: {
             x: 0,
-            y: 1
+            y: 0
         }
     },
     SURFACE_SETTINGS: {
@@ -31,7 +31,9 @@ var WORLD_CONSTRAINTS = {
     },
     DEFAULT_STYLES: {
         FILL_STYLE: "#000000"
-    }
+    },
+    TIME_FACTOR: 1,
+    CTX: ctx
 };
 
 var world_variables = {
@@ -63,7 +65,7 @@ function fix_dpi() {
 fix_dpi();
 
 //create a new game given the world constrains and variables.
-let game = new Game(WORLD_CONSTRAINTS, world_variables);
+let game = new Game(WORLD_CONSTRAINTS, world_variables, ctx);
 game.start(ctx); //start the game.
 
 
