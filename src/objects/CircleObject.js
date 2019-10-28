@@ -20,6 +20,7 @@ export default class circleObject extends Controller{
 
         this.radius = radius;
         this.density = density || 1;
+        if(this.density == 0) this.density = 1;
         this.mass = ( Math.PI * (this.radius ** 2) ) * this.density;
 
         this.ax = 0; 
