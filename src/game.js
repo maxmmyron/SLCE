@@ -1,7 +1,7 @@
 import RigidSurface from "./objects/RigidSurface.js";
 import InputHandler from "./handlers/inputHandler.js";
-import CircleObject from "./objects/CircleObject.js";
-import Shape from "./objects/Shape.js";
+import CircleObject from "./objects/Circle.js";
+import Shape from "./objects/ConvexShape.js";
 import RigidShape from "./objects/RigidShape.js";
 import nBody from "./physics/nBody.js";
 //^^required imports
@@ -67,7 +67,7 @@ export default class Game {
         ];
 
         var pL = this.gameObjects.length;
-        for(var i = 0; i<= 50; i++){
+        for(var i = 0; i < 50; i++){
             this.gameObjects[i + pL] = new CircleObject(
                 this, //canvas context 
                 Math.floor(Math.random() * 5) + 20, //radius
@@ -86,11 +86,19 @@ export default class Game {
         maybe pass an array with all objects to be assigned input 
         handlers, then give each one a seperate set of movement bindings?*/
         //new InputHandler(this.pentagon1); //creates a new input handler hooked to the object set in the arguments. This input handler is able to be controlled by the player.
+
+        this.nBodySimulator = new nBody(2, 0.001, 100, this.gameObjects);
     }
 
     //the update loop. Actual object updating is done by each object to keep the game file clean.
     update (deltaTime){
         this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, this.gameObjects, deltaTime));
+
+        
+        this.nBodySimulator.updatePositionVectors();
+        this.nBodySimulator.updateVelocityVectors();
+        this.nBodySimulator.updateAccelerationVectors();
+        
     }
 
     //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.

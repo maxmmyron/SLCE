@@ -1,7 +1,6 @@
 /**
- * the InputHandler only assigns a respective pressed keycode a 
- * boolean value. This really could be implemented into Controller, 
- * but for some odd reason I haven't done it yet...
+ * InputHandler
+ * @deprecated
  */
 export default class InputHandler {
     constructor(object){

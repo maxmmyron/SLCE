@@ -5,6 +5,8 @@
  * in the game settings. 
  * 
  * It is planned to allow a bit more freedom, like space away from the walls of the screen, 
+ * 
+ * @deprecated
  */
 export default class rigidSurface {
     constructor(game) {
