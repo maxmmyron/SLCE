@@ -56,25 +56,34 @@ export default class objectCollider{
     elastic2DCollision(obj1, obj2, v1, v2, d1, d2, cDir, m1, m2) {
         const massDiff = m1 - m2;
         const massSum = m1 + m2;
+        
         const v1s = v1 * Math.sin(d1 - cDir);
 
         const cp = Math.cos(cDir);
         const sp = Math.sin(cDir);
+        
         var cdp1 = v1 * Math.cos(d1 - cDir);
         var cdp2 = v2 * Math.cos(d2 - cDir);
-        const cpp = Math.cos(cDir + Math.PI / 2)
-        const spp = Math.sin(cDir + Math.PI / 2)
+        
+        const cpp = Math.cos(cDir + Math.PI / 2);
+        const spp = Math.sin(cDir + Math.PI / 2);
 
         var t = (cdp1 * massDiff + 2 * m2 * cdp2) / massSum;
+        
         obj1.vel.x = t * cp + v1s * cpp;
         obj1.vel.y = t * sp + v1s * spp;
+        
         cDir += Math.PI;
+        
         const v2s = v2 * Math.sin(d2 - cDir);    
+        
         cdp1 = v1 * Math.cos(d1 - cDir);
         cdp2 = v2 * Math.cos(d2 - cDir);    
+        
         t = (cdp2 * -massDiff + 2 * m1 * cdp1) / massSum;
+        
         obj2.vel.x = t * -cp + v2s * -cpp;
-        obj2.vel.y = t * -sp + v2s * -spp;        
+        obj2.vel.y = t * -sp + v2s * -spp;
     }
 
     /**
