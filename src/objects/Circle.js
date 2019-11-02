@@ -1,6 +1,6 @@
-import objectCollider from "../physics/objectCollider.js";
+import objectCollider from "../Physics/objectCollider.js";
 import Shape from "./Shape.js";
-import Error from "../handlers/Error.js";
+import Error from "../Handlers/Error.js";
 
 /**
  * Creates a circular object. this object has a few paramaters:
@@ -59,8 +59,8 @@ export default class circleObject extends Shape{
         if(!delta) return;
 
         // Drag force: Fd = -0.5 * Cd * A * rho * v * v
-        var Fx = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.world_variables.physics_variables.air_density * this.vel.x * this.vel.x / this.vel.x;
-        var Fy = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.world_variables.physics_variables.air_density * this.vel.y * this.vel.y / this.vel.y;
+        var Fx = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.environment.physics.air_density * this.vel.x * this.vel.x / this.vel.x;
+        var Fy = -0.5 * 0.47 * ((Math.PI * (this.radius ** 2) / 1000) / (this.radius * 3)) * this.game.environment.physics.air_density * this.vel.y * this.vel.y / this.vel.y;
 
         //ternary operator. checks if force is NaN, and if it is, then replace NaN with 0. Otherwise, continue with force.
         Fx = (isNaN(Fx) ? 0 : Fx);
@@ -93,7 +93,7 @@ export default class circleObject extends Shape{
             new Error().NaNError(this, "object's position is NaN");
         }
         
-        this.vel.y += CONSTRAINTS.PHYSICS_SETTINGS.ACCELERATION.y;
+        this.vel.y += this.game.environment.physics.acceleration.y;
 
         this.checkMove(this.keyBuffer);
     }

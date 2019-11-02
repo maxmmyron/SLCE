@@ -16,12 +16,12 @@ export default class rigidSurface {
         this.gameHeight = game.gameHeight;
 
         this.style = {
-            color: game.surface_settings.color
+            color: game.environment.surfaces.color
         };
 
         this.pos = {
             x: 0,
-            y: this.gameHeight - game.surface_settings.height
+            y: this.gameHeight - game.environment.surfaces.height
         };
     }
 

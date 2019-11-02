@@ -2,6 +2,8 @@
  * InputHandler
  * @deprecated
  */
+
+
 export default class InputHandler {
     constructor(object){
 

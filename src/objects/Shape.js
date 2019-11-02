@@ -1,4 +1,4 @@
-import Controller from "../handlers/Controller.js";
+import Controller from "../Handlers/Controller.js";
 
 /**
  * Creates a new controller. This controller class is what is used to take control of an object and manupulate it around the screen.
