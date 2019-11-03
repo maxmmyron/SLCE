@@ -6,6 +6,7 @@ function start(gameContext, canvasContext, simulatorUpdateArray){
     game = gameContext;
     ctx = canvasContext;
     simulatorUpdates = simulatorUpdateArray || [];
+    game.fix_dpi();
     requestAnimationFrame(gameLoop);
 }
 
