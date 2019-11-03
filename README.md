@@ -38,9 +38,8 @@ let ctx = canvas.getContext('2d');
 You can then define a new Game, with the only input needed being the canavs to render onto.
 `let game =  new Game(canvas);`
 
-Finally, you can start the game, as well as the gameLoop we imported earlier.
+Finally, we can start the game with our start function from the gameLoop import.
 ```
-game.start(ctx);
 start(game, ctx);
 ```
 
@@ -54,7 +53,6 @@ let canvas = document.getElementById('gameCanvas');
 let ctx = canvas.getContext('2d'); //define a new drawing context on our canvas
 
 let game =  new Game(canvas); //create a new game
-game.start(ctx); //start the game.
 
 start(game, ctx); //start the gameLoop
 ```
