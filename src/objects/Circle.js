@@ -34,8 +34,6 @@ export default class circleObject extends Shape{
 
         this.ax = 0; 
         this.ay = 0;
-
-        this.circleCollider = new objectCollider(this.game);
     }
 
     /**
@@ -78,11 +76,13 @@ export default class circleObject extends Shape{
 
         this.x += this.vel.x;
         this.y += this.vel.y;
-        
+
         gameObjects.forEach(element => {
             if(this != element){
-                this.circleCollider.circleCollision(this, element);
-                this.circleCollider.checkSphereWallHit(this);
+                if(element == null);
+                else{
+                    new objectCollider(this.game, this, element).runUpdates();
+                }
             }
         });
 
