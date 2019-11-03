@@ -49,11 +49,13 @@ export default class Game {
         this.mouseHandle = new MouseHandler();
 
         this.lastTime = 0;
+        
+        this.gameObjects = [];
     }
 
     //start() helps to populate the world environment by creating objects.
     start(){
-        this.surface = new RigidSurface(this);
+        /*this.surface = new RigidSurface(this);
 
         this.circle1 = new CircleObject(this, 15, "#00FFAC", 700, 400, 3);
         this.circle2 = new CircleObject(this, 25, "#A0C34F", 500, 600, 3);
@@ -65,14 +67,14 @@ export default class Game {
         this.pentagon1 = new Shape(this, [[25,0], [0,25], [10,50], [40,50], [50,25]], 700, 700, "#71A84F");
 
         this.gameObjects = [ //renders in order from [0] => [gameObjects.length]. Place always on top objects at end of array.
-            /*this.rigidObject,
+            this.rigidObject,
             this.circle1,
             this.circle2,
             this.triangle1,
             this.pentagon1,
             this.player
             
-            this.surface*/
+            this.surface
         ];
 
         var pL = this.gameObjects.length;
@@ -88,9 +90,7 @@ export default class Game {
                 Math.floor(Math.random() * 20) - 10, //starting x vel
                 Math.floor(Math.random() * 20) - 10 //starting y vel
             ); 
-        }
-
-        this.nBodySimulator = new nBody(1, 0.001, 100, this.gameObjects);
+        }*/
 
 
 
@@ -112,12 +112,10 @@ export default class Game {
         fix_dpi();
     }
 
-    update (deltaTime){
+    update (deltaTime, simulatorUpdates){
         this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, this.gameObjects, deltaTime));
-
-        this.nBodySimulator.updatePositionVectors();
-        this.nBodySimulator.updateVelocityVectors();
-        this.nBodySimulator.updateAccelerationVectors();
+        simulatorUpdates.forEach(updateFunction => {let n = updateFunction;});
+        
     }
 
     //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.
@@ -129,6 +127,12 @@ export default class Game {
         if(isNaN(fps) == false) this.ctx.fillText("FPS: " + Math.ceil(fps), 5, 15); //display the fps. this should be last so the FPS are always drawn on top of all objects.
     }
 
-    //the gameloop! ensures smooth running draws and updates objects on the canvas. this should probably be moved one day into it's own, seperate class (or into game.js)
+    add(object){
+        this.gameObjects.push(object);
+    }
+
+    remove(id){
+        this.gameObjects.splice(id, 1);
+    }
     
 }

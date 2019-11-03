@@ -1,10 +1,11 @@
 
 export {start};
 
-let game, ctx;
-function start(gameContext, canvasContext){
+let game, ctx, simulatorUpdates;
+function start(gameContext, canvasContext, simulatorUpdateArray){
     game = gameContext;
     ctx = canvasContext;
+    simulatorUpdates = simulatorUpdateArray || [];
     requestAnimationFrame(gameLoop);
 }
 
@@ -22,7 +23,7 @@ function gameLoop(timestamp){
     ctx.clearRect(0, 0, game.gameWidth, game.gameHeight);
 
     game.draw(fps);
-    game.update(deltaTime);
+    game.update(deltaTime, simulatorUpdates);
 
     requestAnimationFrame(gameLoop);
 }
