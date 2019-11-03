@@ -1,11 +1,20 @@
+import Error from "../Handlers/Error.js";
+
 /**
  * This is currently unused. Eventually, it will house the code for object collision, and possible object collision response. I still need a good SAT-based object collision response. :/
  * 
  */
 export default class objectCollider{
-    constructor(game){
+    constructor(game, obj1, obj2){
         this.ctx = document.getElementById('gameCanvas').getContext('2d');
         this.game = game;
+        this.obj1 = obj1;
+        this.obj2 = obj2;
+    }
+
+    runUpdates(){
+        this.circleCollision(this.obj1, this.obj2);
+        this.checkSphereWallHit(this.obj1);
     }
 
     circleCollision(b1, b2){
@@ -91,7 +100,6 @@ export default class objectCollider{
      * @param {Circle} obj - a circle
      */
     checkSphereWallHit(obj){
-
         if(obj.x - obj.radius < 0){
             obj.x = 0 + obj.radius;
             this.bounceSphere(obj, obj.vel.x);
