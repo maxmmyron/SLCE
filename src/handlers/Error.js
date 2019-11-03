@@ -19,4 +19,17 @@ export default class Error{
             throw "NaN Error: " + message;
         }
     }
+    /**
+     * Prints a custom Null error message.
+     * @param {string} message - a custom message to print
+     */
+    NullError(message){
+        let customMessage = message || "";
+        if(customMessage == ""){
+            throw "NaN Error";
+        }
+        else{
+            throw "NaN Error: " + message;
+        }
+    }
 }
