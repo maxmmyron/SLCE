@@ -7,6 +7,12 @@ export default class nBody {
       this.masses = masses;
     }
 
+    runUpdates(){
+      this.updatePositionVectors();
+      this.updateVelocityVectors();
+      this.updateAccelerationVectors();
+    }
+
     updatePositionVectors() {
         const massesLen = this.masses.length;
   
