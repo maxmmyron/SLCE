@@ -1,9 +1,9 @@
 //imports
-import Game from "./core/game.js";
-import {start} from "./core/gameLoop.js";
-import circleObject from "./Objects/Circle.js";
-import Color from "./Math/Color.js";
-import nBody from "./Physics/nBody.js";
+import Game from "./src/core/game.js";
+import {start} from "./src/core/gameLoop.js";
+import circleObject from "./src/Objects/Circle.js";
+import Color from "./src/Math/Color.js";
+import nBody from "./src/Physics/nBody.js";
 
 //define a new canvas given a canvas in DOM
 let canvas = document.getElementById('gameCanvas');
