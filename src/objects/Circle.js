@@ -1,5 +1,5 @@
-import objectCollider from "../Physics/objectCollider.js";
-import Shape from "./Shape.js";
+import objectCollider from "../Physics/Collider/circleCollider.js";
+import Shape from "../objs/Shape.js";
 import Error from "../Handlers/Error.js";
 
 /**
@@ -11,7 +11,7 @@ import Error from "../Handlers/Error.js";
  *          posY: the starting position of the object on the Y axis. Default is centered on Y axis
  *          density: this varaible is useful for measuring how the object reacts in bouyant simulations. default is 5.
  */
-export default class circleObject extends Shape{
+export default class Circle extends Shape{
     /**
      * Creates a new Circle
      * @typedef {Object} Circle
@@ -24,7 +24,7 @@ export default class circleObject extends Shape{
      * @param {number} velX - starting x velocity
      * @param {number} velY - starting y velocity
      */
-    constructor(game, radius, color, posX, posY, density, velX, velY) {
+    constructor(game, radius, color, posX, posY, density, velX, velY, collides = true, bounded = true) {
         super(game, posX, posY, velX || 0, velY || 0, color);
 
         this.radius = radius;
@@ -34,6 +34,12 @@ export default class circleObject extends Shape{
 
         this.ax = 0; 
         this.ay = 0;
+
+        this.collidesWithObjects = collides;
+        this.boundByCanvas = bounded;
+
+        this.objectCollider = new objectCollider(this.game, this);
+        this.errorManager = new Error();
     }
 
     /**
@@ -77,20 +83,22 @@ export default class circleObject extends Shape{
         this.x += this.vel.x;
         this.y += this.vel.y;
 
-        gameObjects.forEach(element => {
-            if(this != element){
-                if(element == null);
-                else{
-                    new objectCollider(this.game, this, element).runUpdates();
+        if(this.collidesWithObjects){
+            gameObjects.forEach(element => {
+                if(this != element && element.collidesWithObjects){
+                    this.objectCollider.obj2 = element;
+                    this.objectCollider.runUpdates();
                 }
-            }
-        });
-
+            });
+        }
+        else if(this.boundByCanvas){
+            this.objectCollider.checkSphereWallHit(this);
+        }
         if(isNaN(this.vel.x) || isNaN(this.vel.y)){
-            new Error().NaNError(this, "object's velocity is NaN");
+            this.errorManager.NaNError(this, "object's velocity is NaN");
         }
         if(isNaN(this.x) || isNaN(this.y)){
-            new Error().NaNError(this, "object's position is NaN");
+            this.errorManager.NaNError(this, "object's position is NaN");
         }
         
         this.vel.y += this.game.environment.physics.acceleration.y;

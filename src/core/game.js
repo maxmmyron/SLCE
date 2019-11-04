@@ -1,10 +1,10 @@
-import RigidSurface from "../Objects/RigidSurface.js";
+import RigidSurface from "../objs/RigidSurface.js";
 import InputHandler from "../Handlers/InputHandler.js";
 import CircleObject from "../Objects/Circle.js";
-import Shape from "../Objects/ConvexShape.js";
-import RigidShape from "../Objects/RigidShape.js";
+import ConvexShape from "../objs/ConvexShape.js";
+import RigidShape from "../objs/RigidShape.js";
 import nBody from "../Physics/nBody.js";
-import Color from "../Math/Color.js";
+import ColorManager from "../Math/ColorManager.js";
 import MouseHandler from "../Handlers/MouseHandler.js";
 
 /**
