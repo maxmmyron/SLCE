@@ -1,3 +1,6 @@
+/**
+ * @deprecated
+ */
 export default class RigidShape{
     constructor(points, x, y, fill, useOutline, outline){
         this.points = points.map(function(el){
@@ -52,30 +55,7 @@ export default class RigidShape{
         }
     }
 
-    draw(ctx){
-        var p = this.points;
-
-        ctx.save();
-        ctx.fillStyle = this.style.color;
-        ctx.strokeStyle = 'rgba(0,0,0,0)';
-
-        ctx.translate(this.x, this.y);
-        p.forEach(function (point, i) {
-            if (i === 0) {
-                ctx.beginPath();
-                ctx.moveTo(point.x, point.y);
-            } else if (i === (p.length - 1)) {
-                ctx.lineTo(point.x, point.y);
-                ctx.lineTo(p[0].x, p[0].y);
-                ctx.stroke();
-                ctx.fill();
-            } else {
-                ctx.lineTo(point.x, point.y);
-            }
-        });
-        ctx.closePath();
-        ctx.restore();
-    }
+    
 
     update(delta){
         if(!delta) return;
