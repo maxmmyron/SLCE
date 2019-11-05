@@ -4,7 +4,7 @@ import Error from "../../Handlers/Error.js";
  * This is currently unused. Eventually, it will house the code for object collision, and possible object collision response. I still need a good SAT-based object collision response. :/
  * 
  */
-export default class circleCollider{
+export default class CircleCollider{
     constructor(game, obj1, obj2){
         this.ctx = document.getElementById('gameCanvas').getContext('2d');
         this.game = game;
@@ -18,8 +18,8 @@ export default class circleCollider{
     }
 
     circleCollision(b1, b2){
-        let dx = b2.x - b1.x;
-        let dy = b2.y - b1.y;
+        let dx = b2.pos.x - b1.pos.x;
+        let dy = b2.pos.y - b1.pos.y;
         let dist = Math.sqrt(dx*dx + dy*dy);
 
         if(b1.radius + b2.radius >= dist){
@@ -29,17 +29,17 @@ export default class circleCollider{
 
                 //move each circle away from one another
                 const touchDistFromB1 = (dist * (b1.radius / (b1.radius + b2.radius)));       
-                const contactX = b1.x + nx * touchDistFromB1;
-                const contactY = b1.y + ny * touchDistFromB1;
+                const contactX = b1.pos.x + nx * touchDistFromB1;
+                const contactY = b1.pos.y + ny * touchDistFromB1;
 
                 // now move each ball so that they just touch
                 // move b1 back
-                b1.x = contactX - nx * b1.radius;
-                b1.y = contactY - ny * b1.radius;
+                b1.pos.x = contactX - nx * b1.radius;
+                b1.pos.y = contactY - ny * b1.radius;
 
                 // and b2 in the other direction
-                b2.x = contactX + nx * b2.radius;
-                b2.y = contactY + ny * b2.radius;
+                b2.pos.x = contactX + nx * b2.radius;
+                b2.pos.y = contactY + ny * b2.radius;
 
             /*
                 COLLISION RESPONSE
@@ -63,6 +63,7 @@ export default class circleCollider{
     }
 
     elastic2DCollision(obj1, obj2, v1, v2, d1, d2, cDir, m1, m2) {
+        console.log("there has been a collision!");
         const massDiff = m1 - m2;
         const massSum = m1 + m2;
         
@@ -100,21 +101,21 @@ export default class circleCollider{
      * @param {Circle} obj - a circle
      */
     checkSphereWallHit(obj){
-        if(obj.x - obj.radius < 0){
-            obj.x = 0 + obj.radius;
+        if(obj.pos.x - obj.radius < 0){
+            obj.pos.x = 0 + obj.radius;
             this.bounceSphere(obj, obj.vel.x);
         }
-        if(obj.y - obj.radius < 0){
-            obj.y = 0 + obj.radius;
+        if(obj.pos.y - obj.radius < 0){
+            obj.pos.y = 0 + obj.radius;
             this.bounceSphere(obj, obj.vel.y);
         }
-        if(obj.x + obj.radius > this.game.gameWidth){
-            obj.x = this.game.gameWidth - obj.radius;
+        if(obj.pos.x + obj.radius > this.game.gameWidth){
+            obj.pos.x = this.game.gameWidth - obj.radius;
             this.bounceSphere(obj, obj.vel.x);
         }
 
-        if(obj.y + obj.radius > this.game.gameHeight){
-            obj.y = this.game.gameHeight - obj.radius;
+        if(obj.pos.y + obj.radius > this.game.gameHeight){
+            obj.pos.y = this.game.gameHeight - obj.radius;
             this.bounceSphere(obj, obj.vel.y);
             this.touching = true;
         }
