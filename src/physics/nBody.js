@@ -1,16 +1,20 @@
 export default class nBody {
     constructor(g, dt, softeningConstant, masses) {
-      this.g = g;
-      this.dt = dt;
-      this.softeningConstant = softeningConstant;
-  
-      this.masses = masses;
+        this.g = g;
+        this.dt = dt;
+        this.softeningConstant = softeningConstant;
+    
+        this.masses = masses || [];
     }
 
     runUpdates(){
-      this.updatePositionVectors();
-      this.updateVelocityVectors();
-      this.updateAccelerationVectors();
+        this.masses.forEach(mass => {
+            if(mass.radius){
+                this.updatePositionVectors();
+                this.updateVelocityVectors();
+                this.updateAccelerationVectors();
+            }         
+        });
     }
 
     updatePositionVectors() {
@@ -18,9 +22,8 @@ export default class nBody {
   
       for (let i = 0; i < massesLen; i++) {
         const massI = this.masses[i];
-
-        massI.x += massI.vel.x * this.dt;
-        massI.y += massI.vel.y * this.dt;
+        massI.pos.x += massI.vel.x * this.dt;
+        massI.pos.y += massI.vel.y * this.dt;
       }
 
       return this;
@@ -48,8 +51,8 @@ export default class nBody {
             if (i !== j) {
               const massJ = this.masses[j];
     
-              const dx = massJ.x - massI.x;
-              const dy = massJ.y - massI.y;
+              const dx = massJ.pos.x - massI.pos.x;
+              const dy = massJ.pos.y - massI.pos.y;
     
               const distSq = dx * dx + dy * dy;
     

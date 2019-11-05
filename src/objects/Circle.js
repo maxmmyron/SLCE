@@ -1,6 +1,6 @@
-import objectCollider from "../Physics/Collider/circleCollider.js";
-import Shape from "../objs/Shape.js";
 import Error from "../Handlers/Error.js";
+import UOM from "./UOM.js";
+import CircleCollider from "../Physics/Collider/CircleCollider.js";
 
 /**
  * Creates a circular object. this object has a few paramaters:
@@ -11,7 +11,7 @@ import Error from "../Handlers/Error.js";
  *          posY: the starting position of the object on the Y axis. Default is centered on Y axis
  *          density: this varaible is useful for measuring how the object reacts in bouyant simulations. default is 5.
  */
-export default class Circle extends Shape{
+export default class Circle extends UOM{
     /**
      * Creates a new Circle
      * @typedef {Object} Circle
@@ -24,8 +24,8 @@ export default class Circle extends Shape{
      * @param {number} velX - starting x velocity
      * @param {number} velY - starting y velocity
      */
-    constructor(game, radius, color, posX, posY, density, velX, velY, collides = true, bounded = true) {
-        super(game, posX, posY, velX || 0, velY || 0, color);
+    constructor(game, radius, color, pos, density, vel, collides = true, bounded = true) {
+        super(game, pos, vel, color);
 
         this.radius = radius;
         this.density = density;
@@ -38,7 +38,7 @@ export default class Circle extends Shape{
         this.collidesWithObjects = collides;
         this.boundByCanvas = bounded;
 
-        this.objectCollider = new objectCollider(this.game, this);
+        this.collider = new CircleCollider(this.game, this);
         this.errorManager = new Error();
     }
 
@@ -49,7 +49,7 @@ export default class Circle extends Shape{
     draw(ctx) {
         ctx.fillStyle = this.style.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2, false);
         ctx.fill();
     }
 
@@ -80,26 +80,29 @@ export default class Circle extends Shape{
 
         //integrate mass into velocities, inertia
 
-        this.x += this.vel.x;
-        this.y += this.vel.y;
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
 
+        gameObjects.forEach(element => {
+            if(this != element && element.collidesWithObjects){
+                this.collider.obj2 = element;
+                this.collider.runUpdates();
+            }
+        });
+
+        /*
         if(this.collidesWithObjects){
-            gameObjects.forEach(element => {
-                if(this != element && element.collidesWithObjects){
-                    this.objectCollider.obj2 = element;
-                    this.objectCollider.runUpdates();
-                }
-            });
+            
         }
         else if(this.boundByCanvas){
             this.objectCollider.checkSphereWallHit(this);
         }
         if(isNaN(this.vel.x) || isNaN(this.vel.y)){
-            this.errorManager.NaNError(this, "object's velocity is NaN");
+            this.collider.NaNError(this, "object's velocity is NaN");
         }
-        if(isNaN(this.x) || isNaN(this.y)){
-            this.errorManager.NaNError(this, "object's position is NaN");
-        }
+        if(isNaN(this.pos.x) || isNaN(this.pos.y)){
+            this.collider.NaNError(this, "object's position is NaN");
+        }*/
         
         this.vel.y += this.game.environment.physics.acceleration.y;
 
@@ -111,5 +114,9 @@ export default class Circle extends Shape{
      */
     getMass(){
         return this.mass;
+    }
+
+    getType(){
+        return "circle";
     }
 } 
