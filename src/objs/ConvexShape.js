@@ -1,6 +1,10 @@
-import Shape from "./Shape.js";
+import UOM from "../Objects/UOM.js";
 
-export default class ConvexShape extends Shape{
+//import Shape from "./Shape.js";
+/**
+ * @deprecated
+ */
+export default class ConvexShape extends UOM{
     constructor(game, points, posX, posY, fill, useOutline, outline, mass, velX, velY){
 
         super(game, posX, posY, velX || 0, velY || 0);
