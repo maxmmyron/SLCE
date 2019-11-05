@@ -193,6 +193,13 @@ export default class Vector{
         return Math.sqrt(this.len2());
     }
 
+    perp(){
+        let x = this.x;
+        this.x = this.y;
+        this.y = x;
+        return this;
+    }
+
 
     /** draws a new vector on a canvas
      * @param {Context} ctx - a given canvas
