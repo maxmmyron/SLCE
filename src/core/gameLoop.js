@@ -21,8 +21,6 @@ function gameLoop(timestamp){
         game.fix_dpi();
     });
 
-    ctx.clearRect(0, 0, game.gameWidth, game.gameHeight);
-
     game.draw(fps);
     game.update(deltaTime, simulatorUpdates);
 
