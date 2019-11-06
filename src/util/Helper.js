@@ -1,4 +1,4 @@
-import Temps from "./temps";
+import Temps from "./Temps.js";
 
 export default class Helper{
     constructor(){

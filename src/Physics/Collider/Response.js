@@ -1,4 +1,4 @@
-import Vector from "../../Math/Vector";
+import Vector from "../../Math/Vector.js";
 
 export default class Response{
     constructor(){
