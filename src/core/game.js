@@ -6,6 +6,7 @@ import RigidShape from "../objs/RigidShape.js";
 import nBody from "../Physics/nBody.js";
 import ColorManager from "../Math/ColorManager.js";
 import MouseHandler from "../Handlers/MouseHandler.js";
+import UUM from "../util/UUM.js";
 
 /**
  * the main game source code. Mainly houses implementation of the world variables set in main.js, creates the game objects, and houses the default draw() and update() functions.
@@ -13,7 +14,7 @@ import MouseHandler from "../Handlers/MouseHandler.js";
 
 export default class Game {
 
-    constructor(canvasDOM){
+    constructor(canvasDOM, fill = "#ffffff"){
 
         this.canvasDOM = canvasDOM;
         this.ctx = canvasDOM.getContext('2d');
@@ -38,7 +39,7 @@ export default class Game {
                 height: 50
             },
             defaults: {
-                fill_color: "#000000"
+                fill_color: fill
             },
             time_factor: 1
         };
@@ -47,6 +48,8 @@ export default class Game {
         this.gameHeight = this.environment.height;
         
         this.gameObjects = [];
+
+        this.UUM = new UUM();
     }
 
     update (deltaTime, simulatorUpdates){
@@ -54,19 +57,22 @@ export default class Game {
         document.addEventListener("resize", e => {
             this.fix_dpi();
         });
-        //this.nBodySimulator.updatePositionVectors();
-        //this.nBodySimulator.updateVelocityVectors();
-        //this.nBodySimulator.updateAccelerationVectors();
         
         simulatorUpdates.forEach(method => method.runUpdates());
     }
 
     //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.
     draw(fps){
-        
+        this.ctx.clearRect(0, 0, this.gameWidth, this.gameHeight);
+        if(this.environment.defaults.fill_color != "#ffffff"){
+            this.ctx.fillStyle = this.environment.defaults.fill_color;
+            this.ctx.fillRect(0,0,this.gameWidth,this.gameHeight);
+        }
         this.gameObjects.forEach(object => object.draw(this.ctx));
         
         this.ctx.fillStyle = this.environment.defaults.fill_color; //set ctx fillstyle to the fillstyle assigned in the env. variables
+        
+        this.ctx.fillStyle = this.UUM.universalColorManager.invertColor(this.environment.defaults.fill_color);
         if(isNaN(fps) == false) this.ctx.fillText("FPS: " + Math.ceil(fps), 5, 15); //display the fps. this should be last so the FPS are always drawn on top of all objects.
     }
 
