@@ -24,7 +24,7 @@ for(var i = 0; i < 5; i++){ //number of rows
         game.add(new Circle(
             game,
             radius,
-            colorManager.getRandomColor(),
+            game.UUM.universalColorManager.getRandomColor(),
             new Vector((game.gameWidth / 2) - (xOffset) + (j * radius * 2),
             (game.gameHeight / 4) - (yOffset)),
             10, 
@@ -37,10 +37,10 @@ for(var i = 0; i < 5; i++){ //number of rows
 game.add(new Circle(
     game,
     radius,
-    colorManager.getRandomColor(),
+    game.UUM.universalColorManager.getRandomColor(),
     new Vector(game.gameWidth / 2, game.gameHeight - 250),
     10,
-    new Vector(0, -10),
+    new Vector(0, -Math.random() * 25),
     false, true
 ));
 
@@ -48,7 +48,7 @@ game.add(new Circle(
  game.add(new Polygon(game, new Vector(300, 500), [
     new Vector(), new Vector(30, 0), 
     new Vector(30,30), new Vector(0,30)
-], new Vector(), colorManager.getRandomColor()));
+], new Vector(), game.UUM.universalColorManager.getRandomColor()));
  */
 
 game.nBodySimulator = new nBody(0.1, 0.001, 0.15, game.gameObjects);
