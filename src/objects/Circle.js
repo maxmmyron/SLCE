@@ -24,7 +24,7 @@ export default class Circle extends UOM{
      * @param {number} velX - starting x velocity
      * @param {number} velY - starting y velocity
      */
-    constructor(game, radius, color, pos, density, vel, collides = true, bounded = true) {
+    constructor(game, radius, color, pos, density, vel, collides = true, bounded = true, hasDrag = true) {
         super(game, pos, vel, color);
 
         this.radius = radius;
@@ -40,6 +40,8 @@ export default class Circle extends UOM{
 
         this.collider = new CircleCollider(this.game, this);
         this.errorManager = new Error();
+
+        this.hasDrag = hasDrag;
     }
 
     /**
@@ -70,6 +72,9 @@ export default class Circle extends UOM{
         Fx = (isNaN(Fx) ? 0 : Fx);
         Fy = (isNaN(Fy) ? 0 : Fy);
 
+        Fx = (this.hasDrag ? Fx : 0);
+        Fy = (this.hasDrag ? Fy : 0);
+
         if(this.touching){
             this.vel.x += (Fx * 1.7) + this.ax;
         }
@@ -83,16 +88,13 @@ export default class Circle extends UOM{
         this.pos.x += this.vel.x;
         this.pos.y += this.vel.y;
 
-        gameObjects.forEach(element => {
-            if(this != element && element.collidesWithObjects){
-                this.collider.obj2 = element;
-                this.collider.runUpdates();
-            }
-        });
-
-        /*
         if(this.collidesWithObjects){
-            
+            gameObjects.forEach(element => {
+                if(this != element && element.collidesWithObjects){
+                    this.collider.obj2 = element;
+                    this.collider.runUpdates();
+                }
+            });
         }
         else if(this.boundByCanvas){
             this.objectCollider.checkSphereWallHit(this);
@@ -102,7 +104,7 @@ export default class Circle extends UOM{
         }
         if(isNaN(this.pos.x) || isNaN(this.pos.y)){
             this.collider.NaNError(this, "object's position is NaN");
-        }*/
+        }
         
         this.vel.y += this.game.environment.physics.acceleration.y;
 
@@ -118,5 +120,9 @@ export default class Circle extends UOM{
 
     getType(){
         return "circle";
+    }
+
+    drag(hasDrag){
+        this.hasDrag = hasDrag;
     }
 } 
