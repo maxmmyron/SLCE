@@ -1,29 +1,25 @@
 import Error from "../Handlers/Error.js";
 import UOM from "./UOM.js";
-import CircleCollider from "../Physics/Collider/CircleCollider.js";
+import CircleCollider from "../physics/Collider/CircleCollider.js";
+import Vector from "../Math/Vector.js";
 
 /**
- * Creates a circular object. this object has a few paramaters:
- *          game: the game. required param for core functionality.
- *          radius. the size of the circular object. 
- *          color: the color of the object. If this is left blank, a default of black is set as the color.
- *          posX: the starting position of the object on the X axis. Default is centered on X axis
- *          posY: the starting position of the object on the Y axis. Default is centered on Y axis
- *          density: this varaible is useful for measuring how the object reacts in bouyant simulations. default is 5.
+ * Creates a new circle
  */
 export default class Circle extends UOM{
-    /**
-     * Creates a new Circle
-     * @typedef {Object} Circle
-     * @param {*} game - the game the object will reside in
-     * @param {number} radius - radius of the circle
-     * @param {string} color - color
-     * @param {number} posX - starting x position
-     * @param {number} posY - starting y position
-     * @param {number} density - density of the object 
-     * @param {number} velX - starting x velocity
-     * @param {number} velY - starting y velocity
-     */
+
+     /**
+      * Circle constructor
+      * @param {*} game - the game the circle will reside in
+      * @param {number} radius - radius of the circle
+      * @param {string} color - color
+      * @param {Vector} pos - starting position
+      * @param {number} density - density of the circle
+      * @param {Vector} vel - starting velocity
+      * @param {boolean} collides - if the circle will collide with other objects.
+      * @param {boolean} bounded - if the circle will rebound off the canvas edges
+      * @param {boolean} hasDrag - if the circle will experience air resistance
+      */
     constructor(game, radius, color, pos, density, vel, collides = true, bounded = true, hasDrag = true) {
         super(game, pos, vel, color);
 
@@ -97,7 +93,7 @@ export default class Circle extends UOM{
             });
         }
         else if(this.boundByCanvas){
-            this.objectCollider.checkSphereWallHit(this);
+            this.collider.checkSphereWallHit(this);
         }
         if(isNaN(this.vel.x) || isNaN(this.vel.y)){
             this.collider.NaNError(this, "object's velocity is NaN");

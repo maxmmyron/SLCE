@@ -3,7 +3,7 @@
  */
 
 export default class Controller {
-    constructor(game){
+    constructor(game, controllerType){
         this.game = game;
 
         this.keyBuffer = [];
@@ -15,16 +15,26 @@ export default class Controller {
         this.keyBuffer[68] = false;
 
         this.touching = false;
+        this.controllerType = controllerType || 0;
     }
 
     checkMove(buffer){
-        if(buffer[87] && this.vel.y >= -this.constraints.maxSpeed && this.touching == true) {
-            this.vel.y = -30;
-            this.touching = false;
+        if(this.controllerType == 0){
+            if(buffer[87] && this.vel.x >= -this.constraints.maxSpeed) this.vel.y =- 20;
+            if(buffer[83] && this.vel.x <= this.constraints.maxSpeed) this.vel.y =+ 20;
+            if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 20;
+            if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 20;
         }
-        if(buffer[83] && this.vel.y < this.constraints.maxSpeed) this.vel.y++; //this doesn't really do anything, given that every object is immutably responsive to gravity.
-        if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 20;
-        if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 20;
+        if(this.controllerType == 1){
+            if(buffer[87] && this.vel.y >= -this.constraints.maxSpeed && this.touching == true) {
+                this.vel.y = -30;
+                this.touching = false;
+            }
+            if(buffer[83] && this.vel.y < this.constraints.maxSpeed) this.vel.y++; //this doesn't really do anything, given that every object is immutably responsive to gravity.
+            if(buffer[65] && this.vel.x >= -this.constraints.maxSpeed) this.vel.x =- 20;
+            if(buffer[68] && this.vel.x <= this.constraints.maxSpeed) this.vel.x =+ 20;
+        }
+        
     }
 
     //this block of code sorts the x values and y values of each point on a polygon, and then checks if the max and min of those values are touching the hardcoded canvas boundaries.

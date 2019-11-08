@@ -1,12 +1,5 @@
-import RigidSurface from "../objs/RigidSurface.js";
-import InputHandler from "../Handlers/InputHandler.js";
-import CircleObject from "../Objects/Circle.js";
-import ConvexShape from "../objs/ConvexShape.js";
-import RigidShape from "../objs/RigidShape.js";
-import nBody from "../Physics/nBody.js";
-import ColorManager from "../Math/ColorManager.js";
-import MouseHandler from "../Handlers/MouseHandler.js";
 import UUM from "../util/UUM.js";
+import Collider from "../physics/Collider/CollisionSystem.js";
 
 /**
  * the main game source code. Mainly houses implementation of the world variables set in main.js, creates the game objects, and houses the default draw() and update() functions.
@@ -16,9 +9,13 @@ export default class Game {
 
     constructor(canvasDOM, fill = "#ffffff"){
 
+        //define the canvasDOM and the canvas context.
         this.canvasDOM = canvasDOM;
         this.ctx = canvasDOM.getContext('2d');
 
+        /**
+         * The world environment variables. These contain useful, world-wide variables that all objects should use.
+         */
         this.environment = {
             width: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2)),
             height: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2)),
@@ -39,29 +36,46 @@ export default class Game {
                 height: 50
             },
             defaults: {
-                fill_color: fill
+                fill_color: fill,
+                default_font: "12px Arial"
             },
             time_factor: 1
         };
 
+        /**
+         * @deprecated use this.environment.width
+         */
         this.gameWidth = this.environment.width;
+        /**
+         * @deprecated use this.environment.height
+         */
         this.gameHeight = this.environment.height;
         
         this.gameObjects = [];
 
+        //create a new Universal Util Manager for easily reusable classes.
         this.UUM = new UUM();
     }
 
+    /**
+     * updates all objects, as well as invoking any simulator updates.
+     * @param {number} deltaTime - deltaTime from the gameLoop
+     * @param {[]} simulatorUpdates - an array of all simulatorUpdates. (This will be condensed in the future to an array contained within the constructor for game.js, so passing this through will be unnecessary.)
+     */
     update (deltaTime, simulatorUpdates){
         this.gameObjects.forEach(object => object.update(this.WORLD_CONSTRAINTS, this.gameObjects, deltaTime));
         document.addEventListener("resize", e => {
             this.fix_dpi();
         });
-        
-        simulatorUpdates.forEach(method => method.runUpdates());
+
+        simulatorUpdates.forEach(func => func.method.runUpdates(func.args));
     }
 
     //the draw loop. Again, actal object drawing is done by each object to keep the game file clean. However, this method does directly draw the FPS.
+    /**
+     * draws all objects on screen, as well as any debug information
+     * @param {number} fps - passed through from gameLoop for debug purposes.
+     */
     draw(fps){
         this.ctx.clearRect(0, 0, this.gameWidth, this.gameHeight);
         if(this.environment.defaults.fill_color != "#ffffff"){
@@ -98,5 +112,9 @@ export default class Game {
 
         this.gameWidth = w;
         this.gameHeight = h;
+    }
+
+    debug(){
+        console.log('debug');
     }
 }
