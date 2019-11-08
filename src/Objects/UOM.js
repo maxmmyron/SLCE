@@ -4,10 +4,9 @@ import Vector from "../Math/Vector.js";
 /**
  * A Universal Object Manager. Allows for controller, universal object settings, etc.
  */
-
 export default class UOM extends Controller {
     constructor(game, pos, vel, color){
-        super(game);
+        super(game,0);
 
         this.game = game;
 
