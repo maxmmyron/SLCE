@@ -3,7 +3,7 @@ import Game from "./src/core/game.js";
 import {start} from "./src/core/gameLoop.js";
 import Circle from "./src/Objects/Circle.js";
 import ColorManager from "./src/Math/ColorManager.js";
-import nBody from "./src/Physics/nBody.js";
+import nBody from "./src/physics/nBody.js";
 import Polygon from "./src/Objects/Polygon.js";
 import Vector from "./src/Math/Vector.js";
 
@@ -29,7 +29,7 @@ for(var i = 0; i < 5; i++){ //number of rows
             (game.gameHeight / 4) - (yOffset)),
             10, 
             new Vector(),
-            true
+            true,true, true
         ));
     }
 }
@@ -41,21 +41,17 @@ game.add(new Circle(
     new Vector(game.gameWidth / 2, game.gameHeight - 250),
     10,
     new Vector(0, -Math.random() * 25),
-    false, true
+    false, true, true
 ));
-
-/*
- game.add(new Polygon(game, new Vector(300, 500), [
-    new Vector(), new Vector(30, 0), 
-    new Vector(30,30), new Vector(0,30)
-], new Vector(), game.UUM.universalColorManager.getRandomColor()));
- */
 
 game.nBodySimulator = new nBody(0.1, 0.001, 0.15, game.gameObjects);
 
-
 let simulatorUpdates = [
-    game.nBodySimulator
+    {
+        'method' : game.nBodySimulator,
+        'args' : []
+    }   
+    
 ];
 
 start(game, ctx, simulatorUpdates); //start the gameLoop
