@@ -27,7 +27,10 @@ for(var i = 0; i < 100; i++){
 game.nBodySimulator = new nBody(0.25, 0.001, 0.15, game.gameObjects);
 
 let simulatorUpdates = [
-    game.nBodySimulator
+    {
+        'method': game.nBodySimulator,
+        'args' : []
+    }
 ];
 
 start(game, ctx, simulatorUpdates); //start the gameLoop

@@ -3,7 +3,7 @@ import Game from "../../src/core/game.js";
 import {start} from "../../src/core/gameLoop.js";
 import Circle from "../../src/Objects/Circle.js";
 import ColorManager from "../../src/Math/ColorManager.js";
-import nBody from "../../src/Physics/nBody.js";
+import nBody from "../../src/physics/nBody.js";
 import Polygon from "../../src/Objects/Polygon.js";
 import Vector from "../../src/Math/Vector.js";
 
@@ -62,7 +62,10 @@ game.nBodySimulator = new nBody(0.1, 0.001, 0.15, game.gameObjects);
 
 
 let simulatorUpdates = [
-    game.nBodySimulator
+    {
+        'method' : game.nBodySimulator,
+        'args' : []
+    }
 ];
 
 start(game, ctx, simulatorUpdates); //start the gameLoop

@@ -55,7 +55,10 @@ game.add(new circleObject(
 game.nBodySimulator = new nBody(0.1, 0.001, 0.15, game.gameObjects);
 
 let simulatorUpdates = [
-    game.nBodySimulator
+    {
+        'method': game.nBodySimulator,
+        'args': []
+    }
 ];
 
 start(game, ctx, simulatorUpdates); //start the gameLoop
