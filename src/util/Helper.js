@@ -1,8 +1,8 @@
 import Temps from "./Temps.js";
 
 export default class Helper{
-    constructor(){
-        this.temps = new Temps();
+    constructor(temps){
+        this.temps = temps;
     }
 
     /**
@@ -14,30 +14,35 @@ export default class Helper{
     flattenPointsOn(points, normal, result){
         var min = Number.MAX_VALUE;
         var max = -Number.MAX_VALUE;
+        
         var length = points.length;
-
+        
         for(var i = 0; i < length; i++){
             var dot = points[i].dot(normal);
+        
             if(dot < min) min = dot;
             if(dot > max) max = dot;
         }
-        result[0] = min; 
+        
+        result[0] = min;
         result[1] = max;
     }
 
     isSeparatingAxis(aPos, bPos, aPoints, bPoints, axis, response) {
-        var rangeA = this.temps.T_ARRAYS.pop();
-        var rangeB = this.temps.T_ARRAYS.pop();
-    
-        var offsetV = this.temps.T_VECTORS.pop().copy(bPos).sub(aPos);
+        var option1, option2;                                                                   //
+        var rangeA = this.temps.T_ARRAYS.pop();                                                 //
+        var rangeB = this.temps.T_ARRAYS.pop();                                                 //  something is happening here that lets line 46 exec. every time.
+                                                                                                //
+        var offsetV = this.temps.T_VECTORS.pop().copy(bPos).subtract(aPos);                     //
         var projectedOffset = offsetV.dot(axis);
     
-        flattenPointsOn(aPoints, axis, rangeA);
-        flattenPointsOn(bPoints, axis, rangeB);
+        this.flattenPointsOn(aPoints, axis, rangeA);
+        this.flattenPointsOn(bPoints, axis, rangeB);
     
         rangeB[0] += projectedOffset;
         rangeB[1] += projectedOffset;
-    
+        //console.log(rangeA, rangeB);
+        //console.log(rangeA[0] > rangeB[1], rangeB[0] > rangeA[1], rangeA[0] > rangeB[1] || rangeB[0] > rangeA[1]);
         if (rangeA[0] > rangeB[1] || rangeB[0] > rangeA[1]) {
             this.temps.T_VECTORS.push(offsetV);
             this.temps.T_ARRAYS.push(rangeA);
@@ -45,6 +50,7 @@ export default class Helper{
             return true;
         }
     
+        /*
         if (response) {
           var overlap = 0;
     
@@ -56,8 +62,8 @@ export default class Helper{
               response.bInA = false;
     
             } else {
-              var option1 = rangeA[1] - rangeB[0];
-              var option2 = rangeB[1] - rangeA[0];
+              option1 = rangeA[1] - rangeB[0];
+              option2 = rangeB[1] - rangeA[0];
               overlap = option1 < option2 ? option1 : -option2;
             }
     
@@ -69,8 +75,8 @@ export default class Helper{
               response.aInB = false;
     
             } else {
-              var option1 = rangeA[1] - rangeB[0];
-              var option2 = rangeB[1] - rangeA[0];
+              option1 = rangeA[1] - rangeB[0];
+              option2 = rangeB[1] - rangeA[0];
               overlap = option1 < option2 ? option1 : -option2;
             }
           }
@@ -84,6 +90,7 @@ export default class Helper{
             }
           }
         }
+        */
         this.temps.T_VECTORS.push(offsetV);
         this.temps.T_ARRAYS.push(rangeA);
         this.temps.T_ARRAYS.push(rangeB);

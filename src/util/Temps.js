@@ -1,5 +1,5 @@
 import Vector from "../Math/Vector.js";
-import Response from "../Physics/Collider/Response.js";
+import Response from "../physics/Collider/Response.js";
 import Box from "../Objects/Box.js";
 
 export default class Temps{

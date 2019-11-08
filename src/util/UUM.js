@@ -10,7 +10,7 @@ import Helper from "./Helper.js";
 export default class UUM{
     constructor(){
         this.universalColorManager = new ColorManager();
-        this.tempSystems = new Temps();
-        this.helper = new Helper();
+        //this.tempSystems = new Temps();
+        //this.helper = new Helper();
     }
 }
