@@ -1,0 +1,22 @@
+{
+  "name": "slce",
+  "version": "1.0.0",
+  "description": "sweet little canvas engine",
+  "main": "main.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxmmyron/SLCE.git"
+  },
+  "author": "mmyron",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxmmyron/SLCE/issues"
+  },
+  "homepage": "https://github.com/maxmmyron/SLCE#readme"
+}
