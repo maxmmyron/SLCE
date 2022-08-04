@@ -1,4 +1,3 @@
-import UUM from "../util/UUM.js";
 /**
  * An array of actors to be updated and drawn by the canvas
  */
