@@ -6,18 +6,18 @@ import { environment } from "../core/Engine";
  * @param {Function} update an update function that is called every frame
  * @param {Object} options optional arguments for velocity and position
  */
-const Actor = (draw, update, options = {}) => {
+const Actor = (drawFn, updateFn, options = {}) => {
     // utilize nullish coalescing operator to set default values
     // by checking if vel/pos values are null or undefined
     let vel = options.vel ?? {x:0, y:0};
     let pos = options.pos ?? {x:0, y:0};
 
     const draw = (ctx) => {
-        draw(ctx);
+        drawFn(ctx);
     }
     
     const update = () => {
-        update();
+        updateFn();
         vel += environment.physics.accel;
     }      
 }
