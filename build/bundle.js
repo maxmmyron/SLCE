@@ -1,0 +1,1 @@
+document.body.appendChild((()=>{const e=document.createElement("div");return e.innerHTML="<div>Hello</div>",e})());
