@@ -1,5 +1,5 @@
-import Engine, { actors } from "../src/core/Engine";
-import Actor from "../src/Objects/Actor";
+import Engine, { actors } from "../src/core/Engine.js";
+import Actor from "../src/Objects/Actor.js";
 
 const engine = new Engine();
 
