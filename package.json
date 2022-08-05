@@ -8,8 +8,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "start": "webpack serve --open"
+    "build": "webpack --config webpack.config.js",
+    "demo": "webpack serve --open --config webpack.demo.config.js --port 3000",
+    "build-demo": "rm -rf ./demo/bundle.demo.js && webpack --config webpack.demo.config.js"
   },
   "repository": {
     "type": "git",
