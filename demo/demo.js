@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-const comp = () => {
-    const element = document.createElement('div')
-
-    element.innerHTML = '<div>Hello</div>'
-
-    return element
-}
-
-document.body.appendChild(comp())
-=======
 import Engine, { actors } from "../src/core/Engine";
 import Actor from "../src/Objects/Actor";
 
@@ -31,4 +20,3 @@ actors.push(actor);
 engine.start();
 
 setTimeout(() => engine.pause(), 2500);
->>>>>>> 1f360a7 (add demo files)
