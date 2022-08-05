@@ -10,6 +10,9 @@ let environment = {
   background: "#ffffff",
   width: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2)),
   height: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2)),
+  physics: {
+    accel: {x: 0, y: 5}
+  }
 }
 
 /**
@@ -97,7 +100,7 @@ const draw = (ctx) => {
 
   if (debug._showFPS) {
     ctx.fillStyle = "#000000"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
-    if (!isNaN(debug.FPS)) 
+    if (!isNaN(debug.FPS))
       ctx.fillText("FPS: " + Math.round(debug.FPS), 5, 15);
   }
 }
@@ -125,4 +128,5 @@ const fixDPI = (canvasDOM) => {
   return [w, h];
 }
 
+export default Engine
 export { actors, environment };
