@@ -40,7 +40,8 @@ export default class Actor {
    * @param {Object} env - environment variables defined by engine
    */
   update = (dt, env) => {
-    this.vel += env.physics.accel;
+    this.vel.x += env.physics.accel.x / dt;
+    this.vel.y += env.physics.accel.y / dt;
     this.#updateCallback(dt);
   }
 
