@@ -1,9 +1,10 @@
-import Engine, { actors } from "../src/core/Engine.js";
+import Engine from "../src/core/Engine.js";
 import Actor from "../src/Objects/Actor.js";
 
-const engine = new Engine();
+const canvas = document.getElementById("c");
+//const engine = new Engine(canvas);
 
-const actor = new Actor(
+const actor = Actor(
   (ctx) => {
     ctx.fillStyle = "#000000";
     ctx.beginPath();
@@ -17,6 +18,6 @@ const actor = new Actor(
 
 actors.push(actor);
 
-engine.start();
+//engine.start();
 
-setTimeout(() => engine.pause(), 2500);
+//setTimeout(() => engine.pause(), 2500);
