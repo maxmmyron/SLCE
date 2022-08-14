@@ -1,24 +1,7 @@
 /**
- * An array of actors to be updated and drawn by the canvas
- */
-let actors = [];
-
-/**
- * A struct of global variables.
- */
-let environment = {
-  background: "#ffffff",
-  width: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2)),
-  height: Math.ceil(getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2)),
-  physics: {
-    accel: {x: 0, y: 5}
-  }
-}
-
-/**
  * A struct of debug variables.
  */
-let debug = {
+const debug = {
   FPS: 0,
   _drawFPS: true,
 }
@@ -28,13 +11,51 @@ let debug = {
  * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
  * @param {Object} options optional arguments
  */
-const Engine = (canvasDOM, options = {}) => {
+export default Engine = (canvasDOM, options = {}) => {
+  const canvasIsDefined = canvasDOM instanceof HTMLCanvasElement;
+
   // ensure canvasDOM is valid canvas DOM element
-  if (!(canvasDOM instanceof HTMLCanvasElement)) {
+  if (!canvasIsDefined) {
     throw new Error('canvasDOM must be a valid canvas DOM element');
+    return;
   }
 
-  const ctx = canvasDOM.getContext('2d');
+  /**
+   * A struct of global variables.
+   */
+  this.environment = {
+    background: "#ffffff",
+    width: null,
+    height: null,
+    physics: {
+      accel: { x: 0, y: 5 }
+    }
+  }
+
+  /**
+   * An array of actors to be updated and drawn by the canvas
+   */
+  this.actors = [];
+
+  /**
+   * Canvas context for canvas draw calls
+   */
+  this.ctx = canvasDOM.getContext('2d');
+
+  /**
+   * Starts engine
+   */
+  this.start = () => {
+    fix_dpi();
+    requestAnimationFrame(update);
+  }
+
+  /**
+   * Pauses engine
+   */
+  this.pause = () => {
+    cancelAnimationFrame(update);
+  }
 
   // listen for resize events and update canvas dimensions
   document.addEventListener("resize", e => {
@@ -43,24 +64,11 @@ const Engine = (canvasDOM, options = {}) => {
     environment.width = dimensions[0];
     environment.height = dimensions[1];
   });
-
-  /**
-   * Starts engine
-   */
-  const start = () => {
-    fix_dpi();
-    requestAnimationFrame(update);
-  }
-
-  /**
-   * Pauses engine
-   */
-  const pause = () => {
-    cancelAnimationFrame(update);
-  }
 }
 
-// Internal functions
+// ************************
+// INTERNAL FUNCTIONS
+// ************************
 
 let lastTime = 0;
 /**
@@ -127,6 +135,3 @@ const fixDPI = (canvasDOM) => {
 
   return [w, h];
 }
-
-export default Engine
-export { actors, environment };
