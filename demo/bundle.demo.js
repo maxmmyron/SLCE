@@ -10,6 +10,26 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./demo/demo.js":
+/*!**********************!*\
+  !*** ./demo/demo.js ***!
+  \**********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _src_core_Engine_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../src/core/Engine.js */ \"./src/core/Engine.js\");\n/* harmony import */ var _src_Objects_Actor_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/Objects/Actor.js */ \"./src/Objects/Actor.js\");\n\r\n\r\n\r\nconst engine = new _src_core_Engine_js__WEBPACK_IMPORTED_MODULE_0__[\"default\"]();\r\n\r\nconst actor = new _src_Objects_Actor_js__WEBPACK_IMPORTED_MODULE_1__[\"default\"](\r\n  (ctx) => {\r\n    ctx.fillStyle = \"#000000\";\r\n    ctx.beginPath();\r\n    ctx.arc(pos.x, pos.y, 5, 0, Math.PI * 2, false);\r\n    ctx.fill();\r\n  },\r\n  () => {\r\n    pos.x += 5;\r\n  }\r\n);\r\n\r\n_src_core_Engine_js__WEBPACK_IMPORTED_MODULE_0__.actors.push(actor);\r\n\r\nengine.start();\r\n\r\nsetTimeout(() => engine.pause(), 2500);\r\n\n\n//# sourceURL=webpack://slce/./demo/demo.js?");
+
+/***/ }),
+
+/***/ "./src/Objects/Actor.js":
+/*!******************************!*\
+  !*** ./src/Objects/Actor.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var _core_Engine__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core/Engine */ \"./src/core/Engine.js\");\n\r\n\r\n/**\r\n * An actor function represents an actor that can be placed within the canvas.\r\n * @param {Function} draw a draw function that is called every frame\r\n * @param {Function} update an update function that is called every frame\r\n * @param {Object} options optional arguments for velocity and position\r\n */\r\nconst Actor = (drawFn, updateFn, options = {}) => {\r\n    // utilize nullish coalescing operator to set default values\r\n    // by checking if vel/pos values are null or undefined\r\n    let vel = options.vel ?? {x:0, y:0};\r\n    let pos = options.pos ?? {x:0, y:0};\r\n\r\n    const draw = (ctx) => {\r\n        drawFn(ctx);\r\n    }\r\n    \r\n    const update = () => {\r\n        updateFn();\r\n        vel += _core_Engine__WEBPACK_IMPORTED_MODULE_0__.environment.physics.accel;\r\n    }      \r\n}\r\n\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Actor);\n\n//# sourceURL=webpack://slce/./src/Objects/Actor.js?");
+
+/***/ }),
+
 /***/ "./src/core/Engine.js":
 /*!****************************!*\
   !*** ./src/core/Engine.js ***!
@@ -22,8 +42,29 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 
 /******/ 	});
 /************************************************************************/
-/******/ 	// The require scope
-/******/ 	var __webpack_require__ = {};
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/define property getters */
@@ -59,8 +100,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module can't be inlined because the eval devtool is used.
-/******/ 	var __webpack_exports__ = {};
-/******/ 	__webpack_modules__["./src/core/Engine.js"](0, __webpack_exports__, __webpack_require__);
+/******/ 	var __webpack_exports__ = __webpack_require__("./demo/demo.js");
 /******/ 	
 /******/ })()
 ;
