@@ -1,137 +1,169 @@
 /**
- * A struct of debug variables.
- */
-const debug = {
-  FPS: 0,
-  _drawFPS: true,
-}
-
-/**
  * Engine for handling game update logic and actor drawing.
  * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
  * @param {Object} options optional arguments
  */
-export default Engine = (canvasDOM, options = {}) => {
-  const canvasIsDefined = canvasDOM instanceof HTMLCanvasElement;
-
-  // ensure canvasDOM is valid canvas DOM element
-  if (!canvasIsDefined) {
-    throw new Error('canvasDOM must be a valid canvas DOM element');
-    return;
-  }
-
-  /**
-   * A struct of global variables.
-   */
-  this.environment = {
-    background: "#ffffff",
-    width: null,
-    height: null,
-    physics: {
-      accel: { x: 0, y: 5 }
+export default class Engine {
+  constructor(canvasDOM, options = {}) {
+    if (!(canvasDOM instanceof HTMLCanvasElement)) {
+      throw new Error("canvasDOM must be an instance of HTMLCanvasElement");
     }
+
+    this.canvasDOM = canvasDOM;
+
+    /**
+     * Canvas context for canvas draw calls
+     */
+    this.ctx = canvasDOM.getContext("2d");
+
+    /**
+     * A struct of global variables.
+     * @type {Object}
+     */
+    this.environment = {
+      background: "#ffffff",
+      width: getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2),
+      height: getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2),
+      physics: {
+        accel: { x: 0, y: 0 }
+      }
+    }
+
+    this.#init(); // call first time init to set up canvas
   }
+
+  // ****************************************************************
+  // Private defs
 
   /**
    * An array of actors to be updated and drawn by the canvas
    */
-  this.actors = [];
-
-  /**
-   * Canvas context for canvas draw calls
-   */
-  this.ctx = canvasDOM.getContext('2d');
+  actors = [];
 
   /**
    * Starts engine
    */
-  this.start = () => {
-    fix_dpi();
-    requestAnimationFrame(update);
+  start = () => {
+    this.#fixDPI();
+    requestAnimationFrame(this.#update);
   }
 
   /**
    * Pauses engine
    */
-  this.pause = () => {
-    cancelAnimationFrame(update);
+  pause = () => {
+    cancelAnimationFrame(this.#update);
   }
 
-  // listen for resize events and update canvas dimensions
-  document.addEventListener("resize", e => {
-    dimensions = fixDPI(canvasDOM);
-    // set canvas width and height to scaled width and height
-    environment.width = dimensions[0];
-    environment.height = dimensions[1];
-  });
-}
+  // ****************************************************************
+  // Private defs
 
-// ************************
-// INTERNAL FUNCTIONS
-// ************************
+  /**
+   * Struct for storing useful debug values
+   * 
+   * @private
+   * @type {Object}
+   * @property {Number} fps - current frames per second.
+   * @property {Boolean} showFPS - whether to show FPS
+   * 
+   */
+  #debug = {
+    FPS: 0,
+    showFPS: false,
+  };
 
-let lastTime = 0;
-/**
- * (internal function) keeps track of FPS and updates all relevant actors
- * @param {Number} timestamp timestamp of current frame
- */
-const update = (timestamp) => {
-  // get current FPS
-  let dT = timestamp - lastTime;
-  lastTime = timestamp;
-  debug.FPS = 1000 / dT;
+  /**
+   * Timestamp of last frame. Used to calculate delta time in update method
+   * 
+   * @private
+   * @type {number}
+   */
+  #prevTimestamp = 0;
 
-  // draw all relevant actors
-  draw(ctx);
-
-  // update actors
-  actors.forEach(actor => actor.update(dT));
-
-  // filter actors array by those that are NOT queued for disposal
-  actors.filter(actor => !actor.disposalQueued);
-
-  requestAnimationFrame(update);
-}
-
-/**
- * (internal function) draws all relevant actors onto canvas
- * @param {CanvasRenderingContext2D} ctx rendering context of canvas
- */
-const draw = (ctx) => {
-  // clear canvas
-  ctx.clearRect(0, 0, environment.width, environment.height);
-  // reset context fill color
-  ctx.fillStyle = environment.background;
-  ctx.fillRect(0, 0, environemnt.width, environment.height);
-
-  actors.forEach(actor => actor.draw(ctx));
-
-  if (debug._showFPS) {
-    ctx.fillStyle = "#000000"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
-    if (!isNaN(debug.FPS))
-      ctx.fillText("FPS: " + Math.round(debug.FPS), 5, 15);
+  /**
+   * Initializes canvas and sets up event listeners
+   * 
+   * @private
+   */
+  #init = () => {
+    // listen for resize events and update canvas size
+    document.addEventListener("resize", e => {
+      dimensions = this.#fixDPI();
+      // set canvas width and height to scaled width and height
+      this.environment.width = dimensions[0];
+      this.environment.height = dimensions[1];
+    });
+    this.#fixDPI();
   }
-}
 
-/**
- * (internal function) fixes DPI of canvas
- * @param {HTMLCanvasElement} canvasDOM DOM element to recalculate DPI for
- * @returns {[number, number]} [scaledWidth, scaledHeight]
- */
-const fixDPI = (canvasDOM) => {
-  let dpi = window.devicePixelRatio;
+  /**
+   * keeps track of FPS and updates all relevant actors
+   * @private
+   * @param {Number} timestamp - timestamp of current frame
+   */
+  #update = (timestamp) => {
+    // calculate time between frames
+    let dT = timestamp - this.#prevTimestamp;
+    this.#prevTimestamp = timestamp;
 
-  // set current computed canvas dimensions
-  var style_width = getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2); //get width attribute
-  var style_height = getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2); //get height attribute
+    // calculate current FPS
+    this.#debug.FPS = 1000 / dT;
 
-  // scale dimensions by DPI
-  var w = style_width * dpi;
-  var h = style_height * dpi;
+    // call draw method to draw relevant actors
+    this.#draw(this.ctx);
 
-  // set canvas element dimensions to scaled dimensions
-  canvasDOM.setAttribute('width', w);
-  canvasDOM.setAttribute('height', h);
+    // update relevant actors
+    this.actors.forEach(actor => actor.update(dT));
 
-  return [w, h];
+    // filter actors array by those that are NOT queued for disposal
+    this.actors.filter(actor => !actor.disposalQueued);
+
+    requestAnimationFrame(update);
+  }
+
+  /**
+   * draws all relevant actors onto canvas
+   * @private
+   * @param {CanvasRenderingContext2D} ctx - rendering context of canvas
+   */
+  #draw = () => {
+    // clear canvas
+    this.ctx.clearRect(0, 0, this.environment.width, this.environment.height);
+    // reset context fill color
+    this.ctx.fillStyle = this.environment.background;
+    this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
+
+    this.actors.forEach(actor => actor.draw(this.ctx));
+
+    // Draw FPS on screen, if enabled
+    if (this.#debug.showFPS) {
+      this.ctx.fillStyle = "#000000"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
+      if (!isNaN(this.#debug.FPS))
+        this.ctx.fillText("FPS: " + Math.round(this.#debug.FPS), 5, 15);
+    }
+  }
+
+  /**
+   * fixes DPI of canvas
+   * @private
+   * @param {HTMLCanvasElement} canvasDOM - DOM element to recalculate DPI for
+   * @returns {[number, number]} - [scaledWidth, scaledHeight]
+   */
+  #fixDPI = () => {
+    let dpi = window.devicePixelRatio;
+  
+    // set current computed canvas dimensions
+    var style_width = getComputedStyle(this.canvasDOM).getPropertyValue("width").slice(0, -2); //get width attribute
+    var style_height = getComputedStyle(this.canvasDOM).getPropertyValue("height").slice(0, -2); //get height attribute
+  
+    // scale dimensions by DPI
+    var w = style_width * dpi;
+    var h = style_height * dpi;
+  
+    // set canvas element dimensions to scaled dimensions
+    this.canvasDOM.setAttribute('width', w);
+    this.canvasDOM.setAttribute('height', h);
+  
+    return [w, h];
+  }
 }
