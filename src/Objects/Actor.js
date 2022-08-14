@@ -17,9 +17,9 @@ const Actor = (drawCallback, updateCallback, options = {}) => {
   }
 
   const update = () => {
-    updateCallback();
     vel += environment.physics.accel;
+    updateCallback();
   }
-}
+};
 
-export default Actor
+export default Actor;
