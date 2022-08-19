@@ -47,10 +47,27 @@ const handlePause = () => console.log("paused");
 const handleResume = () => console.log("resumed");
 
 engine.addHandler("pause", handlePause)
-
 engine.addHandler("resume", handleResume)
+
+const handleUpdate = (dt) => {
+  console.log(dt);
+}
+
+engine.addHandler("update", handleUpdate);
 
 engine.start();
 
 setTimeout(() => engine.pause(), 2500);
 setTimeout(() => engine.resume(), 3500);
+
+setTimeout(() => engine.pause(), 4500);
+setTimeout(() => engine.resume(), 5500);
+
+setTimeout(() => {
+  engine.removeHandler("pause", handlePause);
+  engine.removeHandler("resume", handleResume);
+  engine.removeHandler("update", handleUpdate);
+}, 6000);
+
+setTimeout(() => engine.pause(), 6500);
+setTimeout(() => engine.resume(), 7500);
