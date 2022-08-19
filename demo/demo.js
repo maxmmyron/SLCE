@@ -43,6 +43,13 @@ const actorB = new Actor(
 engine.actors.push(actorA);
 engine.actors.push(actorB);
 
+const handlePause = () => console.log("paused");
+const handleResume = () => console.log("resumed");
+
+engine.addHandler("pause", handlePause)
+
+engine.addHandler("resume", handleResume)
+
 engine.start();
 
 setTimeout(() => engine.pause(), 2500);
