@@ -1,213 +1,166 @@
-//Lots of this code is modified versions of the code from jriecken's SAT.js system (https://github.com/jriecken)
+/**
+ * A series of helper functions for for working with vectors
+ */
+
+import { assertIsNumber, assertIsVector } from "../util/Asserts";
 
 /**
- * A Vector. Creates and handles math with vectors.
+ * @typedef {Object} Vector
+ * @property {number} x - the x component of the vector
+ * @property {number} y - the y component of the vector
  */
-export default class Vector{
-    /**
-     * A new vector
-     * @typedef {Object} Vector
-     * @param {number} x - the x component of the vector 
-     * @param {number} y - the y component of the vector
-     */
-    constructor(x, y){
-        this.x = x || 0;
-        this.y = y || 0;
 
-        /* diagram of the vector lol
-                ^
-                │\
-                │ \
-              y │  \ 
-                │  θ\
-                └────>
-                   x
-        */
-    }
+/**
+ * Checks if all vectors passed are vectors before performing an operation
+ * 
+ * @param {Array} vectors - an array of potential vectors to check
+ * @param {*} op - the operation to be performed on the vectors upon success
+ * @returns the result of the operation on the vectors
+ * 
+ * @throws {TypeError} if any of the vectors are not vectors
+ */
+const resolveVector = (vectors, op) => new Promise((resolve, reject) => {
+  // check if each element is a vector before performing operation
+  if (vectors.every(assertIsVector))
+    resolve(op(...vectors));
+  else
+    reject(new TypeError("Not all elements are vectors"));
+})
 
 
-    /**
-     * Returns the current x and y components as array.
-     */
-    get(){
-        return this;
-    }
+/**
+ * creates a vector in the form of {x, y}
+ * 
+ * @param {Number} x - optional x component, defaults to 0
+ * @param {Number} y - optional y component, defaults to 0
+ * @return {Object} a new object in the form of {x, y}
+ * 
+ * @example
+ * const v = vec(1, 2);
+ * v.x // 1
+ * v.y // 2
+ * 
+ * @example
+ * const v = vec();
+ * v.x // 0
+ * v.y // 0
+ * 
+ * @example
+ * const v = vec(1);
+ * v.x // 1
+ * v.y // 0
+ */
+export const vec = (x = 0, y = 0) => {
+  // assert that x and y are numbers
+  assertIsNumber(x);
+  assertIsNumber(y);
+  
+  return { x: x, y: y };
+};
 
-    /**
-     * Sets the x and y components of a vector to the specified component values.
-     * @param {number} x - the x component
-     * @param {number} y - the y component
-     */
-    set(x, y){
-        this.x = x;
-        this.y = y;
-    }
+/**
+ * adds two vectors together
+ * 
+ * @param a - A vector
+ * @param b - The vector to add to A
+ * @return {Object} the sum of the two vectors
+ */
+export const add = (a, b) => resolveVector([a, b], (a, b) => vec(a.x + b.x, a.y + b.y));
 
-    /**
-     * return a cloned vector
-     */
-    clone(){
-        return new Vector(this.x, this.y);
-    }
+/**
+ * subtracts two vectors
+ * 
+ * @param a - A vector
+ * @param b - The vector to subtract from A
+ * @return {Object} the difference of A and B
+ */
+export const sub = (a, b) => resolveVector([a, b], (a, b) => vec(a.x - b.x, a.y - b.y));
 
-    /**
-     * copies a given vector to the parent vector
-     * @param {Vector} vector - a given vector
-     */
-    copy(vector){
-        this.x = vector.x;
-        this.y = vector.y;
-        return this;
-    }
+/**
+ * multiplies a vector by a scalar
+ * 
+ * @param a - A vector
+ * @param s - The scalar to multiply A by
+ * @return {Object} the product of A and s
+ * 
+ * @throws {Error} if s is not a number
+ */
+export const mult = (a, s) => {
+  assertIsNumber(s);
 
-    /**
-     * adds a given vector onto the parent vector
-     * @param {Vector} vector - a given vector
-     */
-    add(vector){
-        this.x += vector.x;
-        this.y += vector.y;
-        return this;
-    }
+  return resolveVector(a, a => vec(a.x * s, a.y * s))
+};
 
-    /**
-     * subtracts a given vector onto the parent vector
-     * @param {Vector} vector - a given vector
-     */
-    subtract(vector){
-        this.x -= vector.x;
-        this.y -= vector.y;
-        return this;
-    }
-
-    /**
-     * Scales the vector by an x and y factor
-     * @param {number} x - x scaling factor
-     * @param {?number=} y - y scaling factor. if unspecificed, y direction is scaled by x factor
-     */
-    scale(x,y){
-        this.x *= x;
-        this.y *= y || x;
-        return this;
-    }
-
-    rotate(angle){
-        let x = this.x;
-        let y = this.y;
-        this.x = x * Math.cos(angle) - y * Math.sin(angle);
-        this.y = x * Math.sin(angle) - y * Math.cos(angle);
-        return this;
-    }
-
-    reverse(){
-        this.x = -this.x;
-        this.y = -this.y;
-        return this;
-    }
-
-    /**
-     * normalizes the parent vector to a length of one.
-     */
-    normalize(){
-        var length = this.len();
-        if(length > 0){
-            this.x = this.x / length;
-            this.y = this.y / length;
-        }
-        return this;
-    }
-
-    /**
-     * Projects the parent vector onto another vector
-     * @param {Vector} vector - a given vector
-     */
-    project(vector){
-        let a = this.dot(vector) / this.len2();
-        this.x = a * other.x;
-        this.y = a * other.y;
-        return this;
-    }
-
-    /**
-     * Project the parent vector onto a vector of unit length. Slightly more efficent when dealing with vectors of unit length
-     * @param {Vector} vector - a given vector
-     */
-    projectN(vector){
-        let a = this.dot(vector);
-        this.x = a * other.x;
-        this.y = a * other.y;
-        return this;
-    }
-
-    reflect(axis){
-        let x = this.x, y = this.y;
-        this.project(axis).scale(2);
-        this.x -= x;
-        this.y -= y;
-        return this;
-    }
-    relectN(axis){
-        let x = this.x, y = this.y;
-        this.projectN(axis).scale(2);
-        this.x -= x;
-        this.y -= y;
-        return this;
-    }
-
-    /**
-     * returns the dot product of a given vector and the parent vector
-     * @param {Vector} vector - a given vector
-     */
-    dot(vector){
-        return (this.x * vector.x + this.y, vector.y);
-    }
-
-    /**
-     * Returns the given vector's angle in terms of radians or degrees
-     * @param {Vector} vec - a given vector
-     * @param {boolean} inDeg - Boolean value, if true, then angle will be returned in degrees. If false, then angle will be returned in radians.
-     */
-    vecAngle(vector, inDeg){
-        return (inDeg ? Math.atan(vector.x / vector.y) * (180 * Math.PI) : Math.atan(vector.x / vector.y));
-    }
-
-    /**
-     * returns the magnitude of the parent vector
-     */
-    getVectorMagnitude(){
-        return Math.sqrt(this.x ** 2 + this.y ** 2);
-    }
-
-
-    /**
-     * returns length^2 of a given vector
-     */
-    len2(){
-        return this.dot(this);
-    }
-
-    /**
-     * 
-     */
-    len(){
-        return Math.sqrt(this.len2());
-    }
-
-    perp(){
-        let x = this.x;
-        this.x = this.y;
-        this.y = x;
-        return this;
-    }
-
-
-    /** draws a new vector on a canvas
-     * @param {Context} ctx - a given canvas
-     * @param {number} x - x pos to start at
-     * @param {number} y - y pos to start at
-     */
-    draw(ctx, x, y){
-        ctx.moveTo(x, y);
-        ctx.lineTo(this.x, this.y);
-    }
+/**
+ * divides a vector by a scalar
+ * 
+ * @param a - A vector
+ * @param s - The scalar to divide A by
+ * @return {Object} the quotient of A and s
+ * 
+ * @throws {TypeError} if s is not a number
+ * @throws {Error} if s is zero
+ */
+export const div = (a, s) => {
+  assertIsNumber(s);
+  
+  if (s === 0)
+    throw new Error("Cannot divide by 0");
+    
+  return resolveVector(a, a => vec(a.x / s, a.y / s));
 }
+
+/**
+ * rotates a vector by an angle
+ * 
+ * @param a - A vector
+ * @param angle - The angle to rotate A by in radians
+ * @return {Object} the rotated vector
+ * 
+ * @throws {Error} if angle is not a number
+ */
+export const rotate = (a, angle) => {
+  if (typeof (angle) === Number)
+    return resolveVector(a, a => {
+      const s = Math.sin(angle);
+      const c = Math.cos(angle);
+
+      return vec(a.x * c - a.y * s, a.x * s + a.y * c);
+    });
+  else
+    throw new Error("angle must be a number");
+}
+
+/**
+ * returns the magnitude of a vector
+ * 
+ * @param a - A vector
+ * @return {Number} - the magnitude of A
+ */
+export const mag = (a) => resolveVector(a, a => Math.sqrt(a.x * a.x + a.y * a.y));
+
+/**
+ * normalizes a vector
+ * 
+ * @param a - vector to normalize
+ * @return {Object} - the normalized vector
+ */
+export const norm = (a) => resolveVector(a, a => div(a, mag(a)));
+
+/**
+ * calculates the dot product of two vectors
+ * 
+ * @param a - A vector
+ * @param b - The vector to dot with A
+ * @return {Number} - the dot product of A and B
+ */
+export const dot = (a, b) => resolveVector([a,b], (a,b) => a.x * b.x + a.y * b.y);
+
+/**
+ * calculates the cross product of two vectors
+ * 
+ * @param a - A vector
+ * @param b - The vector to cross with A
+ * @return {Number} - the cross product of A and B
+ */
+export const cross = (a, b) => resolveVector([a,b], (a,b) => a.x * b.y - a.y * b.x);

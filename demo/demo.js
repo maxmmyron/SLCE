@@ -1,4 +1,5 @@
 import Engine from "../src/core/Engine.js";
+import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
 
 const canvas = document.getElementById("c");
@@ -17,7 +18,7 @@ const actorA = new Actor(
     actorA.pos.x += 5 / dt;
   },
   {
-    pos: { x: 25, y: 50 },
+    pos: vec(25,50),
   }
 );
 
@@ -35,7 +36,7 @@ const actorB = new Actor(
     }
   },
   {
-    pos: { x: 500, y: 50 },
+    pos: vec(500,50),
   }
 );
 
