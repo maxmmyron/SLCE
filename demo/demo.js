@@ -45,5 +45,5 @@ engine.actors.push(actorB);
 
 engine.start();
 
-setTimeout(() => engine.stop(), 2500);
-setTimeout(() => engine.start(), 3500);
+setTimeout(() => engine.pause(), 2500);
+setTimeout(() => engine.resume(), 3500);
