@@ -44,17 +44,14 @@ export default class Engine {
   actors = [];
 
   /**
-   * Starts engine update loop
+   * Starts engine update loop. Used only once at startup.
    */
   start = () => {
     if (!this.#hasInit) {
       this.#fixDPI();
       this.#animationFrameID = requestAnimationFrame(this.#update);
       this.#hasInit = true;
-    } else {
-      this.#isPaused = false;
     }
-
   }
 
   /**
@@ -63,6 +60,15 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
+    this.#eventHandlers["resume"].forEach(handler => handler());
+  }
+
+  /**
+   * Resumes engine update loop.
+   */
+  resume = () => {
+    this.#isPaused = false;
+    this.#eventHandlers["resume"].forEach(handler => handler());
   }
 
   /**
@@ -273,7 +279,6 @@ export default class Engine {
         this.ctx.fillText("dt: " + (1000 / this.#debug.FPS), 5, 25);
       }
     }
-
   }
 
   /**
