@@ -44,28 +44,33 @@ export default class Engine {
   actors = [];
 
   /**
-   * Starts engine
+   * Starts engine update loop
    */
   start = () => {
-    this.#fixDPI();
-    this.#isPaused = false;
-    this.#animationFrameID = requestAnimationFrame(this.#update);
+    if (!this.#hasInit) {
+      this.#fixDPI();
+      this.#animationFrameID = requestAnimationFrame(this.#update);
+      this.#hasInit = true;
+    } else {
+      this.#isPaused = false;
+    }
+
   }
 
   /**
-   * Pauses engine
+   * Pauses engine update loop. Game will continue requesting 
+   * animation frames, but will not continue to update or draw.
    */
-  pause = () => {
-    cancelAnimationFrame(this.#animationFrameID);
+  stop = () => {
     this.#isPaused = true;
   }
 
   /**
-   * Gets state of isPaused property
+   * Returns whether engine is paused or not
+   * 
+   * @return {Boolean} true if engine is paused, false otherwise
    */
-  get isPaused() {
-    return this.#isPaused;
-  }
+  isPaused = () => this.#isPaused;
 
   // ****************************************************************
   // Private defs
@@ -105,8 +110,18 @@ export default class Engine {
    * 
    * @private
    * @type {Boolean}
+   * @default false
    */
   #isPaused = false;
+
+  /**
+   * Stores whether Engine has been initialized or not
+   * 
+   * @private
+   * @type {Boolean}
+   * @default false
+   */
+  #hasInit = false;
 
   /**
    * Initializes canvas and sets up event listeners
@@ -131,23 +146,24 @@ export default class Engine {
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
   #update = (timestamp) => {
-    if (this.#isPaused) return;
+    if (!this.#isPaused) {
 
-    // calculate time between frames
-    let dt = timestamp - this.#prevTimestamp;
-    this.#prevTimestamp = timestamp;
+      // calculate time between frames
+      let dt = timestamp - this.#prevTimestamp;
+      this.#prevTimestamp = timestamp;
 
-    // calculate current FPS
-    this.#debug.FPS = 1000 / dt;
+      // calculate current FPS
+      this.#debug.FPS = 1000 / dt;
 
-    // call draw method to draw relevant actors
-    this.#draw(this.ctx);
+      // call draw method to draw relevant actors
+      this.#draw(this.ctx);
 
-    // update relevant actors
-    this.actors.forEach(actor => actor.update(dt, this.environment));
+      // update relevant actors
+      this.actors.forEach(actor => actor.update(dt, this.environment));
 
-    // filter actors array by those that are NOT queued for disposal
-    this.actors.filter(actor => !actor.disposalQueued);
+      // filter actors array by those that are NOT queued for disposal
+      this.actors.filter(actor => !actor.disposalQueued);
+    }
 
     this.#animationFrameID = requestAnimationFrame(this.#update);
   }
