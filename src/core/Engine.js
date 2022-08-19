@@ -60,7 +60,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    this.#eventHandlers["resume"].forEach(handler => handler());
+    this.#eventHandlers["pause"].forEach(handler => handler());
   }
 
   /**
@@ -93,7 +93,7 @@ export default class Engine {
     // assert handler is a function
     if (typeof handler !== "function") throw new Error("handler must be a function");
     // assert event is a valid event
-    if (!this.#eventTypes.includes(event)) throw new Error("event is not a valid event");
+    if (!this.#validEvents.includes(event)) throw new Error("event is not a valid event");
 
     // add handler function to array of handlers for specified event
     this.#eventHandlers[event].push(handler);
@@ -116,7 +116,7 @@ export default class Engine {
     // assert handler is a function
     if (typeof handler !== "function") throw new Error("handler must be a function");
     // assert event is a valid event
-    if (!this.#eventTypes.includes(event)) throw new Error("event is not a valid event");
+    if (!this.#validEvents.includes(event)) throw new Error("event is not a valid event");
 
     // remove handler function from array of handlers for specified event
     const index = this.#eventHandlers[event].indexOf(handler);
@@ -180,7 +180,7 @@ export default class Engine {
   #hasInit = false;
 
   /**
-   * Array of possible event types to be handled
+   * Enum of possible event types to be handled
    * 
    * @private
    * @type {Array}
@@ -189,7 +189,7 @@ export default class Engine {
    * @property {String} pause - triggered on engine pause
    * @property {String} resume - triggered on engine resume
    */
-  #eventTypes = ["update", "pause", "resume"];
+  #validEvents = ["update", "pause", "resume"];
 
   /**
    * Array of event handlers for each event type
