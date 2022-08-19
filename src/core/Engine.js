@@ -1,3 +1,5 @@
+import { vec } from "../Math/Vector";
+
 /**
  * Engine for handling game update logic and actor drawing.
  * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
@@ -26,7 +28,7 @@ export default class Engine {
       width: getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2),
       height: getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2),
       physics: {
-        accel: { x: 0, y: 0 }
+        accel: vec()
       }
     }
 
