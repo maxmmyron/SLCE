@@ -42,26 +42,33 @@ export default class Engine {
   actors = [];
 
   /**
-   * Stores whether Engine is paused or not
-   * 
-   * @type {Boolean}
-   */
-  isPaused = false;
-
-  /**
    * Starts engine update loop
    */
   start = () => {
-    this.#fixDPI();
-    this.#animationFrameID = requestAnimationFrame(this.#update);
+    if (!this.#hasInit) {
+      this.#fixDPI();
+      this.#animationFrameID = requestAnimationFrame(this.#update);
+      this.#hasInit = true;
+    } else {
+      this.#isPaused = false;
+    }
+
   }
 
   /**
-   * Stops engine update loop and clears animation frame
+   * Pauses engine update loop. Game will continue requesting 
+   * animation frames, but will not continue to update or draw.
    */
   stop = () => {
-    cancelAnimationFrame(this.#animationFrameID);
+    this.#isPaused = true;
   }
+
+  /**
+   * Returns whether engine is paused or not
+   * 
+   * @return {Boolean} true if engine is paused, false otherwise
+   */
+  isPaused = () => this.#isPaused;
 
   // ****************************************************************
   // Private defs
@@ -97,6 +104,24 @@ export default class Engine {
   #animationFrameID = 0;
 
   /**
+   * Stores whether Engine is paused or not
+   * 
+   * @private
+   * @type {Boolean}
+   * @default false
+   */
+  #isPaused = false;
+
+  /**
+   * Stores whether Engine has been initialized or not
+   * 
+   * @private
+   * @type {Boolean}
+   * @default false
+   */
+  #hasInit = false;
+
+  /**
    * Initializes canvas and sets up event listeners
    * 
    * @private
@@ -119,7 +144,7 @@ export default class Engine {
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
   #update = (timestamp) => {
-    if (!this.isPaused) {
+    if (!this.#isPaused) {
 
       // calculate time between frames
       let dt = timestamp - this.#prevTimestamp;
