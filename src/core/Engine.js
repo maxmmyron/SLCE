@@ -44,25 +44,31 @@ export default class Engine {
   actors = [];
 
   /**
-   * Starts engine update loop
+   * Starts engine update loop. Used only once at startup.
    */
   start = () => {
     if (!this.#hasInit) {
       this.#fixDPI();
       this.#animationFrameID = requestAnimationFrame(this.#update);
       this.#hasInit = true;
-    } else {
-      this.#isPaused = false;
     }
-
   }
 
   /**
    * Pauses engine update loop. Game will continue requesting 
    * animation frames, but will not continue to update or draw.
    */
-  stop = () => {
+  pause = () => {
     this.#isPaused = true;
+    this.#eventHandlers["pause"].forEach(handler => handler());
+  }
+
+  /**
+   * Resumes engine update loop.
+   */
+  resume = () => {
+    this.#isPaused = false;
+    this.#eventHandlers["resume"].forEach(handler => handler());
   }
 
   /**
@@ -71,6 +77,56 @@ export default class Engine {
    * @return {Boolean} true if engine is paused, false otherwise
    */
   isPaused = () => this.#isPaused;
+
+  /**
+   * Adds a handler function to execute on a specific event.
+   * @param {String} event - name of event to handle
+   * @param {Function} handler - function to execute when event is triggered
+   * 
+   * @throws {Error} if event is not a string
+   * @throws {Error} if handler is not a function
+   * @throws {Error} if event is not a valid event
+   */
+  addHandler = (event, handler) => {
+    // assert event is a string
+    if (typeof event !== "string") throw new Error("event must be a string");
+    // assert handler is a function
+    if (typeof handler !== "function") throw new Error("handler must be a function");
+    // assert event is a valid event
+    if (!this.#validEvents.includes(event)) throw new Error("event is not a valid event");
+
+    // add handler function to array of handlers for specified event
+    this.#eventHandlers[event].push(handler);
+  }
+
+  /**
+   * Removes handler fucntion from event
+   * 
+   * @param {String} event - name of event to remove handler from
+   * @param {Function} handler - function to remove from event
+   * @return {Boolean} true if handler was removed, false otherwise
+   * 
+   * @throws {Error} if event is not a string
+   * @throws {Error} if handler is not a function
+   * @throws {Error} if event is not a valid event
+   */
+  removeHandler = (event, handler) => {
+    // assert event is a string
+    if (typeof event !== "string") throw new Error("event must be a string");
+    // assert handler is a function
+    if (typeof handler !== "function") throw new Error("handler must be a function");
+    // assert event is a valid event
+    if (!this.#validEvents.includes(event)) throw new Error("event is not a valid event");
+
+    // remove handler function from array of handlers for specified event
+    const index = this.#eventHandlers[event].indexOf(handler);
+    if (index !== -1) {
+      this.#eventHandlers[event].splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
 
   // ****************************************************************
   // Private defs
@@ -124,6 +180,35 @@ export default class Engine {
   #hasInit = false;
 
   /**
+   * Enum of possible event types to be handled
+   * 
+   * @private
+   * @type {Array}
+   * 
+   * @property {String} update - triggered on each engine update loop
+   * @property {String} pause - triggered on engine pause
+   * @property {String} resume - triggered on engine resume
+   */
+  #validEvents = ["update", "pause", "resume"];
+
+  /**
+   * Array of event handlers for each event type
+   *
+   * @private
+   * @type {Object}
+   * 
+   * @property {Array} update - array of update event handlers
+   * @property {Array} pause - array of pause event handlers
+   * @property {Array} resume - array of resume event handlers
+   */
+
+  #eventHandlers = {
+    update: [],
+    pause: [],
+    resume: [],
+  };
+
+  /**
    * Initializes canvas and sets up event listeners
    * 
    * @private
@@ -161,6 +246,9 @@ export default class Engine {
       // update relevant actors
       this.actors.forEach(actor => actor.update(dt, this.environment));
 
+      // call event handlers for relevant events
+      this.#eventHandlers["update"].forEach(handler => handler(dt, this.environment));
+
       // filter actors array by those that are NOT queued for disposal
       this.actors.filter(actor => !actor.disposalQueued);
     }
@@ -191,7 +279,6 @@ export default class Engine {
         this.ctx.fillText("dt: " + (1000 / this.#debug.FPS), 5, 25);
       }
     }
-
   }
 
   /**
