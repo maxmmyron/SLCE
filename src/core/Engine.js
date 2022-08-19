@@ -42,27 +42,25 @@ export default class Engine {
   actors = [];
 
   /**
-   * Starts engine
+   * Stores whether Engine is paused or not
+   * 
+   * @type {Boolean}
+   */
+  isPaused = false;
+
+  /**
+   * Starts engine update loop
    */
   start = () => {
     this.#fixDPI();
-    this.#isPaused = false;
     this.#animationFrameID = requestAnimationFrame(this.#update);
   }
 
   /**
-   * Pauses engine
+   * Stops engine update loop and clears animation frame
    */
-  pause = () => {
+  stop = () => {
     cancelAnimationFrame(this.#animationFrameID);
-    this.#isPaused = true;
-  }
-
-  /**
-   * Gets state of isPaused property
-   */
-  get isPaused() {
-    return this.#isPaused;
   }
 
   // ****************************************************************
@@ -99,14 +97,6 @@ export default class Engine {
   #animationFrameID = 0;
 
   /**
-   * Stores whether Engine is paused or not
-   * 
-   * @private
-   * @type {Boolean}
-   */
-  #isPaused = false;
-
-  /**
    * Initializes canvas and sets up event listeners
    * 
    * @private
@@ -129,23 +119,24 @@ export default class Engine {
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
   #update = (timestamp) => {
-    if (this.#isPaused) return;
+    if (!this.isPaused) {
 
-    // calculate time between frames
-    let dt = timestamp - this.#prevTimestamp;
-    this.#prevTimestamp = timestamp;
+      // calculate time between frames
+      let dt = timestamp - this.#prevTimestamp;
+      this.#prevTimestamp = timestamp;
 
-    // calculate current FPS
-    this.#debug.FPS = 1000 / dt;
+      // calculate current FPS
+      this.#debug.FPS = 1000 / dt;
 
-    // call draw method to draw relevant actors
-    this.#draw(this.ctx);
+      // call draw method to draw relevant actors
+      this.#draw(this.ctx);
 
-    // update relevant actors
-    this.actors.forEach(actor => actor.update(dt, this.environment));
+      // update relevant actors
+      this.actors.forEach(actor => actor.update(dt, this.environment));
 
-    // filter actors array by those that are NOT queued for disposal
-    this.actors.filter(actor => !actor.disposalQueued);
+      // filter actors array by those that are NOT queued for disposal
+      this.actors.filter(actor => !actor.disposalQueued);
+    }
 
     this.#animationFrameID = requestAnimationFrame(this.#update);
   }
