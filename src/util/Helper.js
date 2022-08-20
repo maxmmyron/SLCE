@@ -4,7 +4,7 @@
  * @param {Vector} normal - The unit vector axis.
  * @param {Array.<number>} result - An array. result[0] is minimum value, result[1] is maximum value
  */
-const flattenPointsOn = (points, normal, result) => {
+export const flattenPointsOn = (points, normal, result) => {
   var min = Number.MAX_VALUE;
   var max = -Number.MAX_VALUE;
 
@@ -29,7 +29,7 @@ const flattenPointsOn = (points, normal, result) => {
  *          MIDDLE_VORONOI_REGION (0) if it is the middle region,
  *          RIGHT_VORONOI_REGION (1) if it is the right region.
 */
-const voronoiRegion = (line, point) => {
+export const voronoiRegion = (line, point) => {
   var len2 = line.len2();
   var dp = point.dot(line);
 
@@ -50,5 +50,3 @@ const voronoiRegion = (line, point) => {
   else if (dp > len2) { return RIGHT_VORONOI_REGION; }
   else { return MIDDLE_VORONOI_REGION; }
 }
-
-export {flattenPointsOn, voronoiRegion};
