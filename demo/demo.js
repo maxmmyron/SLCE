@@ -1,6 +1,8 @@
 import Engine from "../src/core/Engine.js";
 import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
+import TextureLayer from "../src/util/TextureLayer.js";
+import test from "./testing.png"
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
@@ -19,6 +21,9 @@ const actorA = new Actor(
   },
   {
     pos: vec(25,50),
+    textures: [
+      new TextureLayer(test),
+    ],
   }
 );
 
@@ -46,14 +51,14 @@ engine.actors.push(actorB);
 const handlePause = () => console.log("paused");
 const handleResume = () => console.log("resumed");
 
-engine.addHandler("pause", handlePause)
-engine.addHandler("resume", handleResume)
+// engine.addHandler("pause", handlePause)
+// engine.addHandler("resume", handleResume)
 
 const handleUpdate = (dt) => {
   console.log(dt);
 }
 
-engine.addHandler("update", handleUpdate);
+// engine.addHandler("update", handleUpdate);
 
 engine.start();
 
@@ -63,11 +68,11 @@ setTimeout(() => engine.resume(), 3500);
 setTimeout(() => engine.pause(), 4500);
 setTimeout(() => engine.resume(), 5500);
 
-setTimeout(() => {
-  engine.removeHandler("pause", handlePause);
-  engine.removeHandler("resume", handleResume);
-  engine.removeHandler("update", handleUpdate);
-}, 6000);
+// setTimeout(() => {
+//   engine.removeHandler("pause", handlePause);
+//   engine.removeHandler("resume", handleResume);
+//   engine.removeHandler("update", handleUpdate);
+// }, 6000);
 
 setTimeout(() => engine.pause(), 6500);
 setTimeout(() => engine.resume(), 7500);
