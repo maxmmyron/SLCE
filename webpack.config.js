@@ -1,12 +1,24 @@
 const path = require('path');
 
 module.exports = {
-  mode: 'development',
+  devServer: {
+    "static": "./demo",
+  },
   entry: {
     index: './src/core/Engine.js'
   },
-  devServer: {
-    "static": "./demo",
+  mode: 'development',
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpe?g)$/i,
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
+      },
+    ],
   },
   output: {
     filename: 'bundle.js',
