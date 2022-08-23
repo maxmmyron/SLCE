@@ -1,5 +1,6 @@
 import { vec } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
+import EventHandler from "../util/EventHandler";
 
 /**
  * An actor function represents an actor that can be placed within the canvas.
@@ -8,10 +9,7 @@ import TextureLayer from "../util/TextureLayer";
  * @param {Object} options optional arguments for velocity and position
  */
 export default class Actor {
-  constructor(drawCallback, updateCallback, options = {}) {
-
-    this.#drawCallback = drawCallback;
-    this.#updateCallback = updateCallback;
+  constructor(options = {}) {
 
     // set velocity and position to values passed in options;
     // if not provided, set to 0
@@ -20,10 +18,19 @@ export default class Actor {
 
     this.textures = options.textures ?? [];
 
+    this.eventHandler = new EventHandler(["preload", "draw", "update"]);
   }
 
   // ****************************************************************
   // Pubic defs
+
+  /**
+    * An EventHandler object for handling engine events
+    * 
+    * @private
+    * @type {EventHandler}
+    */
+  eventHandler;
 
   /**
    * optional arguments for drawing actor
@@ -51,7 +58,7 @@ export default class Actor {
    * 
    * @type {Array<TextureLayer>}
    */
-   textures = [];
+  textures = [];
 
   /**
    * Notifies engine that an actor should be disposed of at next update cycle.
@@ -64,14 +71,19 @@ export default class Actor {
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
    */
   draw = (ctx) => {
+    const negTextureLayers = this.textures.filter(textureLayer => textureLayer.options.zIndex < 0);
+    const posTextureLayers = this.textures.filter(textureLayer => textureLayer.options.zIndex >= 0);
+
     // draw texture layers with a z-index below 0
-    this.#drawTextureLayers(ctx, this.textures.filter(texture => texture.options.zIndex < 0));
+    if (negTextureLayers.length > 0)
+      this.#drawTextureLayers(ctx, negTextureLayers);
 
     // call draw callback function
-    this.#drawCallback(ctx);
+    this.eventHandler.eventHandlers["draw"][0](ctx);
 
     // draw texture layers with a z-index geater than 0
-    this.#drawTextureLayers(ctx, this.textures.filter(texture => texture.options.zIndex >= 0));
+    if (posTextureLayers.length > 0)
+      this.#drawTextureLayers(ctx, posTextureLayers);
   }
 
   /**
@@ -82,50 +94,16 @@ export default class Actor {
   update = (dt, env) => {
     this.vel.x += env.physics.accel.x / dt;
     this.vel.y += env.physics.accel.y / dt;
-    this.#updateCallback(dt);
+    
+    this.eventHandler.eventHandlers["update"][0](dt, env);
   }
 
   // ****************************************************************
   // Private defs
 
-  /**
-   * Callback function for actor's draw method
-   * @private 
-   */
-  #drawCallback;
-
-  /**
-   * Callback function for actor's update method
-   * @private 
-   */
-  #updateCallback;
-
-  /**
-   * Draws relevant texture layers to canvas.
-   * @private
-   * 
-   * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
-   * @param {Array<TextureLayer>} textureLayers - array of texture layers to draw
-   */
   #drawTextureLayers = (ctx, textureLayers) => {
-    // sort texture layers by z-index defined in options
-    textureLayers.sort((a, b) => a.options.zIndex - b.options.zIndex);
-
-    for (let textureLayer of textureLayers) {
-      this.#drawTextureLayer(ctx, textureLayer);
-    }
-  }
-
-  /**
-   * Draws a single texture layer to canvas.
-   * @private
-   * 
-   * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
-   * @param {TextureLayer} textureLayer - texture layer to draw
-   */
-
-  #drawTextureLayer = (ctx, textureLayer) => {
-    ctx.drawImage(textureLayer.imageBitmap, textureLayer.options.x, textureLayer.options.y);
-    console.log("a");
+    textureLayers.forEach(textureLayer => {
+      ctx.drawImage(textureLayer.imageBitmap, textureLayer.options.x, textureLayer.options.y, textureLayer.options.width, textureLayer.options.height);
+    });
   }
 }
