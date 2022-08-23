@@ -1,5 +1,6 @@
 import { vec } from "../Math/Vector";
 import EventHandler from "../util/EventHandler";
+import Actor from "../Objects/Actor";
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -93,24 +94,59 @@ export default class Engine {
     }
   }
 
+  /**
+   * Attempts to add an actor by first calling respective preload functions
+   * 
+   * @param {Actor} actor 
+   * @return {Boolean} true if actor was added
+   * 
+   * @throws {Error} if actor is not an instance of Actor
+   */
   addActor = (actor) => {
-    console.log("preloading...");
-
-    const currTime = performance.now();
-
-    actor.eventHandler.eventHandlers["preload"][0]().then((val) => {
-      console.log("preload complete");
-      console.log(performance.now() - currTime);
+    if (!(actor instanceof Actor)) {
+      throw new Error(`Error adding actor: actor must be an instance of Actor.`);
+    }
+    
+    // add actor to engine if it does not have any preload 
+    // functions, since there is no need to preload anything
+    if(actor.eventHandler.eventHandlers["preload"].length === 0) {
       this.#actors.push(actor);
+      return true;
+    }
+
+    // Promise.all() will resolve when all preload functions in preload array have resolved
+    Promise.all(actor.eventHandler.eventHandlers["preload"]).then(() => {
+      this.#actors.push(actor);
+      return true;
+    }).catch(err => {
+      throw new Error(`Error adding actor: ${err}`);
     })
   }
 
+  /**
+   * Queues an actor for disposal by setting actor's disposalQueued flag to true.
+   * 
+   * @param {Actor} actor 
+   * @return {Boolean} true if actor was queued for disposal
+   * 
+   * @throws {Error} if actor is not an instance of Actor
+   */
   removeActor = (actor) => {
+    if (!(actor instanceof Actor)) {
+      throw new Error(`Error removing actor: actor must be an instance of Actor.`);
+    }
+
     // queue actor for disposal instead of removing immediately
     // this prevents actors from being removed from the array while iterating over it
     actor.disposalQueued = true;
+    return true;
   }
 
+  /**
+   * Returns an array of current actors in engine
+   * 
+   * @returns {Array} an array of all actors in the engine
+   */
   getActors = () => this.#actors;
 
   // ****************************************************************
@@ -118,6 +154,8 @@ export default class Engine {
 
   /**
    * An array of actors to be updated and drawn by the canvas
+   * 
+   * @type {Array<Actor>}
    */
   #actors = [];
 
@@ -126,13 +164,14 @@ export default class Engine {
    * 
    * @private
    * @type {Object}
-   * @property {Number} fps - current frames per second.
-   * @property {Boolean} showFPS - whether to show FPS
-   * 
+   * @property {Number} debug.fps - current FPS
+   * @property {Boolean} debug.showFPS - whether to show FPS
+   * @property {Boolean} debug.logPerformanceMetrics - whether to log performance metrics
    */
   #debug = {
     FPS: 0,
     showFPS: true,
+    logPerformanceMetrics: true
   };
 
   /**
@@ -182,7 +221,6 @@ export default class Engine {
       let dt = timestamp - this.#prevTimestamp;
       this.#prevTimestamp = timestamp;
 
-      // calculate current FPS
       this.#debug.FPS = 1000 / dt;
 
       // call draw method to draw relevant actors
