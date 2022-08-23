@@ -95,7 +95,7 @@ export default class Engine {
   }
 
   /**
-   * Attempts to add an actor by first calling respective preload functions
+   * Attempts to add an actor to the engine.
    * 
    * @param {Actor} actor 
    * @return {Boolean} true if actor was added
@@ -106,21 +106,8 @@ export default class Engine {
     if (!(actor instanceof Actor)) {
       throw new Error(`Error adding actor: actor must be an instance of Actor.`);
     }
-    
-    // add actor to engine if it does not have any preload 
-    // functions, since there is no need to preload anything
-    if(actor.eventHandler.eventHandlers["preload"].length === 0) {
-      this.#actors.push(actor);
-      return true;
-    }
 
-    // Promise.all() will resolve when all preload functions in preload array have resolved
-    Promise.all(actor.eventHandler.eventHandlers["preload"]).then(() => {
-      this.#actors.push(actor);
-      return true;
-    }).catch(err => {
-      throw new Error(`Error adding actor: ${err}`);
-    })
+    this.#actors.push(actor);
   }
 
   /**
