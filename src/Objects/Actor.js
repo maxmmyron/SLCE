@@ -1,4 +1,4 @@
-import { vec } from "../Math/Vector";
+import { vec, add, sub, div } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
 import EventHandler from "../util/EventHandler";
 
@@ -15,8 +15,6 @@ export default class Actor {
     // if not provided, set to 0
     this.vel = options.vel ?? vec();
     this.pos = options.pos ?? vec();
-
-    this.textures = options.textures ?? [];
 
     this.eventHandler = new EventHandler(["preload", "draw", "update"]);
   }
@@ -50,7 +48,6 @@ export default class Actor {
     rotation: 0, // unimplemented
     opacity: 1, // unimplemented
     zIndex: 0, // unimplemented
-    textures: [],
   };
 
   /**
@@ -67,6 +64,41 @@ export default class Actor {
   disposalQueued = false;
 
   /**
+   * 
+   * @param {TextureLayer} textureLayer 
+   */
+  addTextureLayer = (textureLayer) => new Promise((resolve, reject) => {
+    console.log('attempting to add texture layer');
+    textureLayer.resolveImageBitmap().then(imageBitmap => {
+      this.textures.push(textureLayer);
+      console.log('added texture layer');
+      console.log(this.textures);
+      resolve("Successfully resolved imageBitmap and added textureLayer to actor");
+    }).catch(err => {
+      reject(`Error adding texture layer to actor: ${err}`);
+    });
+  });
+
+  /**
+   * Preload function is called once before the first draw cycle. 
+   * Accepts a function to run as a preload function, and a function 
+   * that is called after the preload function is finished.
+   * 
+   * @param {Function} preloadCallback a function to run as a preload function
+   * @param {Function} postloadCallback a function to run after the preload function is finished
+   * 
+   * @returns {Promise} a promise that resolves when the preload function is finished
+   * 
+   */
+  preload = (preloadCallback, postloadCallback) => new Promise((resolve, reject) => {
+    resolve(preloadCallback())
+  }).then(() => {
+    postloadCallback();
+  }).catch(err => {
+    reject(`Error in preload function: ${err}`);
+  });
+
+  /**
    * Calls draw callback function for actor.
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
    */
@@ -75,15 +107,18 @@ export default class Actor {
     const posTextureLayers = this.textures.filter(textureLayer => textureLayer.options.zIndex >= 0);
 
     // draw texture layers with a z-index below 0
-    if (negTextureLayers.length > 0)
+    if (negTextureLayers.length > 0) {
       this.#drawTextureLayers(ctx, negTextureLayers);
+    }
+
 
     // call draw callback function
     this.eventHandler.eventHandlers["draw"][0](ctx);
 
     // draw texture layers with a z-index geater than 0
-    if (posTextureLayers.length > 0)
+    if (posTextureLayers.length > 0) {
       this.#drawTextureLayers(ctx, posTextureLayers);
+    }
   }
 
   /**
@@ -94,7 +129,7 @@ export default class Actor {
   update = (dt, env) => {
     this.vel.x += env.physics.accel.x / dt;
     this.vel.y += env.physics.accel.y / dt;
-    
+
     this.eventHandler.eventHandlers["update"][0](dt, env);
   }
 
@@ -103,7 +138,8 @@ export default class Actor {
 
   #drawTextureLayers = (ctx, textureLayers) => {
     textureLayers.forEach(textureLayer => {
-      ctx.drawImage(textureLayer.imageBitmap, textureLayer.options.x, textureLayer.options.y, textureLayer.options.width, textureLayer.options.height);
+      const offsetPos = sub(this.pos, div(textureLayer.options.size, 2));
+      ctx.drawImage(textureLayer.imageBitmap, offsetPos.x, offsetPos.y, textureLayer.options.size.x, textureLayer.options.size.y);
     });
   }
 }
