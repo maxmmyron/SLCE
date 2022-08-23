@@ -1,6 +1,7 @@
 import Engine from "../src/core/Engine.js";
 import { add, sub, mult, vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
+import { encapsulateHandler } from "../src/util/EventHandler.js";
 import TextureLayer from "../src/util/TextureLayer.js";
 import test from "./testing.png";
 
@@ -13,12 +14,6 @@ const actorA = new Actor({
   pos: vec(25, 50),
   textures: [new TextureLayer(test)],
 });
-
-engine.start();
-
-actorA.eventHandler.addHandler("preload", () =>
-  new TextureLayer(test).resolveImageBitmap()
-);
 
 actorA.eventHandler.addHandler("draw", (ctx) => {
   ctx.fillStyle = "#000000";
@@ -37,7 +32,17 @@ actorA.eventHandler.addHandler(
   }
 );
 
-engine.addActor(actorA);
+actorA.preload(
+  () => {
+    const textureLayer = new TextureLayer(test, { pos: vec(100, 100) });
+    actorA.addTextureLayer(textureLayer);
+  },
+  () => {
+    engine.addActor(actorA);
+  }
+);
+
+engine.start();
 
 // const actorB = new Actor(
 //   (ctx) => {
