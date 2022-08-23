@@ -1,4 +1,5 @@
 import { vec } from "../Math/Vector";
+import EventHandler from "../util/EventHandler";
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -34,19 +35,33 @@ export default class Engine {
       },
     };
 
-    this.#init(); // call first time init to set up canvas
+    this.eventHandler = new EventHandler(["update", "pause", "resume"]);
+
+    // listen for resize events and update canvas size
+    document.addEventListener("resize", (e) => {
+      dimensions = this.#fixDPI();
+      // set canvas width and height to scaled width and height
+      this.environment.width = dimensions[0];
+      this.environment.height = dimensions[1];
+    });
+    this.#fixDPI();
   }
 
   // ****************************************************************
   // Public defs
 
   /**
-   * An array of actors to be updated and drawn by the canvas
+   * An EventHandler object for handling engine events
+   *
+   * @private
+   * @type {EventHandler}
    */
-  actors = [];
+  eventHandler;
 
   /**
-   * Starts engine update loop. Used only once at startup.
+   * Returns whether engine is paused or not
+   *
+   * @return {Boolean} true if engine is paused, false otherwise
    */
   start = () => {
     if (!this.#hasInit) {
@@ -63,7 +78,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    this.#eventHandlers["pause"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["pause"].forEach((handler) => handler());
   };
 
   /**
@@ -71,7 +86,7 @@ export default class Engine {
    */
   resume = () => {
     this.#isPaused = false;
-    this.#eventHandlers["resume"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["resume"].forEach((handler) => handler());
   };
 
   /**
@@ -79,7 +94,15 @@ export default class Engine {
    *
    * @return {Boolean} true if engine is paused, false otherwise
    */
-  isPaused = () => this.#isPaused;
+  start = () => {
+    if (!this.#hasStart) {
+      this.#fixDPI();
+      this.#animationFrameID = requestAnimationFrame(this.#update);
+      this.#hasStart = true;
+    } else {
+      throw new Error(`Error starting engine: engine has already started.`);
+    }
+  };
 
   /**
    * Adds a handler function to execute on a specific event.
@@ -136,6 +159,11 @@ export default class Engine {
 
   // ****************************************************************
   // Private defs
+
+  /**
+   * An array of actors to be updated and drawn by the canvas
+   */
+  #actors = [];
 
   /**
    * Struct for storing useful debug values
@@ -284,7 +312,7 @@ export default class Engine {
     const interp = this.#lag / this.#targetFrameTime;
 
     // call draw method to draw relevant actors
-    this.#draw(interp);
+    this.eventHandler.draw(interp);
 
     // filter actors array by those that are NOT queued for disposal
     this.actors.filter((actor) => !actor.disposalQueued);
