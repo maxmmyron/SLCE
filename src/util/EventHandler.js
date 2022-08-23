@@ -39,7 +39,7 @@ export default class EventHandler {
    * @throws {Error} if handler is not a function
    * @throws {Error} if event is not a valid event
    */
-  addHandler(event, handler) {
+  addHandler = (event, handler) => {
     // assert event is a string
     if (typeof event !== "string") throw new Error("event must be a string");
     // assert handler is a function
@@ -50,29 +50,6 @@ export default class EventHandler {
     // add handler function to array of handlers for specified event
     this.eventHandlers[event].push(handler);
   }
-
-  /**
-   * Adds an asyncrhonous event handler to the event handler list.
-   * @param {String} event - event type to handle
-   * @param {Function} handler - function to execute when event is triggered
-   * 
-   * @throws {Error} if event is not a string
-   * @throws {Error} if handler is not a function
-   * @throws {Error} if event is not a valid event
-   */
-  addAsyncHandler(event, handler) {
-    // assert event is a string
-    if (typeof event !== "string") throw new Error("event must be a string");
-    // assert handler is a function
-    if (typeof handler !== "function") throw new Error("handler must be a function");
-    // assert event is a valid event
-    if (!this.validEvents.includes(event)) throw new Error("event is not a valid event");
-
-    // add handler function to array of handlers for specified event
-
-    this.eventHandlers[event].push(handler);
-  }
-
 
   /**
    * Removes an event handler from the event handler list.
@@ -86,7 +63,7 @@ export default class EventHandler {
    * @throws {Error} if handler is not a function
    * @throws {Error} if event is not a valid event
    */
-  removeHandler(event, handler) {
+  removeHandler = (event, handler) => {
     // assert event is a string
     if (typeof event !== "string") throw new Error("event must be a string");
     // assert handler is a function
