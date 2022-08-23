@@ -69,6 +69,8 @@ export default class Engine {
       this.#animationFrameID = requestAnimationFrame(this.#update);
       this.#hasInit = true;
       this.#isPaused = false;
+    } else {
+      throw new Error(`Error starting engine: engine has already started.`);
     }
   };
 
@@ -89,73 +91,25 @@ export default class Engine {
     this.eventHandler.eventHandlers["resume"].forEach((handler) => handler());
   };
 
-  /**
-   * Returns whether engine is paused or not
-   *
-   * @return {Boolean} true if engine is paused, false otherwise
-   */
-  start = () => {
-    if (!this.#hasStart) {
-      this.#fixDPI();
-      this.#animationFrameID = requestAnimationFrame(this.#update);
-      this.#hasStart = true;
-    } else {
-      throw new Error(`Error starting engine: engine has already started.`);
-    }
+  addActor = (actor) => {
+    console.log("preloading...");
+
+    const currTime = performance.now();
+
+    actor.eventHandler.eventHandlers["preload"][0]().then((val) => {
+      console.log("preload complete");
+      console.log(performance.now() - currTime);
+      this.#actors.push(actor);
+    });
   };
 
-  /**
-   * Adds a handler function to execute on a specific event.
-   * @param {String} event - name of event to handle
-   * @param {Function} handler - function to execute when event is triggered
-   *
-   * @throws {Error} if event is not a string
-   * @throws {Error} if handler is not a function
-   * @throws {Error} if event is not a valid event
-   */
-  addHandler = (event, handler) => {
-    // assert event is a string
-    if (typeof event !== "string") throw new Error("event must be a string");
-    // assert handler is a function
-    if (typeof handler !== "function")
-      throw new Error("handler must be a function");
-    // assert event is a valid event
-    if (!this.#validEvents.includes(event))
-      throw new Error("event is not a valid event");
-
-    // add handler function to array of handlers for specified event
-    this.#eventHandlers[event].push(handler);
+  removeActor = (actor) => {
+    // queue actor for disposal instead of removing immediately
+    // this prevents actors from being removed from the array while iterating over it
+    actor.disposalQueued = true;
   };
 
-  /**
-   * Removes handler fucntion from event
-   *
-   * @param {String} event - name of event to remove handler from
-   * @param {Function} handler - function to remove from event
-   * @return {Boolean} true if handler was removed, false otherwise
-   *
-   * @throws {Error} if event is not a string
-   * @throws {Error} if handler is not a function
-   * @throws {Error} if event is not a valid event
-   */
-  removeHandler = (event, handler) => {
-    // assert event is a string
-    if (typeof event !== "string") throw new Error("event must be a string");
-    // assert handler is a function
-    if (typeof handler !== "function")
-      throw new Error("handler must be a function");
-    // assert event is a valid event
-    if (!this.#validEvents.includes(event))
-      throw new Error("event is not a valid event");
-
-    // remove handler function from array of handlers for specified event
-    const index = this.#eventHandlers[event].indexOf(handler);
-    if (index !== -1) {
-      this.#eventHandlers[event].splice(index, 1);
-      return true;
-    }
-    return false;
-  };
+  getActors = () => this.#actors;
 
   // ****************************************************************
   // Private defs
@@ -312,7 +266,7 @@ export default class Engine {
     const interp = this.#lag / this.#targetFrameTime;
 
     // call draw method to draw relevant actors
-    this.eventHandler.draw(interp);
+    this.#draw(interp);
 
     // filter actors array by those that are NOT queued for disposal
     this.actors.filter((actor) => !actor.disposalQueued);
@@ -349,6 +303,9 @@ export default class Engine {
     // reset context fill color
     this.ctx.fillStyle = this.environment.background;
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
+
+    // call draw event handlers for relevant events
+    this.#eventHandlers["draw"].forEach((handler) => handler(interp, this.ctx));
 
     this.actors.forEach((actor) => actor.draw(this.ctx, interp));
 
