@@ -17,7 +17,7 @@ export default class TextureLayer {
     // apply any options passed in; keep defaults if not provided
     this.options = {
       pos: options.pos ?? vec(),
-      size: options.size ?? vec(),
+      size: options.size ?? vec(48, 48),
       vel: options.vel ?? vec(),
       rotation: options.rotation ?? 0,
       opacity: options.opacity ?? 1,
