@@ -17,7 +17,7 @@ const actorA = new Actor(
 
 engine.start();
 
-actorA.eventHandler.addHandler("preload", () => new Promise((resolve, reject) => setTimeout(() => resolve("done!"), 2000)));
+actorA.eventHandler.addHandler("preload", () => new TextureLayer(test).resolveImageBitmap());
 
 actorA.eventHandler.addHandler("draw", (ctx) => {
   ctx.fillStyle = "#000000";
