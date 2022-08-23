@@ -1,6 +1,7 @@
+import { vec } from "../Math/Vector";
+
 /**
  * TextureLayer.js - A helper class that encapsulates a texture and its draw arguments for drawing to the canvas.
- * 
  */
 export default class TextureLayer {
   /**
@@ -11,23 +12,21 @@ export default class TextureLayer {
    */
   constructor(path, options = {}) {
 
-    this.#path = path;
+    this.#path = path || null;
 
-    this.options = options;
-
-    // init TextureLayer
-    this.#init();
+    // apply any options passed in; keep defaults if not provided
+    this.options = {
+      pos: options.pos ?? vec(),
+      size: options.size ?? vec(),
+      vel: options.vel ?? vec(),
+      rotation: options.rotation ?? 0,
+      opacity: options.opacity ?? 1,
+      zIndex: options.zIndex ?? 0,
+    };
   }
 
   // ****************************************************************
   // Public defs
-
-  /**
-   * ImageBitmap for texturing
-   * 
-   * @type {ImageBitmap}
-   */
-  imageBitmap = null;
 
   /**
    * optional arguments for drawing texture layer
@@ -41,15 +40,7 @@ export default class TextureLayer {
    * @property {Number} options.opacity - opacity of texture layer
    * @property {Number} options.zIndex - z-index of texture layer. -1 will draw texture behind actor.
    */
-  options = {
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    rotation: 0,
-    opacity: 1,
-    zIndex: 0,
-  };
+  options;
 
   // ****************************************************************
   // Private defs
@@ -60,30 +51,26 @@ export default class TextureLayer {
    * @private
    * @type {String}
    */
-  #path = null;
+  #path;
 
   /**
-   * Initializes texture layer
-   * 
-   * @private
+   * resolves an image bitmap from an image file path
    */
-  #init = () => {
+  resolveImageBitmap = () => new Promise((resolve, reject) => {
+    if (!this.#path)
+      return reject(new Error("No path provided"));
+
     const image = new Image();
     image.src = this.#path;
     image.crossOrigin = "anonymous";
 
     image.onload = () => {
+      // create image bitmap from image file
       createImageBitmap(image)
-        .then(imageBitmap => this.imageBitmap = imageBitmap)
-        // throw an error if ImageBitmap cannot be instantiated
-        .catch(err => {
-          throw new Error(`Error creating image bitmap: ${err}`)
-        });
-    }
+        .then(imageBitmap => resolve(imageBitmap))
+        .catch(err => reject(err));
+    };
 
-    // throw an error if image does not load properly
-    image.onerror = (err) => {
-      throw new Error(`Error initializing texture layer: ${err}`);
-    }
-  }
+    image.onerror = (err) => reject(err);
+  });
 }
