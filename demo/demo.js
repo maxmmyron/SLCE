@@ -1,7 +1,6 @@
 import Engine from "../src/core/Engine.js";
 import { add, sub, mult, vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
-import { encapsulateHandler } from "../src/util/EventHandler.js";
 import TextureLayer from "../src/util/TextureLayer.js";
 import test from "./testing.png";
 
