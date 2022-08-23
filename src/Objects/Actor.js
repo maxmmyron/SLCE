@@ -1,5 +1,6 @@
 import { vec } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
+import EventHandler from "../util/EventHandler";
 
 /**
  * An actor function represents an actor that can be placed within the canvas.
@@ -19,12 +20,22 @@ export default class Actor {
 
     this.textures = options.textures ?? [];
 
+    this.eventHandler = new EventHandler(["preload", "draw", "update"]);
+
     this.last.pos = this.pos;
     this.last.vel = this.vel;
   }
 
   // ****************************************************************
   // Pubic defs
+
+  /**
+   * An EventHandler object for handling engine events
+   *
+   * @private
+   * @type {EventHandler}
+   */
+  eventHandler;
 
   /**
    * optional arguments for drawing actor
@@ -80,20 +91,23 @@ export default class Actor {
       y: this.last.pos.y + (this.pos.y - this.last.pos.y) * interp,
     };
 
-    // draw texture layers with a z-index below 0
-    this.#drawTextureLayers(
-      ctx,
-      this.textures.filter((texture) => texture.options.zIndex < 0)
+    const negTextureLayers = this.textures.filter(
+      (textureLayer) => textureLayer.options.zIndex < 0
     );
+    const posTextureLayers = this.textures.filter(
+      (textureLayer) => textureLayer.options.zIndex >= 0
+    );
+
+    // draw texture layers with a z-index below 0
+    if (negTextureLayers.length > 0)
+      this.#drawTextureLayers(ctx, negTextureLayers);
 
     // call draw callback function
-    this.#drawCallback(ctx, interp);
+    this.eventHandler.eventHandlers["draw"][0](ctx);
 
     // draw texture layers with a z-index geater than 0
-    this.#drawTextureLayers(
-      ctx,
-      this.textures.filter((texture) => texture.options.zIndex >= 0)
-    );
+    if (posTextureLayers.length > 0)
+      this.#drawTextureLayers(ctx, posTextureLayers);
   };
 
   /**
@@ -107,7 +121,10 @@ export default class Actor {
 
     this.vel.x += env.physics.accel.x / timestep;
     this.vel.y += env.physics.accel.y / timestep;
-    this.#updateCallback(timestep);
+
+    this.eventHandler.eventHandlers["update"][0](timestep, env);
+
+    this.#updateCallback(timestep, env);
   };
 
   // ****************************************************************
@@ -133,28 +150,14 @@ export default class Actor {
    * @param {Array<TextureLayer>} textureLayers - array of texture layers to draw
    */
   #drawTextureLayers = (ctx, textureLayers) => {
-    // sort texture layers by z-index defined in options
-    textureLayers.sort((a, b) => a.options.zIndex - b.options.zIndex);
-
-    for (let textureLayer of textureLayers) {
-      this.#drawTextureLayer(ctx, textureLayer);
-    }
-  };
-
-  /**
-   * Draws a single texture layer to canvas.
-   * @private
-   *
-   * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
-   * @param {TextureLayer} textureLayer - texture layer to draw
-   */
-
-  #drawTextureLayer = (ctx, textureLayer) => {
-    ctx.drawImage(
-      textureLayer.imageBitmap,
-      textureLayer.options.x,
-      textureLayer.options.y
-    );
-    console.log("a");
+    textureLayers.forEach((textureLayer) => {
+      ctx.drawImage(
+        textureLayer.imageBitmap,
+        textureLayer.options.x,
+        textureLayer.options.y,
+        textureLayer.options.width,
+        textureLayer.options.height
+      );
+    });
   };
 }
