@@ -19,13 +19,13 @@ import { assertIsNumber, assertIsVector } from "../util/Asserts";
  * 
  * @throws {TypeError} if any of the vectors are not vectors
  */
-const resolveVector = (vectors, op) => new Promise((resolve, reject) => {
+const resolveVector = (vectors, op) => {
   // check if each element is a vector before performing operation
   if (vectors.every(assertIsVector))
-    resolve(op(...vectors));
+   vectors.map(vector => op(vector));
   else
     reject(new TypeError("Not all elements are vectors"));
-})
+};
 
 
 /**
@@ -65,7 +65,8 @@ export const vec = (x = 0, y = 0) => {
  * @param b - The vector to add to A
  * @return {Object} the sum of the two vectors
  */
-export const add = (a, b) => resolveVector([a, b], (a, b) => vec(a.x + b.x, a.y + b.y));
+export const add = (a, b) => vec(a.x + b.x, a.y + b.y);
+//resolveVector([a, b], (a, b) => vec(a.x + b.x, a.y + b.y));
 
 /**
  * subtracts two vectors
@@ -74,7 +75,8 @@ export const add = (a, b) => resolveVector([a, b], (a, b) => vec(a.x + b.x, a.y 
  * @param b - The vector to subtract from A
  * @return {Object} the difference of A and B
  */
-export const sub = (a, b) => resolveVector([a, b], (a, b) => vec(a.x - b.x, a.y - b.y));
+export const sub = (a, b) => vec(a.x - b.x, a.y - b.y);
+// resolveVector([a, b], (a, b) => vec(a.x - b.x, a.y - b.y));
 
 /**
  * multiplies a vector by a scalar
@@ -88,7 +90,8 @@ export const sub = (a, b) => resolveVector([a, b], (a, b) => vec(a.x - b.x, a.y 
 export const mult = (a, s) => {
   assertIsNumber(s);
 
-  return resolveVector(a, a => vec(a.x * s, a.y * s))
+  return vec(a.x * s, a.y * s);
+  // resolveVector(a, a => vec(a.x * s, a.y * s));
 };
 
 /**
@@ -107,7 +110,8 @@ export const div = (a, s) => {
   if (s === 0)
     throw new Error("Cannot divide by 0");
     
-  return resolveVector(a, a => vec(a.x / s, a.y / s));
+  return vec(a.x / s, a.y / s);
+  // resolveVector(a, a => vec(a.x / s, a.y / s));
 }
 
 /**
