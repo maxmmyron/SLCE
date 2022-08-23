@@ -1,6 +1,7 @@
 import Engine from "../src/core/Engine.js";
 import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
+import { encapsulateHandler } from "../src/util/EventHandler.js";
 import TextureLayer from "../src/util/TextureLayer.js";
 import test from "./testing.png"
 
@@ -15,22 +16,25 @@ const actorA = new Actor(
   }
 );
 
-engine.start();
-
-actorA.eventHandler.addHandler("preload", () => new TextureLayer(test).resolveImageBitmap());
-
 actorA.eventHandler.addHandler("draw", (ctx) => {
   ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
+  ctx.fill();
 });
 
 actorA.eventHandler.addHandler("update", (dt) => {
   actorA.pos.x += 5 / dt;
 });
 
-engine.addActor(actorA);
+actorA.preload(() => {
+  const textureLayer = new TextureLayer(test, {pos: vec(100, 100)});
+  actorA.addTextureLayer(textureLayer);
+}, () => {
+  engine.addActor(actorA);
+})
+
+engine.start();
 
 // const actorB = new Actor(
 //   (ctx) => {
