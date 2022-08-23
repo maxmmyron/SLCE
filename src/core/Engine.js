@@ -94,12 +94,13 @@ export default class Engine {
   }
 
   addActor = (actor) => {
-    console.log("preloading...")
+    console.log("preloading...");
 
-    console.log(actor.eventHandler.eventHandlers["preload"][0].toString())
+    const currTime = performance.now();
+
     actor.eventHandler.eventHandlers["preload"][0]().then((val) => {
       console.log("preload complete");
-      console.log(val);
+      console.log(performance.now() - currTime);
       this.#actors.push(actor);
     })
   }
