@@ -42,6 +42,13 @@ export default class TextureLayer {
    */
   options;
 
+  /**
+   * ImageBitmap of texture layer
+   * 
+   * @type {ImageBitmap}
+   */
+  imageBitmap;
+
   // ****************************************************************
   // Private defs
 
@@ -67,7 +74,10 @@ export default class TextureLayer {
     image.onload = () => {
       // create image bitmap from image file
       createImageBitmap(image)
-        .then(imageBitmap => resolve(imageBitmap))
+        .then(imageBitmap => {
+          this.imageBitmap = imageBitmap; 
+          resolve(imageBitmap);
+        })
         .catch(err => reject(err));
     };
 
