@@ -7,77 +7,58 @@ import test from "./testing.png"
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
-engine.environment.physics.accel.y = 3;
+engine.environment.physics.accel.y = 0;
 
-const actorA = new Actor(
-  {
-    pos: vec(25, 50),
-  }
-);
+new Array(9).fill(0).forEach((_, i) => {
+  const actor = new Actor({
+    pos: vec(48, i * 64 + 48),
+    vel: vec((i + 1) * 1.1, 0),
+  });
 
-actorA.eventHandler.addHandler("draw", (ctx) => {
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
-  ctx.fill();
+  actor.eventHandler.addHandler("draw", (ctx) => {
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
+    ctx.fill();
+  });
+
+  actor.eventHandler.addHandler("update", (dt) => {
+    actor.pos.x += actor.vel.x;
+    if ((actor.pos.x - 24) > engine.environment.width) {
+      actor.pos.x = -24;
+    }
+  });
+
+  actor.preload(() => {
+    const textureLayer = new TextureLayer(test);
+    actor.addTextureLayer(textureLayer);
+  }, () => engine.addActor(actor));
 });
 
-actorA.eventHandler.addHandler("update", (dt) => {
-  actorA.pos.x += 5 / dt;
-});
+new Array(16).fill(0).forEach((_, i) => {
+  const actor = new Actor({
+    pos: vec(i * 64 + 48, 48),
+    vel: vec(0, (i + 1) * 1.1),
+  });
 
-actorA.preload(() => {
-  const textureLayer = new TextureLayer(test, {pos: vec(100, 100)});
-  actorA.addTextureLayer(textureLayer);
-}, () => {
-  engine.addActor(actorA);
-})
+  actor.eventHandler.addHandler("draw", (ctx) => {
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
+    ctx.fill();
+  });
+
+  actor.eventHandler.addHandler("update", (dt) => {
+    actor.pos.y += actor.vel.y;
+    if ((actor.pos.y - 24) > engine.environment.height) {
+      actor.pos.y = -24;
+    }
+  });
+
+  actor.preload(() => {
+    const textureLayer = new TextureLayer(test);
+    actor.addTextureLayer(textureLayer);
+  }, () => engine.addActor(actor));
+});
 
 engine.start();
-
-// const actorB = new Actor(
-//   (ctx) => {
-//     ctx.fillStyle = "#000000";
-//     ctx.beginPath();
-//     ctx.arc(actorB.pos.x, actorB.pos.y, 5, 0, Math.PI * 2, false);
-//     ctx.fill();
-//   },
-//   (dt) => {
-//     actorB.pos.y += actorB.vel.y / dt;
-//     if(actorB.pos.y > engine.environment.height) {
-//       actorB.pos.y = 0;
-//     }
-//   },
-//   {
-//     pos: vec(500,50),
-//   }
-// );
-
-// engine.actors.push(actorB);
-
-// const handlePause = () => console.log("paused");
-// const handleResume = () => console.log("resumed");
-
-// engine.addHandler("pause", handlePause)
-// engine.addHandler("resume", handleResume)
-
-// const handleUpdate = (dt) => {
-//   console.log(dt);
-// }
-
-// engine.addHandler("update", handleUpdate);
-
-// setTimeout(() => engine.pause(), 2500);
-// setTimeout(() => engine.resume(), 3500);
-
-// setTimeout(() => engine.pause(), 4500);
-// setTimeout(() => engine.resume(), 5500);
-
-// setTimeout(() => {
-//   engine.removeHandler("pause", handlePause);
-//   engine.removeHandler("resume", handleResume);
-//   engine.removeHandler("update", handleUpdate);
-// }, 6000);
-
-// setTimeout(() => engine.pause(), 6500);
-// setTimeout(() => engine.resume(), 7500);
