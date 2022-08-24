@@ -141,7 +141,8 @@ export const rotate = (a, angle) => {
  * @param a - A vector
  * @return {Number} - the magnitude of A
  */
-export const mag = (a) => resolveVector(a, a => Math.sqrt(a.x * a.x + a.y * a.y));
+export const mag = (a) => Math.sqrt(a.x * a.x + a.y * a.y)
+//resolveVector(a, a => Math.sqrt(a.x * a.x + a.y * a.y));
 
 /**
  * normalizes a vector
