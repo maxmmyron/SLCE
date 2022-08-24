@@ -1,4 +1,4 @@
-import { vec, add, sub, div } from "../Math/Vector";
+import { vec, add, sub, div, mag } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
 import EventHandler from "../util/EventHandler";
 
@@ -82,16 +82,11 @@ export default class Actor {
    */
   addTextureLayer = (textureLayer) =>
     new Promise((resolve, reject) => {
-      console.log("attempting to add texture layer");
       textureLayer
         .resolveImageBitmap()
-        .then((imageBitmap) => {
+        .then(() => {
           this.textures.push(textureLayer);
-          console.log("added texture layer");
-          console.log(this.textures);
-          resolve(
-            "Successfully resolved imageBitmap and added textureLayer to actor"
-          );
+          resolve("Success");
         })
         .catch((err) => {
           reject(`Error adding texture layer to actor: ${err}`);
@@ -145,7 +140,8 @@ export default class Actor {
     }
 
     // call draw callback function
-    this.eventHandler.eventHandlers["draw"][0](ctx);
+    if (this.eventHandler.eventHandlers["draw"][0])
+      this.eventHandler.eventHandlers["draw"][0](ctx);
 
     // draw texture layers with a z-index geater than 0
     if (posTextureLayers.length > 0) {
@@ -165,7 +161,8 @@ export default class Actor {
     this.vel.x += env.physics.accel.x / timestep;
     this.vel.y += env.physics.accel.y / timestep;
 
-    this.eventHandler.eventHandlers["update"][0](timestep, env);
+    if (this.eventHandler.eventHandlers["update"][0])
+      this.eventHandler.eventHandlers["update"][0](dt, env);
   };
 
   // ****************************************************************
