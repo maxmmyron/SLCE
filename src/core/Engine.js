@@ -149,9 +149,35 @@ export default class Engine {
    * Timestamp of last frame. Used to calculate delta time in update method
    * 
    * @private
-   * @type {number}
+   * @type {Number}
    */
   #prevTimestamp = 0;
+
+  /**
+   * Accumulating lag for update method. Used to smooth out update method.
+   * 
+   * @private
+   * @type {Number}
+   */
+  #lag = 0;
+
+  /**
+   * Target FPS to reach when updating
+   * 
+   * @private
+   * @type {Number}
+   * @default 60
+   */
+  #targetFPS = 60;
+
+  /**
+   * Target frame rate (in ms) to reach when updating. 
+   * Used as contstant timestep for update methods
+   * 
+   * @private
+   * @type {Number}
+   */
+  #targetFrameTime = 1000 / this.#targetFPS;
 
   /**
    * holds ID of animation frame request
@@ -239,17 +265,26 @@ export default class Engine {
       let dt = timestamp - this.#prevTimestamp;
       this.#prevTimestamp = timestamp;
 
+      this.#lag += dt;
+
       // calculate current FPS
       this.#debug.FPS = 1000 / dt;
 
+      while(this.#lag >= this.#targetFrameTime) {
+        // call event handlers for relevant events
+        this.#eventHandlers["update"].forEach(handler => handler(this.#targetFrameTime, this.environment));
+
+        // update all actors
+        this.actors.forEach(actor => actor.update(this.#targetFrameTime, this.environment));
+
+        this.#lag -= this.#targetFrameTime;
+      }
+
+      // interpolate between lag and target frame time
+      const interp = this.#lag / this.#targetFrameTime;
+
       // call draw method to draw relevant actors
-      this.#draw(this.ctx);
-
-      // update relevant actors
-      this.actors.forEach(actor => actor.update(dt, this.environment));
-
-      // call event handlers for relevant events
-      this.#eventHandlers["update"].forEach(handler => handler(dt, this.environment));
+      this.#draw(interp);
 
       // filter actors array by those that are NOT queued for disposal
       this.actors.filter(actor => !actor.disposalQueued);
@@ -264,14 +299,14 @@ export default class Engine {
    * @private
    * @param {CanvasRenderingContext2D} ctx - rendering context of canvas
    */
-  #draw = () => {
+  #draw = (interp) => {
     // clear canvas
     this.ctx.clearRect(0, 0, this.environment.width, this.environment.height);
     // reset context fill color
     this.ctx.fillStyle = this.environment.background;
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
 
-    this.actors.forEach(actor => actor.draw(this.ctx));
+    this.actors.forEach(actor => actor.draw(this.ctx, interp));
 
     // Draw FPS on screen, if enabled
     if (this.#debug.showFPS) {
@@ -279,6 +314,7 @@ export default class Engine {
       if (!isNaN(this.#debug.FPS)) {
         this.ctx.fillText("FPS: " + Math.round(this.#debug.FPS), 5, 15);
         this.ctx.fillText("dt: " + (1000 / this.#debug.FPS), 5, 25);
+        this.ctx.fillText("interp: " + (1000 / interp), 5, 35);
       }
     }
   }
