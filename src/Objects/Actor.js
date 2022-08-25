@@ -1,3 +1,5 @@
+import { vec } from "../Math/Vector";
+
 /**
  * An actor function represents an actor that can be placed within the canvas.
  * @param {Function} draw a draw function that is called every frame
@@ -15,6 +17,9 @@ export default class Actor {
     this.vel = options.vel ?? { x: 0, y: 0 };
     this.pos = options.pos ?? { x: 0, y: 0 };
 
+    this.last.pos = this.pos;
+    this.last.vel = this.vel;
+
   }
 
   // ****************************************************************
@@ -27,22 +32,34 @@ export default class Actor {
   disposalQueued = false;
 
   /**
+   * Struct of last calculated state of actor
+   */
+  last = {
+    pos: vec(),
+    vel: vec(),
+  };
+
+  /**
    * Calls draw callback function for actor.
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
+   * @param {Number} delta - interpolated time between current delta and target timestep
    */
-  draw = (ctx) => {
-    this.#drawCallback(ctx);
+  draw = (ctx, delta) => {
+    this.#drawCallback(ctx, delta);
   }
 
   /**
    * Calls update callback function for actor
-   * @param {Number} dt - update delta time
+   * @param {Number} timestep - update timestep
    * @param {Object} env - environment variables defined by engine
    */
-  update = (dt, env) => {
-    this.vel.x += env.physics.accel.x / dt;
-    this.vel.y += env.physics.accel.y / dt;
-    this.#updateCallback(dt);
+  update = (timestep, env) => {
+    this.last.pos = this.pos;
+    this.last.vel = this.vel;
+
+    this.vel.x += env.physics.accel.x / timestep;
+    this.vel.y += env.physics.accel.y / timestep;
+    this.#updateCallback(timestep);
   }
 
   // ****************************************************************

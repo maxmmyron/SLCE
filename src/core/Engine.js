@@ -229,6 +229,8 @@ export default class Engine {
    * 
    * @private
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
+   * 
+   * todo: https://isaacsukin.com/news/2015/01/detailed-explanation-javascript-game-loops-and-timing#first-attempt
    */
   #update = (timestamp) => {
     if (!this.#isPaused) {
