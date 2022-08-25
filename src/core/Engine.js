@@ -256,41 +256,45 @@ export default class Engine {
    * @private
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    * 
-   * todo: https://isaacsukin.com/news/2015/01/detailed-explanation-javascript-game-loops-and-timing#first-attempt
    */
   #update = (timestamp) => {
-    if (!this.#isPaused) {
+    // calculate time between frames
+    let dt = timestamp - this.#prevTimestamp;
+    this.#prevTimestamp = timestamp;
 
-      // calculate time between frames
-      let dt = timestamp - this.#prevTimestamp;
-      this.#prevTimestamp = timestamp;
+    this.#lag += dt;
 
-      this.#lag += dt;
+    // calculate current FPS
+    this.#debug.FPS = 1000 / dt;
 
-      // calculate current FPS
-      this.#debug.FPS = 1000 / dt;
+    while (this.#lag >= this.#targetFrameTime) {
+      this.#performUpdates();
 
-      while(this.#lag >= this.#targetFrameTime) {
-        // call event handlers for relevant events
-        this.#eventHandlers["update"].forEach(handler => handler(this.#targetFrameTime, this.environment));
-
-        // update all actors
-        this.actors.forEach(actor => actor.update(this.#targetFrameTime, this.environment));
-
-        this.#lag -= this.#targetFrameTime;
-      }
-
-      // interpolate between lag and target frame time
-      const interp = this.#lag / this.#targetFrameTime;
-
-      // call draw method to draw relevant actors
-      this.#draw(interp);
-
-      // filter actors array by those that are NOT queued for disposal
-      this.actors.filter(actor => !actor.disposalQueued);
+      this.#lag -= this.#targetFrameTime;
     }
 
+    // interpolate between lag and target frame time
+    const interp = this.#lag / this.#targetFrameTime;
+
+    // TODO: move draw call to wrapper method (like update) and check for pause state
+    // call draw method to draw relevant actors
+    this.#draw(interp);
+
+    // filter actors array by those that are NOT queued for disposal
+    this.actors.filter(actor => !actor.disposalQueued);
+
+
     this.#animationFrameID = requestAnimationFrame(this.#update);
+  }
+
+  #performUpdates = () => {
+    if(this.#isPaused) return;
+
+    // call event handlers for relevant events
+    this.#eventHandlers["update"].forEach(handler => handler(this.#targetFrameTime, this.environment));
+
+    // update all actors
+    this.actors.forEach(actor => actor.update(this.#targetFrameTime, this.environment));
   }
 
   /**
