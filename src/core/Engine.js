@@ -314,7 +314,8 @@ export default class Engine {
       if (!isNaN(this.#debug.FPS)) {
         this.ctx.fillText("FPS: " + Math.round(this.#debug.FPS), 5, 15);
         this.ctx.fillText("dt: " + (1000 / this.#debug.FPS), 5, 25);
-        this.ctx.fillText("interp: " + (1000 / interp), 5, 35);
+        this.ctx.fillText("lag: " + this.#lag, 5, 35);
+        this.ctx.fillText("interp: " + interp, 5, 45);
       }
     }
   }
