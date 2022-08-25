@@ -42,10 +42,15 @@ export default class Actor {
   /**
    * Calls draw callback function for actor.
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
-   * @param {Number} delta - interpolated time between current delta and target timestep
+   * @param {Number} interp - interpolated time between current delta and target timestep
    */
-  draw = (ctx, delta) => {
-    this.#drawCallback(ctx, delta);
+  draw = (ctx, interp) => {
+    // set pos to interpolated position
+    this.pos = {
+      x: this.last.pos.x + (this.pos.x - this.last.pos.x) * interp,
+      y: this.last.pos.y + (this.pos.y - this.last.pos.y) * interp,
+    }
+    this.#drawCallback(ctx, interp);
   }
 
   /**
