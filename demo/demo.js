@@ -11,12 +11,9 @@ engine.environment.physics.accel.y = 3;
 
 const actorA = new Actor(
   (ctx, interp) => {
-    const interpPosX = actorA.last.pos.x + (actorA.pos.x - actorA.last.pos.x) * interp;
-    const interpPosY = actorA.last.pos.y + (actorA.pos.y - actorA.last.pos.y) * interp;
-    //const interpPos = add(actorA.last.pos, mult(sub(actorA.pos, actorA.last.pos), interp));
     ctx.fillStyle = "#000000";
     ctx.beginPath();
-    ctx.arc(interpPosX, interpPosY, 5, 0, Math.PI * 2, false);
+    ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
     ctx.fill();
   },
   (timestep) => {
