@@ -7,8 +7,6 @@ const engine = new Engine(canvas);
 
 engine.environment.physics.accel.y = 3;
 
-// todo: https://github.com/IceCreamYou/MainLoop.js/blob/gh-pages/demo/index.html
-
 const actorA = new Actor(
   (ctx, interp) => {
     ctx.fillStyle = "#000000";
