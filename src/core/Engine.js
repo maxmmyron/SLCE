@@ -196,6 +196,15 @@ export default class Engine {
   #targetFrameTime = 1000 / this.#targetFPS;
 
   /**
+   * Maximum number of updates to perform in a single frame before panicing.
+   *
+   * @private
+   * @type {Number}
+   * @default 240
+   */
+  #maxUpdatesPerFrame = 240;
+
+  /**
    * holds ID of animation frame request
    *
    * @private
@@ -229,6 +238,8 @@ export default class Engine {
    *
    */
   #update = (timestamp) => {
+    this.#animationFrameID = requestAnimationFrame(this.#update);
+
     // calculate time between frames
     let dt = timestamp - this.#prevTimestamp;
     this.#prevTimestamp = timestamp;
@@ -238,10 +249,16 @@ export default class Engine {
     // calculate current FPS
     this.#debug.FPS = 1000 / dt;
 
+    let numUpdates = 0;
     while (this.#lag >= this.#targetFrameTime) {
       this.#attemptPhysicsUpdates();
 
       this.#lag -= this.#targetFrameTime;
+
+      if (++numUpdates >= this.#maxUpdatesPerFrame) {
+        this.#lag = 0;
+        break;
+      }
     }
 
     // interpolate between lag and target frame time
@@ -252,8 +269,6 @@ export default class Engine {
 
     // filter actors array by those that are NOT queued for disposal
     this.#actors.filter((actor) => !actor.disposalQueued);
-
-    this.#animationFrameID = requestAnimationFrame(this.#update);
   };
 
   #attemptPhysicsUpdates = () => {
