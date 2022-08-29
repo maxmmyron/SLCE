@@ -8,7 +8,6 @@ import { vec } from "../Math/Vector";
  */
 export default class Actor {
   constructor(drawCallback, updateCallback, options = {}) {
-
     this.#drawCallback = drawCallback;
     this.#updateCallback = updateCallback;
 
@@ -19,7 +18,6 @@ export default class Actor {
 
     this.last.pos = this.pos;
     this.last.vel = this.vel;
-
   }
 
   // ****************************************************************
@@ -49,9 +47,9 @@ export default class Actor {
     this.pos = {
       x: this.last.pos.x + (this.pos.x - this.last.pos.x) * interp,
       y: this.last.pos.y + (this.pos.y - this.last.pos.y) * interp,
-    }
+    };
     this.#drawCallback(ctx, interp);
-  }
+  };
 
   /**
    * Calls update callback function for actor
@@ -65,20 +63,20 @@ export default class Actor {
     this.vel.x += env.physics.accel.x / timestep;
     this.vel.y += env.physics.accel.y / timestep;
     this.#updateCallback(timestep);
-  }
+  };
 
   // ****************************************************************
   // Private defs
 
   /**
    * Callback function for actor's draw method
-   * @private 
+   * @private
    */
   #drawCallback;
 
   /**
    * Callback function for actor's update method
-   * @private 
+   * @private
    */
   #updateCallback;
 }
