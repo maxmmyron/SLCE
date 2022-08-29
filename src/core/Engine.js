@@ -36,7 +36,7 @@ export default class Engine {
       },
     };
 
-    this.eventHandler = new EventHandler(["update", "pause", "resume"]);
+    this.eventHandler = new EventHandler(["update", "draw", "pause", "resume"]);
 
     // listen for resize events and update canvas size
     document.addEventListener("resize", (e) => {
@@ -63,10 +63,10 @@ export default class Engine {
    * Starts engine update loop. Used only once at startup.
    */
   start = () => {
-    if (!this.#hasInit) {
+    if (!this.#hasStart) {
       this.#fixDPI();
       this.#animationFrameID = requestAnimationFrame(this.#update);
-      this.#hasInit = true;
+      this.#hasStart = true;
       this.#isPaused = false;
     } else {
       throw new Error(`Error starting engine: engine has already started.`);
@@ -248,12 +248,10 @@ export default class Engine {
     const interp = this.#lag / this.#targetFrameTime;
 
     // call draw method to draw relevant actors
-    this.eventHandler.draw(interp);
-
-    this.#draw();
+    this.#draw(interp);
 
     // filter actors array by those that are NOT queued for disposal
-    this.actors.filter((actor) => !actor.disposalQueued);
+    this.#actors.filter((actor) => !actor.disposalQueued);
 
     this.#animationFrameID = requestAnimationFrame(this.#update);
   };
@@ -262,12 +260,12 @@ export default class Engine {
     if (this.#isPaused) return;
 
     // call update event handlers for relevant events
-    this.#eventHandlers["update"].forEach((handler) =>
+    this.eventHandler.eventHandlers["update"].forEach((handler) =>
       handler(this.#targetFrameTime, this.environment)
     );
 
     // update all actors
-    this.actors.forEach((actor) =>
+    this.#actors.forEach((actor) =>
       actor.update(this.#targetFrameTime, this.environment)
     );
   };
@@ -289,9 +287,11 @@ export default class Engine {
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
 
     // call draw event handlers for relevant events
-    this.#eventHandlers["draw"].forEach((handler) => handler(interp, this.ctx));
+    this.eventHandler.eventHandlers["draw"].forEach((handler) =>
+      handler(interp, this.ctx)
+    );
 
-    this.actors.forEach((actor) => actor.draw(this.ctx, interp));
+    this.#actors.forEach((actor) => actor.draw(this.ctx, interp));
 
     // Draw FPS on screen, if enabled
     if (this.#debug.showFPS) {

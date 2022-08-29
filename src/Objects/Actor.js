@@ -159,7 +159,7 @@ export default class Actor {
     this.vel.y += env.physics.accel.y / timestep;
 
     if (this.eventHandler.eventHandlers["update"][0])
-      this.eventHandler.eventHandlers["update"][0](dt, env);
+      this.eventHandler.eventHandlers["update"][0](timestep, env);
   };
 
   // ****************************************************************
