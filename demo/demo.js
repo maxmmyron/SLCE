@@ -1,5 +1,5 @@
 import Engine from "../src/core/Engine.js";
-import { vec } from "../src/Math/Vector.js";
+import { add, sub, mult, vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
 
 const canvas = document.getElementById("c");
@@ -8,31 +8,16 @@ const engine = new Engine(canvas);
 engine.environment.physics.accel.y = 3;
 
 const actorA = new Actor(
-  (ctx) => {
+  (ctx, interp) => {
     ctx.fillStyle = "#000000";
     ctx.beginPath();
     ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
     ctx.fill();
   },
-  (dt) => {
-    actorA.pos.x += 5 / dt;
-  },
-  {
-    pos: vec(25,50),
-  }
-);
-
-const actorB = new Actor(
-  (ctx) => {
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(actorB.pos.x, actorB.pos.y, 5, 0, Math.PI * 2, false);
-    ctx.fill();
-  },
-  (dt) => {
-    actorB.pos.y += actorB.vel.y / dt;
-    if(actorB.pos.y > engine.environment.height) {
-      actorB.pos.y = 0;
+  (timestep) => {
+    actorA.pos.y += actorA.vel.y / timestep;
+    if(actorA.pos.y > engine.environment.height) {
+      actorA.pos.y = 0;
     }
   },
   {
@@ -41,7 +26,6 @@ const actorB = new Actor(
 );
 
 engine.actors.push(actorA);
-engine.actors.push(actorB);
 
 const handlePause = () => console.log("paused");
 const handleResume = () => console.log("resumed");
