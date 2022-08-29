@@ -22,18 +22,12 @@ new Array(9).fill(0).forEach((_, i) => {
     ctx.fill();
   });
 
-  actor.eventHandler.addHandler(
-    "update",
-    (dt) => {
-      actor.pos.x += actor.vel.x;
-      if (actor.pos.x - 24 > engine.environment.width) {
-        actor.pos.x = -24;
-      }
-    },
-    {
-      pos: vec(25, 50),
+  actor.eventHandler.addHandler("update", (dt) => {
+    actor.pos.x += actor.vel.x;
+    if (actor.pos.x - 24 > engine.environment.width) {
+      actor.pos.x = -24;
     }
-  );
+  });
 
   actor.preload(
     () => {

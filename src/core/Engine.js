@@ -60,9 +60,7 @@ export default class Engine {
   eventHandler;
 
   /**
-   * Returns whether engine is paused or not
-   *
-   * @return {Boolean} true if engine is paused, false otherwise
+   * Starts engine update loop. Used only once at startup.
    */
   start = () => {
     if (!this.#hasInit) {
@@ -215,59 +213,13 @@ export default class Engine {
   #isPaused = false;
 
   /**
-   * Stores whether Engine has been initialized or not
+   * Stores whether Engine has been started or not
    *
    * @private
    * @type {Boolean}
    * @default false
    */
-  #hasInit = false;
-
-  /**
-   * Enum of possible event types to be handled
-   *
-   * @private
-   * @type {Array}
-   *
-   * @property {String} update - triggered on during each successfuly update attempt. This may run more often than draw events due to lag
-   * @property {String} draw - triggered on each successful draw update attempt
-   * @property {String} pause - triggered on engine pause
-   * @property {String} resume - triggered on engine resume
-   */
-  #validEvents = ["update", "draw", "pause", "resume"];
-
-  /**
-   * Array of event handlers for each event type
-   *
-   * @private
-   * @type {Object}
-   *
-   * @property {Array} update - array of update event handlers
-   * @property {Array} pause - array of pause event handlers
-   * @property {Array} resume - array of resume event handlers
-   */
-
-  #eventHandlers = {
-    update: [],
-    pause: [],
-    resume: [],
-  };
-
-  /**
-   * Initializes canvas and sets up event listeners
-   *
-   * @private
-   */
-  #init = () => {
-    // listen for resize events and update canvas size
-    document.addEventListener("resize", (e) => {
-      dimensions = this.#fixDPI();
-      // set canvas width and height to scaled width and height
-      this.environment.width = dimensions[0];
-      this.environment.height = dimensions[1];
-    });
-    this.#fixDPI();
-  };
+  #hasStart = false;
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -296,7 +248,9 @@ export default class Engine {
     const interp = this.#lag / this.#targetFrameTime;
 
     // call draw method to draw relevant actors
-    this.#draw(interp);
+    this.eventHandler.draw(interp);
+
+    this.#draw();
 
     // filter actors array by those that are NOT queued for disposal
     this.actors.filter((actor) => !actor.disposalQueued);

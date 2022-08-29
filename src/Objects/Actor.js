@@ -9,10 +9,7 @@ import EventHandler from "../util/EventHandler";
  * @param {Object} options optional arguments for velocity and position
  */
 export default class Actor {
-  constructor(drawCallback, updateCallback, options = {}) {
-    this.#drawCallback = drawCallback;
-    this.#updateCallback = updateCallback;
-
+  constructor(options = {}) {
     // set velocity and position to values passed in options;
     // if not provided, set to 0
     this.vel = options.vel ?? vec();
@@ -168,25 +165,6 @@ export default class Actor {
   // ****************************************************************
   // Private defs
 
-  /**
-   * Callback function for actor's draw method
-   * @private
-   */
-  #drawCallback;
-
-  /**
-   * Callback function for actor's update method
-   * @private
-   */
-  #updateCallback;
-
-  /**
-   * Draws relevant texture layers to canvas.
-   * @private
-   *
-   * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
-   * @param {Array<TextureLayer>} textureLayers - array of texture layers to draw
-   */
   #drawTextureLayers = (ctx, textureLayers) => {
     textureLayers.forEach((textureLayer) => {
       const offsetPos = sub(this.pos, div(textureLayer.options.size, 2));
