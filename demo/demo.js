@@ -12,7 +12,7 @@ engine.environment.physics.accel.y = 0;
 new Array(9).fill(0).forEach((_, i) => {
   const actor = new Actor({
     pos: vec(48, i * 64 + 48),
-    vel: vec((i + 1) * 1.1, 0),
+    vel: vec(i + 1, 0),
   });
 
   actor.eventHandler.addHandler("draw", (ctx) => {
@@ -38,10 +38,10 @@ new Array(9).fill(0).forEach((_, i) => {
   );
 });
 
-new Array(16).fill(0).forEach((_, i) => {
+new Array(9).fill(0).forEach((_, i) => {
   const actor = new Actor({
     pos: vec(i * 64 + 48, 48),
-    vel: vec(0, (i + 1) * 1.1),
+    vel: vec(0, i + 1),
   });
 
   actor.eventHandler.addHandler("draw", (ctx) => {
@@ -68,3 +68,7 @@ new Array(16).fill(0).forEach((_, i) => {
 });
 
 engine.start();
+
+setTimeout(() => {
+  engine.pause();
+}, 10000);
