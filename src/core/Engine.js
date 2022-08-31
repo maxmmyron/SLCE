@@ -68,6 +68,7 @@ export default class Engine {
       this.#animationFrameID = requestAnimationFrame(this.#update);
       this.#hasStart = true;
       this.#isPaused = false;
+      this.#debug.startTime = performance.now();
     } else {
       throw new Error(`Error starting engine: engine has already started.`);
     }
@@ -159,6 +160,8 @@ export default class Engine {
     FPS: 0,
     showFPS: true,
     logPerformanceMetrics: true,
+    updatesSinceStart: 0,
+    startTime: 0,
   };
 
   /**
@@ -255,6 +258,7 @@ export default class Engine {
 
       this.#lag -= this.#targetFrameTime;
 
+      this.#debug.updatesSinceStart++;
       if (++numUpdates >= this.#maxUpdatesPerFrame) {
         this.#lag = 0;
         break;
@@ -312,10 +316,20 @@ export default class Engine {
     if (this.#debug.showFPS) {
       this.ctx.fillStyle = "#333333"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
       if (!isNaN(this.#debug.FPS)) {
-        this.ctx.fillText("FPS: " + Math.round(this.#debug.FPS), 5, 15);
+        this.ctx.fillText("FPS: " + this.#debug.FPS, 5, 15);
         this.ctx.fillText("dt: " + 1000 / this.#debug.FPS, 5, 25);
         this.ctx.fillText("lag: " + this.#lag, 5, 35);
         this.ctx.fillText("interp: " + interp, 5, 45);
+        this.ctx.fillText(
+          "total updates: " + this.#debug.updatesSinceStart,
+          5,
+          55
+        );
+        this.ctx.fillText(
+          "runtime: " + (performance.now() - this.#debug.startTime),
+          5,
+          65
+        );
       }
     }
   };
