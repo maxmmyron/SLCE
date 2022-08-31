@@ -60,6 +60,25 @@ export default class Engine {
   eventHandler;
 
   /**
+   * Struct of relevant properties for engine
+   *
+   * @unused
+   * @type {Object}
+   */
+  properties = {
+    isPaused,
+    isInitalized,
+    debug: {
+      enableDebugMetrics,
+    },
+    update: {
+      targetFPS,
+      frameTimestep: 1 / targetFPS,
+      maxUpdatesPerFrame,
+    },
+  };
+
+  /**
    * Starts engine update loop. Used only once at startup.
    */
   start = () => {
@@ -80,7 +99,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    this.eventHandler.eventHandlers["pause"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["pause"].forEach((callback) => callback());
   };
 
   /**
@@ -88,7 +107,7 @@ export default class Engine {
    */
   resume = () => {
     this.#isPaused = false;
-    this.eventHandler.eventHandlers["resume"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["resume"].forEach((callback) => callback());
   };
 
   /**
@@ -279,8 +298,8 @@ export default class Engine {
     if (this.#isPaused) return;
 
     // call update event handlers for relevant events
-    this.eventHandler.eventHandlers["update"].forEach((handler) =>
-      handler(this.#targetFrameTime, this.environment)
+    this.eventHandler.eventHandlers["update"].forEach((callback) =>
+      callback(this.#targetFrameTime, this.environment)
     );
 
     // update all actors
@@ -306,8 +325,8 @@ export default class Engine {
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
 
     // call draw event handlers for relevant events
-    this.eventHandler.eventHandlers["draw"].forEach((handler) =>
-      handler(interp, this.ctx)
+    this.eventHandler.eventHandlers["draw"].forEach((callback) =>
+      callback(interp, this.ctx)
     );
 
     this.#actors.forEach((actor) => actor.draw(this.ctx, interp));

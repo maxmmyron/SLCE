@@ -6,51 +6,56 @@ import EventHandler from "../util/EventHandler";
  * An actor function represents an actor that can be placed within the canvas.
  * @param {Function} draw a draw function that is called every frame
  * @param {Function} update an update function that is called every frame
- * @param {Object} options optional arguments for velocity and position
+ * @param {Object} initialProperties optional arguments for velocity and position
+ * @property {Vector} initialProperties.pos - starting position of actor (with respect to origin of canvas)
+ * @property {Vector} initialProperties.vel - velocity of actor
+ * @property {Number} initialProperties.bounds.size - size of actor's bounds
+ * @property {Number} initialProperties.zIndex - z-index of actor. -1 will draw actor behind canvas.
  */
 export default class Actor {
-  constructor(options = {}) {
-    // set velocity and position to values passed in options;
+  constructor(initialProperties = {}) {
+    // set velocity and position to values passed in initialProperties;
     // if not provided, set to 0
-    this.vel = options.vel ?? vec();
-    this.pos = options.pos ?? vec();
+    this.position = initialProperties.position ?? vec();
+    this.velocity = initialProperties.velocity ?? vec();
 
+    this.size = initialProperties.size ?? vec();
+
+    // create a new event handler for handling events called during preload, draw, and update cycles.
     this.eventHandler = new EventHandler(["preload", "draw", "update"]);
 
-    this.last.pos = this.pos;
-    this.last.vel = this.vel;
+    this.#last.pos = this.position;
+    this.#last.vel = this.velocity;
   }
 
   // ****************************************************************
   // Pubic defs
 
   /**
-   * An EventHandler object for handling engine events
+   * An EventHandler object for accessing and handling engine events
    *
-   * @private
    * @type {EventHandler}
    */
   eventHandler;
 
   /**
-   * optional arguments for drawing actor
+   * Current position of actor. Defaults to a zero-vector on initialization
    *
-   * @type {Object} options
-   * @property {Vector} options.pos - starting position of actor (with respect to origin of canvas)
-   * @property {Vector} options.size - size of actor
-   * @property {Vector} options.vel - velocity of actor
-   * @property {Number} options.rotation - rotation of actor
-   * @property {Number} options.opacity - opacity of actor
-   * @property {Number} options.zIndex - z-index of actor. -1 will draw actor behind canvas.
+   * @type {Vector}
    */
-  options = {
-    pos: vec(),
-    size: vec(), // unimplemented
-    vel: vec(),
-    rotation: 0, // unimplemented
-    opacity: 1, // unimplemented
-    zIndex: 0, // unimplemented
-  };
+  position;
+
+  /**
+   * Current velocity of actor. Defaults to a zero-vector on initialization
+   *
+   * @type {Vector}
+   */
+  velocity;
+
+  /**
+   * Size of bounds actor, as calculated from center of actor. Defaults to a zero-vector on initialization
+   */
+  size;
 
   /**
    * An array of TextureLayer objects that are incrementally drawn to the canvas for each draw cycle.
@@ -60,22 +65,26 @@ export default class Actor {
   textures = [];
 
   /**
+   * A struct containing actor properties beyond those most commonly used.
+   *
+   * @type {Object}
+   *
+   * @property {Number} zIndex z-index of actor; used in ordering draw of actor. -1 will draw actor behind canvas.
+   */
+  properties = {
+    zIndex,
+  };
+
+  /**
    * Notifies engine that an actor should be disposed of at next update cycle.
    * @type {Boolean}
    */
   disposalQueued = false;
 
   /**
-   * Struct of last calculated state of actor
-   */
-  last = {
-    pos: vec(),
-    vel: vec(),
-  };
-
-  /**
+   * Adds a new texture layer to the actor.
    *
-   * @param {TextureLayer} textureLayer
+   * @param {TextureLayer} textureLayer TextureLayer object to attempt to add to actor
    */
   addTextureLayer = (textureLayer) =>
     new Promise((resolve, reject) => {
@@ -101,34 +110,39 @@ export default class Actor {
    * @returns {Promise} a promise that resolves when the preload function is finished
    *
    */
-  preload = (preloadCallback, postloadCallback) =>
-    new Promise((resolve, reject) => {
+  preload = (preloadCallback, postloadCallback) => {
+    return new Promise((resolve, reject) => {
       resolve(preloadCallback());
     })
       .then(() => {
+        this.eventHandler.eventHandlers["preload"].forEach((callback) =>
+          callback()
+        );
         postloadCallback();
       })
       .catch((err) => {
         reject(`Error in preload function: ${err}`);
       });
+  };
 
   /**
    * Calls draw callback function for actor.
+   *
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
   draw = (ctx, interp) => {
     // set pos to interpolated position
     this.pos = {
-      x: this.last.pos.x + (this.pos.x - this.last.pos.x) * interp,
-      y: this.last.pos.y + (this.pos.y - this.last.pos.y) * interp,
+      x: this.#last.pos.x + (this.position.x - this.#last.pos.x) * interp,
+      y: this.#last.pos.y + (this.position.y - this.#last.pos.y) * interp,
     };
 
     const negTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.options.zIndex < 0
+      (textureLayer) => textureLayer.initialProperties.zIndex < 0
     );
     const posTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.options.zIndex >= 0
+      (textureLayer) => textureLayer.initialProperties.zIndex >= 0
     );
 
     // draw texture layers with a z-index below 0
@@ -148,15 +162,16 @@ export default class Actor {
 
   /**
    * Calls update callback function for actor
+   *
    * @param {Number} timestep - update timestep
    * @param {Object} env - environment variables defined by engine
    */
   update = (timestep, env) => {
-    this.last.pos = this.pos;
-    this.last.vel = this.vel;
+    this.#last.pos = this.position;
+    this.#last.vel = this.velocity;
 
-    this.vel.x += env.physics.accel.x / timestep;
-    this.vel.y += env.physics.accel.y / timestep;
+    this.velocity.x += env.physics.accel.x / timestep;
+    this.velocity.y += env.physics.accel.y / timestep;
 
     if (this.eventHandler.eventHandlers["update"][0])
       this.eventHandler.eventHandlers["update"][0](timestep, env);
@@ -165,15 +180,32 @@ export default class Actor {
   // ****************************************************************
   // Private defs
 
+  /**
+   * A struct containing last calculated position and velocity of actor. Used when interpolating between draw cycles.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Vector} pos - last calculated position of actor
+   * @property {Vector} vel - last calculated velocity of actor
+   */
+  #last = {
+    pos: vec(),
+    vel: vec(),
+  };
+
   #drawTextureLayers = (ctx, textureLayers) => {
     textureLayers.forEach((textureLayer) => {
-      const offsetPos = sub(this.pos, div(textureLayer.options.size, 2));
+      const offsetPos = sub(
+        this.pos,
+        div(textureLayer.initialProperties.size, 2)
+      );
       ctx.drawImage(
         textureLayer.imageBitmap,
         offsetPos.x,
         offsetPos.y,
-        textureLayer.options.size.x,
-        textureLayer.options.size.y
+        textureLayer.initialProperties.size.x,
+        textureLayer.initialProperties.size.y
       );
     });
   };
