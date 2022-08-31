@@ -11,21 +11,21 @@ engine.environment.physics.accel.y = 0;
 
 new Array(9).fill(0).forEach((_, i) => {
   const actor = new Actor({
-    pos: vec(48, i * 64 + 48),
-    vel: vec(i + 1, 0),
+    position: vec(48, i * 64 + 48),
+    velocity: vec(i + 1, 0),
   });
 
   actor.eventHandler.addHandler("draw", (ctx) => {
     ctx.fillStyle = "#000000";
     ctx.beginPath();
-    ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
+    ctx.arc(actor.position.x, actor.position.y, 5, 0, Math.PI * 2, false);
     ctx.fill();
   });
 
   actor.eventHandler.addHandler("update", (dt) => {
-    actor.pos.x += actor.vel.x;
-    if (actor.pos.x - 24 > engine.environment.width) {
-      actor.pos.x = -24;
+    actor.position.x += actor.velocity.x;
+    if (actor.position.x - 24 > engine.environment.width) {
+      actor.position.x = -24;
     }
   });
 
@@ -40,21 +40,21 @@ new Array(9).fill(0).forEach((_, i) => {
 
 new Array(9).fill(0).forEach((_, i) => {
   const actor = new Actor({
-    pos: vec(i * 64 + 48, 48),
-    vel: vec(0, i + 1),
+    position: vec(i * 64 + 48, 48),
+    velocity: vec(0, i + 1),
   });
 
   actor.eventHandler.addHandler("draw", (ctx) => {
     ctx.fillStyle = "#000000";
     ctx.beginPath();
-    ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
+    ctx.arc(actor.position.x, actor.position.y, 5, 0, Math.PI * 2, false);
     ctx.fill();
   });
 
   actor.eventHandler.addHandler("update", (dt) => {
-    actor.pos.y += actor.vel.y;
-    if (actor.pos.y - 24 > engine.environment.height) {
-      actor.pos.y = -24;
+    actor.position.y += actor.velocity.y;
+    if (actor.position.y - 24 > engine.environment.height) {
+      actor.position.y = -24;
     }
   });
 
