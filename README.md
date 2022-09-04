@@ -1,6 +1,8 @@
 
 # SLCE
 
+## (This README is currently out of date and will be updated.)
+
 ###### (pronounced "slice")
 
  a **s**weet **l**ittle **c**anvas **e**ngine created by [mmyron](https://mmyron.com/)
