@@ -21,8 +21,8 @@ export default class Actor {
 
     this.size = properties.size ?? vec();
 
-    // create a new event handler for handling events called during preload, draw, and update cycles.
-    this.eventHandler = new EventHandler(["preload", "draw", "update"]);
+    // create a new event handler for handling events called during clip, draw, and update cycles.
+    this.eventHandler = new EventHandler(["onClip", "draw", "update"]);
 
     this.#last.pos = this.pos;
     this.#last.vel = this.vel;
@@ -110,18 +110,15 @@ export default class Actor {
    * @returns {Promise} a promise that resolves when the preload function is finished
    *
    */
-  preload = (preloadCallback, postloadCallback) => {
+  preload = (preloadCallback) => {
     return new Promise((resolve, reject) => {
       resolve(preloadCallback());
     })
-      .then(() => {
-        this.eventHandler.eventHandlers["preload"].forEach((callback) =>
-          callback()
-        );
-        postloadCallback();
+      .then((onFulfilledCallback) => {
+        onFulfilledCallback();
       })
       .catch((err) => {
-        reject(`Error in preload function: ${err}`);
+        reject(`Error attempting to preload actor: ${err}`);
       });
   };
 
@@ -132,6 +129,9 @@ export default class Actor {
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
   draw = (ctx, interp) => {
+    // ****************************************************************
+    // draw setup
+
     // interpolate position of actor based on interpolation value
     this.pos = {
       x: this.#last.pos.x + (this.pos.x - this.#last.pos.x) * interp,
@@ -144,6 +144,11 @@ export default class Actor {
     const posTextureLayers = this.textures.filter(
       (textureLayer) => textureLayer.properties.zIndex >= 0
     );
+
+    // ****************************************************************
+    // perform draw operations
+
+    ctx.save();
 
     // draw texture layers with a z-index below 0
     if (negTextureLayers.length > 0) {
@@ -158,6 +163,8 @@ export default class Actor {
     if (posTextureLayers.length > 0) {
       this.#drawTextureLayers(ctx, posTextureLayers);
     }
+
+    ctx.restore();
   };
 
   /**
