@@ -9,67 +9,24 @@ const engine = new Engine(canvas);
 
 engine.environment.physics.accel.y = 0;
 
-new Array(9).fill(0).forEach((_, i) => {
-  const actor = new Actor({
-    pos: vec(48, i * 64 + 48),
-    vel: vec(i + 1, 0),
-  });
-
-  actor.eventHandler.addHandler("draw", (ctx) => {
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
-    ctx.fill();
-  });
-
-  actor.eventHandler.addHandler("update", (dt) => {
-    actor.pos.x += actor.vel.x;
-    if (actor.pos.x - 24 > engine.environment.width) {
-      actor.pos.x = -24;
-    }
-  });
-
-  actor.preload(
-    () => {
-      const textureLayer = new TextureLayer(test, { size: vec(48, 48) });
-      actor.addTextureLayer(textureLayer);
-    },
-    () => engine.addActor(actor)
-  );
+const actorA = new Actor({
+  pos: vec(engine.environment.width / 2 - 64, engine.environment.height / 2),
+  vel: vec(),
+  bounds: {
+    pos: vec(-16, -16),
+    size: vec(32),
+  },
 });
 
-// new Array(9).fill(0).forEach((_, i) => {
-//   const actor = new Actor({
-//     position: vec(i * 64 + 48, 48),
-//     velocity: vec(0, i + 1),
-//   });
-
-//   actor.eventHandler.addHandler("draw", (ctx) => {
-//     ctx.fillStyle = "#000000";
-//     ctx.beginPath();
-//     ctx.arc(actor.pos.x, actor.pos.y, 5, 0, Math.PI * 2, false);
-//     ctx.fill();
-//   });
-
-//   actor.eventHandler.addHandler("update", (dt) => {
-//     actor.pos.y += actor.vel.y;
-//     if (actor.pos.y - 24 > engine.environment.height) {
-//       actor.pos.y = -24;
-//     }
-//   });
-
-//   actor.preload(
-//     () => {
-//       const textureLayer = new TextureLayer(test, { size: vec(48, 48) });
-//       actor.addTextureLayer(textureLayer);
-//     },
-//     () => engine.addActor(actor)
-//   );
-// });
+actorA.eventHandler.addHandler("draw", (ctx) => {
+  ctx.save();
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  ctx.arc(actorA.pos.x, actorA.pos.y, 25, 0, Math.PI * 2, false);
+  ctx.clip();
+});
 
 engine.start();
-
-console.log(engine.getActors());
 
 setTimeout(() => {
   engine.pause();
