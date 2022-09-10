@@ -180,14 +180,14 @@ export default class Engine {
    * @private
    * @type {Object}
    *
+   * @property {Number} maxFrameUpdates - maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
    * @property {Number} targetFPS - target FPS for update loop to achieve during runtime
-   * @property {Number} frameTimestep - timestep of individual an individual frame in ms. Used as constant timestep for update method
-   * @property {Number} maxUpdatesPerFrame - maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
+   * @property {Number} targetFrameTimestep - timestep of individual an individual frame in ms. Used as constant timestep for update method
    */
   #updateProperties = {
-    maxUpdatesPerFrame: 240,
+    maxFrameUpdates: 240,
     targetFPS: 60,
-    frameTimestep: 1 / 60,
+    targetFrameTimestep: 1000 / 60,
   };
 
   /**
@@ -249,13 +249,15 @@ export default class Engine {
     this.#debugMetrics.FPS = 1000 / dt;
 
     let numUpdates = 0;
-    while (this.#updateMetrics.lag >= this.#updateProperties.targetFrameTime) {
+    while (
+      this.#updateMetrics.lag >= this.#updateProperties.targetFrameTimestep
+    ) {
       this.#attemptPhysicsUpdates();
 
-      this.#updateMetrics.lag -= this.#updateProperties.targetFrameTime;
+      this.#updateMetrics.lag -= this.#updateProperties.targetFrameTimestep;
 
       this.#debugMetrics.updatesSinceStart++;
-      if (++numUpdates >= this.#updateProperties.maxUpdatesPerFrame) {
+      if (++numUpdates >= this.#updateProperties.maxFrameUpdates) {
         this.#updateMetrics.lag = 0;
         break;
       }
@@ -263,7 +265,7 @@ export default class Engine {
 
     // interpolate between lag and target frame time
     const interp =
-      this.#updateMetrics.lag / this.#updateProperties.targetFrameTime;
+      this.#updateMetrics.lag / this.#updateProperties.targetFrameTimestep;
 
     // call draw method to draw relevant actors
     this.#draw(interp);
@@ -277,12 +279,12 @@ export default class Engine {
 
     // call update event handlers for relevant events
     this.eventHandler.eventHandlers["update"].forEach((callback) =>
-      callback(this.#updateProperties.targetFrameTime, this.environment)
+      callback(this.#updateProperties.targetFrameTimestep, this.environment)
     );
 
     // update all actors
     this.#actors.forEach((actor) =>
-      actor.update(this.#updateProperties.targetFrameTime, this.environment)
+      actor.update(this.#updateProperties.targetFrameTimestep, this.environment)
     );
   };
 
@@ -310,7 +312,7 @@ export default class Engine {
     this.#actors.forEach((actor) => actor.draw(this.ctx, interp));
 
     // Draw FPS on screen, if enabled
-    if (this.#debugProperties.showFPS) {
+    if (this.#debugProperties.isPerformanceDebugScreenEnabled) {
       this.ctx.fillStyle = "#333333"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
       if (!isNaN(this.#debugMetrics.FPS)) {
         this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
@@ -323,7 +325,8 @@ export default class Engine {
           55
         );
         this.ctx.fillText(
-          "runtime: " + (performance.now() - this.#debugMetrics.startTime),
+          "runtime: " +
+            (performance.now() - this.#debugMetrics.startTime) / 1000,
           5,
           65
         );

@@ -9,20 +9,20 @@ export default class TextureLayer {
    *
    * @param {String} texture - path to texture image file
    * @param {Object} initialProperties - opitonal arguments for texture layer
-   * @property {Number} initialProperties.x - starting x position of texture layer (with respect to x pos of actor)
-   * @property {Number} initialProperties.y - starting y position of texture layer (with respect to y pos of actor)
-   * @property {Number} initialProperties.width - width of texture layer
-   * @property {Number} initialProperties.height - height of texture layer
+   * @property {Vector} initialProperties.pos - position of texture layer
+   * @property {Vector} initialProperties.size - size of texture layer
    * @property {Number} initialProperties.zIndex - z-index of texture layer. -1 will draw texture behind actor.
    */
-  constructor(path, initialProperties = {}) {
+  constructor(path, properties = {}) {
     this.#path = path || null;
 
     // apply any options passed in; keep defaults if not provided
-    this.initialProperties = {
-      pos: initialProperties.pos ?? vec(),
-      vel: initialProperties.vel ?? vec(),
-      zIndex: initialProperties.zIndex ?? 0,
+    this.properties = {
+      pos: properties.pos ?? vec(),
+      size: properties.size ?? vec(48),
+      repeatX: properties.repeatX ?? false,
+      repeatY: properties.repeatY ?? false,
+      zIndex: properties.zIndex ?? 0,
     };
   }
 

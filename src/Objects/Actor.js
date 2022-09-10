@@ -13,19 +13,19 @@ import EventHandler from "../util/EventHandler";
  * @property {Number} initialProperties.zIndex - z-index of actor. -1 will draw actor behind canvas.
  */
 export default class Actor {
-  constructor(initialProperties = {}) {
+  constructor(properties = {}) {
     // set velocity and position to values passed in initialProperties;
     // if not provided, set to 0
-    this.position = initialProperties.position ?? vec();
-    this.velocity = initialProperties.velocity ?? vec();
+    this.pos = properties.pos ?? vec();
+    this.vel = properties.vel ?? vec();
 
-    this.size = initialProperties.size ?? vec();
+    this.size = properties.size ?? vec();
 
     // create a new event handler for handling events called during preload, draw, and update cycles.
     this.eventHandler = new EventHandler(["preload", "draw", "update"]);
 
-    this.#last.pos = this.position;
-    this.#last.vel = this.velocity;
+    this.#last.pos = this.pos;
+    this.#last.vel = this.vel;
   }
 
   // ****************************************************************
@@ -43,14 +43,14 @@ export default class Actor {
    *
    * @type {Vector}
    */
-  position;
+  pos;
 
   /**
    * Current velocity of actor. Defaults to a zero-vector on initialization
    *
    * @type {Vector}
    */
-  velocity;
+  vel;
 
   /**
    * Size of bounds actor, as calculated from center of actor. Defaults to a zero-vector on initialization
@@ -72,7 +72,7 @@ export default class Actor {
    * @property {Number} zIndex z-index of actor; used in ordering draw of actor. -1 will draw actor behind canvas.
    */
   properties = {
-    zIndex,
+    zIndex: 0,
   };
 
   /**
@@ -132,17 +132,17 @@ export default class Actor {
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
   draw = (ctx, interp) => {
-    // set pos to interpolated position
+    // interpolate position of actor based on interpolation value
     this.pos = {
-      x: this.#last.pos.x + (this.position.x - this.#last.pos.x) * interp,
-      y: this.#last.pos.y + (this.position.y - this.#last.pos.y) * interp,
+      x: this.#last.pos.x + (this.pos.x - this.#last.pos.x) * interp,
+      y: this.#last.pos.y + (this.pos.y - this.#last.pos.y) * interp,
     };
 
     const negTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.initialProperties.zIndex < 0
+      (textureLayer) => textureLayer.properties.zIndex < 0
     );
     const posTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.initialProperties.zIndex >= 0
+      (textureLayer) => textureLayer.properties.zIndex >= 0
     );
 
     // draw texture layers with a z-index below 0
@@ -167,11 +167,11 @@ export default class Actor {
    * @param {Object} env - environment variables defined by engine
    */
   update = (timestep, env) => {
-    this.#last.pos = this.position;
-    this.#last.vel = this.velocity;
+    this.#last.pos = this.pos;
+    this.#last.vel = this.vel;
 
-    this.velocity.x += env.physics.accel.x / timestep;
-    this.velocity.y += env.physics.accel.y / timestep;
+    this.vel.x += env.physics.accel.x / timestep;
+    this.vel.y += env.physics.accel.y / timestep;
 
     if (this.eventHandler.eventHandlers["update"][0])
       this.eventHandler.eventHandlers["update"][0](timestep, env);
@@ -196,16 +196,13 @@ export default class Actor {
 
   #drawTextureLayers = (ctx, textureLayers) => {
     textureLayers.forEach((textureLayer) => {
-      const offsetPos = sub(
-        this.pos,
-        div(textureLayer.initialProperties.size, 2)
-      );
+      const offsetPos = sub(this.pos, div(textureLayer.properties.size, 2));
       ctx.drawImage(
         textureLayer.imageBitmap,
         offsetPos.x,
         offsetPos.y,
-        textureLayer.initialProperties.size.x,
-        textureLayer.initialProperties.size.y
+        textureLayer.properties.size.x,
+        textureLayer.properties.size.y
       );
     });
   };
