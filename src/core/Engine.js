@@ -60,34 +60,17 @@ export default class Engine {
   eventHandler;
 
   /**
-   * Struct of relevant properties for engine
-   *
-   * @unused
-   * @type {Object}
-   */
-  properties = {
-    isPaused,
-    isInitalized,
-    debug: {
-      enableDebugMetrics,
-    },
-    update: {
-      targetFPS,
-      frameTimestep: 1 / targetFPS,
-      maxUpdatesPerFrame,
-    },
-  };
-
-  /**
    * Starts engine update loop. Used only once at startup.
    */
   start = () => {
-    if (!this.#hasStart) {
+    if (!this.#isStarted) {
       this.#fixDPI();
-      this.#animationFrameID = requestAnimationFrame(this.#update);
-      this.#hasStart = true;
+      this.#updateMetrics.animationFrameID = requestAnimationFrame(
+        this.#update
+      );
+      this.#isStarted = true;
       this.#isPaused = false;
-      this.#debug.startTime = performance.now();
+      this.#debugMetrics.startTime = performance.now();
     } else {
       throw new Error(`Error starting engine: engine has already started.`);
     }
@@ -160,82 +143,7 @@ export default class Engine {
   // Private defs
 
   /**
-   * An array of actors to be updated and drawn by the canvas
-   *
-   * @type {Array<Actor>}
-   */
-  #actors = [];
-
-  /**
-   * Struct for storing useful debug values
-   *
-   * @private
-   * @type {Object}
-   * @property {Number} debug.fps - current FPS
-   * @property {Boolean} debug.showFPS - whether to show FPS
-   *@property {Boolean} debug.logPerformanceMetrics - whether to log performance metrics
-   */
-  #debug = {
-    FPS: 0,
-    showFPS: true,
-    logPerformanceMetrics: true,
-    updatesSinceStart: 0,
-    startTime: 0,
-  };
-
-  /**
-   * Timestamp of last frame. Used to calculate delta time in update method
-   *
-   * @private
-   * @type {Number}
-   */
-  #prevTimestamp = 0;
-
-  /**
-   * Accumulating lag for update method. Used to smooth out update method.
-   *
-   * @private
-   * @type {Number}
-   */
-  #lag = 0;
-
-  /**
-   * Target FPS to reach when updating
-   *
-   * @private
-   * @type {Number}
-   * @default 60
-   */
-  #targetFPS = 60;
-
-  /**
-   * Target frame rate (in ms) to reach when updating.
-   * Used as contstant timestep for update methods
-   *
-   * @private
-   * @type {Number}
-   */
-  #targetFrameTime = 1000 / this.#targetFPS;
-
-  /**
-   * Maximum number of updates to perform in a single frame before panicing.
-   *
-   * @private
-   * @type {Number}
-   * @default 240
-   */
-  #maxUpdatesPerFrame = 240;
-
-  /**
-   * holds ID of animation frame request
-   *
-   * @private
-   * @type {Number}
-   */
-  #animationFrameID = 0;
-
-  /**
-   * Stores whether Engine is paused or not
+   * Whether or not engine is paused
    *
    * @private
    * @type {Boolean}
@@ -244,13 +152,82 @@ export default class Engine {
   #isPaused = false;
 
   /**
-   * Stores whether Engine has been started or not
+   * Whether or not engine has started
    *
    * @private
    * @type {Boolean}
    * @default false
    */
-  #hasStart = false;
+  #isStarted = false;
+
+  /**
+   * Relevant properties for debugging and performance logging. Composed primarily of either boolean flags or constant properties.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} isPerformanceLoggingEnabled - whether Engine should log performance data to console or not
+   * @property {Boolean} isPerformanceDebugScreenEnabled - whether Engine should draw performance metrics to canvas or not
+   */
+  #debugProperties = {
+    isPerformanceDebugScreenEnabled: true,
+    isPerformanceLoggingEnabled: false,
+  };
+
+  /**
+   * Relevant properties for update cycle. Composed primarily of either boolean flags or constant properties.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} targetFPS - target FPS for update loop to achieve during runtime
+   * @property {Number} frameTimestep - timestep of individual an individual frame in ms. Used as constant timestep for update method
+   * @property {Number} maxUpdatesPerFrame - maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
+   */
+  #updateProperties = {
+    maxUpdatesPerFrame: 240,
+    targetFPS: 60,
+    frameTimestep: 1 / 60,
+  };
+
+  /**
+   * Releveant metrics for debugging and performance tracking.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} FPS - current FPS of engine
+   * @property {Number} startTime - time at which Engine was started
+   * @property {Number} updatesSinceStart - number of updates since Engine was started
+   */
+  #debugMetrics = {
+    FPS: 0,
+    startTime: 0,
+    updatesSinceStart: 0,
+  };
+
+  /**
+   * Relevant metrics for update cycle.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} animationFrameID - ID of current animation frame
+   * @property {Number} lag - accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
+   * @property {Number} prevTimestamp - timestamp of last frame in ms
+   */
+  #updateMetrics = {
+    animationFrameID: -1,
+    lag: 0,
+    prevTimestamp: 0,
+  };
+
+  /**
+   * An array of actors to be updated and drawn by the canvas
+   *
+   * @type {Array<Actor>}
+   */
+  #actors = [];
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -260,32 +237,33 @@ export default class Engine {
    *
    */
   #update = (timestamp) => {
-    this.#animationFrameID = requestAnimationFrame(this.#update);
+    this.#updateMetrics.animationFrameID = requestAnimationFrame(this.#update);
 
     // calculate time between frames
-    let dt = timestamp - this.#prevTimestamp;
-    this.#prevTimestamp = timestamp;
+    let dt = timestamp - this.#updateMetrics.prevTimestamp;
+    this.#updateMetrics.prevTimestamp = timestamp;
 
-    this.#lag += dt;
+    this.#updateMetrics.lag += dt;
 
     // calculate current FPS
-    this.#debug.FPS = 1000 / dt;
+    this.#debugMetrics.FPS = 1000 / dt;
 
     let numUpdates = 0;
-    while (this.#lag >= this.#targetFrameTime) {
+    while (this.#updateMetrics.lag >= this.#updateProperties.targetFrameTime) {
       this.#attemptPhysicsUpdates();
 
-      this.#lag -= this.#targetFrameTime;
+      this.#updateMetrics.lag -= this.#updateProperties.targetFrameTime;
 
-      this.#debug.updatesSinceStart++;
-      if (++numUpdates >= this.#maxUpdatesPerFrame) {
-        this.#lag = 0;
+      this.#debugMetrics.updatesSinceStart++;
+      if (++numUpdates >= this.#updateProperties.maxUpdatesPerFrame) {
+        this.#updateMetrics.lag = 0;
         break;
       }
     }
 
     // interpolate between lag and target frame time
-    const interp = this.#lag / this.#targetFrameTime;
+    const interp =
+      this.#updateMetrics.lag / this.#updateProperties.targetFrameTime;
 
     // call draw method to draw relevant actors
     this.#draw(interp);
@@ -299,12 +277,12 @@ export default class Engine {
 
     // call update event handlers for relevant events
     this.eventHandler.eventHandlers["update"].forEach((callback) =>
-      callback(this.#targetFrameTime, this.environment)
+      callback(this.#updateProperties.targetFrameTime, this.environment)
     );
 
     // update all actors
     this.#actors.forEach((actor) =>
-      actor.update(this.#targetFrameTime, this.environment)
+      actor.update(this.#updateProperties.targetFrameTime, this.environment)
     );
   };
 
@@ -332,20 +310,20 @@ export default class Engine {
     this.#actors.forEach((actor) => actor.draw(this.ctx, interp));
 
     // Draw FPS on screen, if enabled
-    if (this.#debug.showFPS) {
+    if (this.#debugProperties.showFPS) {
       this.ctx.fillStyle = "#333333"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
-      if (!isNaN(this.#debug.FPS)) {
-        this.ctx.fillText("FPS: " + this.#debug.FPS, 5, 15);
-        this.ctx.fillText("dt: " + 1000 / this.#debug.FPS, 5, 25);
-        this.ctx.fillText("lag: " + this.#lag, 5, 35);
+      if (!isNaN(this.#debugMetrics.FPS)) {
+        this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
+        this.ctx.fillText("dt: " + 1000 / this.#debugMetrics.FPS, 5, 25);
+        this.ctx.fillText("lag: " + this.#updateMetrics.lag, 5, 35);
         this.ctx.fillText("interp: " + interp, 5, 45);
         this.ctx.fillText(
-          "total updates: " + this.#debug.updatesSinceStart,
+          "total updates: " + this.#debugMetrics.updatesSinceStart,
           5,
           55
         );
         this.ctx.fillText(
-          "runtime: " + (performance.now() - this.#debug.startTime),
+          "runtime: " + (performance.now() - this.#debugMetrics.startTime),
           5,
           65
         );
