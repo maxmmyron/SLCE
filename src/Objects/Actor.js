@@ -19,10 +19,12 @@ export default class Actor {
     this.pos = properties.pos ?? vec();
     this.vel = properties.vel ?? vec();
 
-    this.size = properties.size ?? vec();
+    this.size = properties.size ?? vec(48);
+
+    this.clipBounds = properties.clipBounds ?? null;
 
     // create a new event handler for handling events called during clip, draw, and update cycles.
-    this.eventHandler = new EventHandler(["onClip", "draw", "update"]);
+    this.eventHandler = new EventHandler(["on_draw", "on_update"], true);
 
     this.#last.pos = this.pos;
     this.#last.vel = this.vel;
@@ -30,6 +32,32 @@ export default class Actor {
 
   // ****************************************************************
   // Pubic defs
+
+  /**
+   * Clip bounds of actor, which represents the region in which draw calls and texture drawing is confined to. If defined, the actor will be clipped to within these bounds.
+   * Clip bounds default to null, meaning that the actor will not be clipped. May be defined in one of two states, "clipToSize", or as a function using context draw calls to form a clip region.
+   *
+   * @type {String|Function}
+   * @default null
+   *
+   * @example
+   * // clip to size
+   * actor.clipBounds = "clipToSize";
+   *
+   * @example
+   * // clip to a circle
+   * actor.clipBounds = (ctx) => {
+   *  ctx.arc(0, 0, 48, 0, 2 * Math.PI);
+   * }
+   *
+   */
+  clipBounds;
+
+  /**
+   * Notifies engine that an actor should be disposed of at next update cycle.
+   * @type {Boolean}
+   */
+  disposalQueued = false;
 
   /**
    * An EventHandler object for accessing and handling engine events
@@ -46,40 +74,25 @@ export default class Actor {
   pos;
 
   /**
-   * Current velocity of actor. Defaults to a zero-vector on initialization
+   * Size of bounds actor, as calculated from center of actor. Defaults to a zero-vector on initialization
    *
    * @type {Vector}
-   */
-  vel;
-
-  /**
-   * Size of bounds actor, as calculated from center of actor. Defaults to a zero-vector on initialization
    */
   size;
 
   /**
-   * An array of TextureLayer objects that are incrementally drawn to the canvas for each draw cycle.
+   * An array of TextureLayers that can be drawn to the canvas in the draw callback.
    *
    * @type {Array<TextureLayer>}
    */
   textures = [];
 
   /**
-   * A struct containing actor properties beyond those most commonly used.
+   * Current velocity of actor. Defaults to a zero-vector on initialization
    *
-   * @type {Object}
-   *
-   * @property {Number} zIndex z-index of actor; used in ordering draw of actor. -1 will draw actor behind canvas.
+   * @type {Vector}
    */
-  properties = {
-    zIndex: 0,
-  };
-
-  /**
-   * Notifies engine that an actor should be disposed of at next update cycle.
-   * @type {Boolean}
-   */
-  disposalQueued = false;
+  vel;
 
   /**
    * Adds a new texture layer to the actor.
@@ -100,19 +113,39 @@ export default class Actor {
     });
 
   /**
+   * Adds a callback, if one is not already present, to the event handler for the given event.
+   *
+   * @param {String} event event to add callback to
+   * @param {Function} callback callback to add to event handler
+   *
+   * @returns true if callback was added, false if callback was already present
+   */
+  addEventHandler = (event, callback) =>
+    this.eventHandler.addEventHandler(event, callback);
+
+  /**
+   * Removes a callback from the event handler for the given event.
+   *
+   * @param {Function} callback - function to remove
+   *
+   * @returns true if callback was removed, false if callback was not present
+   */
+  removeEventHandler = (callback) =>
+    this.eventHandler.removeEventHandler(callback);
+
+  /**
    * Preload function is called once before the first draw cycle.
    * Accepts a function to run as a preload function, and a function
    * that is called after the preload function is finished.
    *
-   * @param {Function} preloadCallback a function to run as a preload function
-   * @param {Function} postloadCallback a function to run after the preload function is finished
+   * @param {Function} callback a function to run as a preload function
    *
    * @returns {Promise} a promise that resolves when the preload function is finished
    *
    */
-  preload = (preloadCallback) => {
+  preload = (callback) => {
     return new Promise((resolve, reject) => {
-      resolve(preloadCallback());
+      resolve(callback());
     })
       .then((onFulfilledCallback) => {
         onFulfilledCallback();
@@ -130,20 +163,21 @@ export default class Actor {
    */
   draw = (ctx, interp) => {
     // ****************************************************************
-    // draw setup
+    // perform default draw operations
 
-    // interpolate position of actor based on interpolation value
+    // interpolate position of actor based on interpolation provided by engine loop
     this.pos = {
       x: this.#last.pos.x + (this.pos.x - this.#last.pos.x) * interp,
       y: this.#last.pos.y + (this.pos.y - this.#last.pos.y) * interp,
     };
 
-    const negTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.properties.zIndex < 0
-    );
-    const posTextureLayers = this.textures.filter(
-      (textureLayer) => textureLayer.properties.zIndex >= 0
-    );
+    // split texture layers into those that render below main draw call and those that render above
+    // const negTextureLayers = this.textures.filter(
+    //   (textureLayer) => textureLayer.properties.zIndex < 0
+    // );
+    // const posTextureLayers = this.textures.filter(
+    //   (textureLayer) => textureLayer.properties.zIndex >= 0
+    // );
 
     // ****************************************************************
     // perform draw operations
@@ -151,21 +185,36 @@ export default class Actor {
     ctx.save();
 
     // draw texture layers with a z-index below 0
-    if (negTextureLayers.length > 0) {
-      this.#drawTextureLayers(ctx, negTextureLayers);
-    }
+    // if (negTextureLayers.length > 0) {
+    //   this.#drawTextureLayers(ctx, negTextureLayers);
+    // }
 
-    // call draw callback function
-    if (this.eventHandler.eventHandlers["draw"][0])
-      this.eventHandler.eventHandlers["draw"][0](ctx);
+    // execute draw callback
+    if (this.eventHandler.eventHandlers["on_draw"])
+      this.eventHandler.eventHandlers["on_draw"](ctx);
 
     // draw texture layers with a z-index geater than 0
-    if (posTextureLayers.length > 0) {
-      this.#drawTextureLayers(ctx, posTextureLayers);
-    }
+    // if (posTextureLayers.length > 0) {
+    //   this.#drawTextureLayers(ctx, posTextureLayers);
+    // }
 
     ctx.restore();
   };
+
+  /**
+   * Draws a Texturelayer to the canvas context.
+   *
+   * @param {TextureLayer} textureLayer
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  drawTextureLayer = (textureLayer, ctx) =>
+    ctx.drawImage(
+      textureLayer.imageBitmap,
+      this.pos.x + textureLayer.pos.x,
+      this.pos.y + textureLayer.pos.y,
+      textureLayer.size.x,
+      textureLayer.size.y
+    );
 
   /**
    * Calls update callback function for actor
@@ -174,14 +223,20 @@ export default class Actor {
    * @param {Object} env - environment variables defined by engine
    */
   update = (timestep, env) => {
+    // ****************************************************************
+    // perform default updates
+
     this.#last.pos = this.pos;
     this.#last.vel = this.vel;
 
     this.vel.x += env.physics.accel.x / timestep;
     this.vel.y += env.physics.accel.y / timestep;
 
-    if (this.eventHandler.eventHandlers["update"][0])
-      this.eventHandler.eventHandlers["update"][0](timestep, env);
+    // ****************************************************************
+    // call update callback function
+
+    if (this.eventHandler.eventHandlers["on_update"])
+      this.eventHandler.eventHandlers["on_update"](timestep, env);
   };
 
   // ****************************************************************
@@ -201,16 +256,16 @@ export default class Actor {
     vel: vec(),
   };
 
-  #drawTextureLayers = (ctx, textureLayers) => {
-    textureLayers.forEach((textureLayer) => {
-      const offsetPos = sub(this.pos, div(textureLayer.properties.size, 2));
-      ctx.drawImage(
-        textureLayer.imageBitmap,
-        offsetPos.x,
-        offsetPos.y,
-        textureLayer.properties.size.x,
-        textureLayer.properties.size.y
-      );
-    });
-  };
+  // #drawTextureLayers = (ctx, textureLayers) => {
+  //   textureLayers.forEach((textureLayer) => {
+  //     const offsetPos = sub(this.pos, div(textureLayer.properties.size, 2));
+  //     ctx.drawImage(
+  //       textureLayer.imageBitmap,
+  //       offsetPos.x,
+  //       offsetPos.y,
+  //       textureLayer.properties.size.x,
+  //       textureLayer.properties.size.y
+  //     );
+  //   });
+  // };
 }
