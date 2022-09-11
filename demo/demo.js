@@ -9,22 +9,23 @@ const engine = new Engine(canvas);
 
 engine.environment.physics.accel.y = 0;
 
-const actorA = new Actor({
-  pos: vec(engine.environment.width / 2 - 64, engine.environment.height / 2),
+const actor = new Actor({
+  pos: vec(engine.environment.width / 2, engine.environment.height / 2),
   vel: vec(),
-  bounds: {
-    pos: vec(-16, -16),
-    size: vec(32),
-  },
+  size: vec(64, 64),
 });
 
-actorA.eventHandler.addHandler("draw", (ctx) => {
-  ctx.save();
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(actorA.pos.x, actorA.pos.y, 25, 0, Math.PI * 2, false);
-  ctx.clip();
+actor.addEventHandler("on_draw", (ctx) => {
+  ctx.fillStyle = "black";
+  ctx.fillRect(
+    actor.pos.x - actor.size.x / 2,
+    actor.pos.y - actor.size.y / 2,
+    actor.size.x,
+    actor.size.y
+  );
 });
+
+engine.addActor(actor);
 
 engine.start();
 
