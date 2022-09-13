@@ -139,6 +139,14 @@ export default class Engine {
    */
   getActors = () => this.#actors;
 
+  /**
+   * Gets the current runtime of the engine.
+   * @returns {Number} the current time in milliseconds
+   */
+  getCurrentEngineTime = () => {
+    return performance.now() - this.#debugMetrics.startTime;
+  };
+
   // ****************************************************************
   // Private defs
 
