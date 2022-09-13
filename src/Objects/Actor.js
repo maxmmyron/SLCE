@@ -83,13 +83,6 @@ export default class Actor {
   size;
 
   /**
-   * An array of TextureLayers that can be drawn to the canvas in the draw callback.
-   *
-   * @type {Array<TextureLayer>}
-   */
-  textures = [];
-
-  /**
    * Current velocity of actor. Defaults to a zero-vector on initialization
    *
    * @type {Vector}
@@ -103,18 +96,24 @@ export default class Actor {
    *
    * @param {TextureLayer} textureLayer TextureLayer object to attempt to add to actor
    */
-  addTextureLayer = (textureLayer) =>
+  addTextureLayer = (textureLayer) => {
     new Promise((resolve, reject) => {
-      textureLayer
-        .resolveImageBitmap()
-        .then(() => {
-          this.textures.push(textureLayer);
-          resolve("Success");
-        })
-        .catch((err) => {
-          reject(`Error adding texture layer to actor: ${err}`);
-        });
+      if (textureLayer.imageBitmap) {
+        this.#textures.push(textureLayer);
+        resolve("Success");
+      } else {
+        textureLayer
+          .resolveImageBitmap()
+          .then(() => {
+            this.#textures.push(textureLayer);
+            resolve("Success");
+          })
+          .catch((err) => {
+            reject(`Error adding texture layer to actor: ${err}`);
+          });
+      }
     });
+  };
 
   /**
    * Adds a callback, if one is not already present, to the event handler for the given event.
@@ -127,36 +126,7 @@ export default class Actor {
   addEventHandler = (event, callback) =>
     this.eventHandler.addEventHandler(event, callback);
 
-  /**
-   * Removes a callback from the event handler for the given event.
-   *
-   * @param {Function} callback - function to remove
-   *
-   * @returns true if callback was removed, false if callback was not present
-   */
-  removeEventHandler = (callback) =>
-    this.eventHandler.removeEventHandler(callback);
-
-  /**
-   * Preload function is called once before the first draw cycle.
-   * Accepts a function to run as a preload function, and a function
-   * that is called after the preload function is finished.
-   *
-   * @param {Function} callback a function to run as a preload function
-   *
-   * @returns {Promise} a promise that resolves when the preload function is finished
-   */
-  preload = (callback, onFulfilled) => {
-    return new Promise((resolve, reject) => {
-      resolve(callback());
-    })
-      .then((res) => {
-        onFulfilled(res);
-      })
-      .catch((err) => {
-        console.error(`Error attempting to preload actor: ${err}`);
-      });
-  };
+  getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
 
   /**
    * Calls draw callback function for actor.
@@ -175,7 +145,7 @@ export default class Actor {
     };
 
     // split texture layers into those that render below main draw call and those that render above
-    const activeTextureLayers = this.textures.filter(
+    const activeTextureLayers = this.#textures.filter(
       (textureLayer) => textureLayer.isActive
     );
 
@@ -217,7 +187,6 @@ export default class Actor {
    * @param {CanvasRenderingContext2D} ctx
    */
   drawTextureLayer = (textureLayer, ctx) => {
-    console.log(textureLayer.size);
     ctx.drawImage(
       textureLayer.imageBitmap,
       this.pos.x + textureLayer.pos.x,
@@ -226,6 +195,37 @@ export default class Actor {
       textureLayer.size.y
     );
   };
+
+  /**
+   * Preload function is called once before the first draw cycle.
+   * Accepts a function to run as a preload function, and a function
+   * that is called after the preload function is finished.
+   *
+   * @param {Function} callback a function to run as a preload function
+   *
+   * @returns {Promise} a promise that resolves when the preload function is finished
+   */
+  preload = (callback, onFulfilled) => {
+    return new Promise((resolve, reject) => {
+      resolve(callback());
+    })
+      .then((res) => {
+        onFulfilled && onFulfilled(res);
+      })
+      .catch((err) => {
+        console.error(`Error attempting to preload actor: ${err}`);
+      });
+  };
+
+  /**
+   * Removes a callback from the event handler for the given event.
+   *
+   * @param {Function} callback - function to remove
+   *
+   * @returns true if callback was removed, false if callback was not present
+   */
+  removeEventHandler = (callback) =>
+    this.eventHandler.removeEventHandler(callback);
 
   /**
    * Calls update callback function for actor
@@ -267,6 +267,14 @@ export default class Actor {
     vel: vec(),
   };
 
+  /**
+   * An array of TextureLayers that can be drawn to the canvas in the draw callback.
+   *
+   * @private
+   * @type {Array<TextureLayer>}
+   */
+  #textures = [];
+
   #drawDebug = (ctx) => {
     ctx.save();
 
@@ -279,6 +287,8 @@ export default class Actor {
     const texts = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
       `vel: ${this.vel.x}, ${this.vel.y}`,
+      `textures: ${this.#textures.length}`,
+      `isClippedToSize: ${this.isClippedToSize}`,
     ];
 
     texts.forEach((text, i) => {
