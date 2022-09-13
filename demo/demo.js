@@ -10,24 +10,29 @@ const engine = new Engine(canvas);
 engine.environment.physics.accel.y = 0;
 
 const actor = new Actor({
-  pos: vec(engine.environment.width / 2, engine.environment.height / 2),
+  pos: vec(
+    engine.environment.width / 2 - 32,
+    engine.environment.height / 2 - 32
+  ),
   vel: vec(),
   size: vec(64, 64),
+  isDebugEnabled: true,
 });
 
-actor.addEventHandler("on_draw", (ctx) => {
-  ctx.fillStyle = "black";
-  ctx.fillRect(
-    actor.pos.x - actor.size.x / 2,
-    actor.pos.y - actor.size.y / 2,
-    actor.size.x,
-    actor.size.y
-  );
-});
-
-engine.addActor(actor);
+actor.preload(
+  () => {
+    actor.addTextureLayer(
+      new TextureLayer(test, { isActive: true, size: vec(69, 69) })
+    );
+  },
+  () => {
+    engine.addActor(actor);
+  }
+);
 
 engine.start();
+
+console.log(engine.getActors());
 
 setTimeout(() => {
   engine.pause();
