@@ -15,8 +15,7 @@ export default class TextureLayer {
 
     // apply any options passed in; keep defaults if not provided
     this.drawProperties = {
-      repeatX: options.repeatX ?? false,
-      repeatY: options.repeatY ?? false,
+      tileMode: options.tileMode ?? "none",
       zIndex: options.zIndex ?? 0,
     };
 
