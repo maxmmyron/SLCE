@@ -2,57 +2,92 @@ import Engine from "../src/core/Engine.js";
 import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
 import TextureLayer from "../src/util/TextureLayer.js";
-import test from "./testing.png";
+
+import grassTexturePath from "./grassTexture.png";
+import dirtTexturePath from "./dirtTexture.png";
+import leavesTexturePath from "./leavesTexture.png";
+import woodTexturePath from "./woodTexture.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
 engine.environment.physics.accel.y = 0;
 
-const numActors = 64;
-
-[...Array(numActors)].forEach((_, i) => {
-  const sqrtNumActors = Math.sqrt(numActors);
-
-  const actor = new Actor({
-    pos: vec(
-      (engine.environment.width / sqrtNumActors) * (i % sqrtNumActors),
-      (engine.environment.height / sqrtNumActors) *
-        Math.floor(i / sqrtNumActors)
-    ),
-    vel: vec(),
-    size: vec(64, 64),
-    isDebugEnabled: true,
-    isClippedToSize: i % 2 === 0,
-  });
-
-  actor.preload(async () => {
-    actor.addTextureLayer(
-      new TextureLayer(test, {
-        isActive: true,
-        size: vec(69, 69),
-      })
-    );
-  });
-
-  engine.addActor(actor);
-
-  actor.addEventHandler("on_update", async (timestep, env) => {
-    let textures = await actor.getTextures();
-
-    if (textures.length > 0) {
-      textures[0].pos.x = Math.cos(engine.getCurrentEngineTime() / 500) * 20;
-      textures[0].pos.y = Math.sin(engine.getCurrentEngineTime() / 500) * 20;
-      textures[0].size.x =
-        Math.sin(engine.getCurrentEngineTime() / 500) * 20 + 69;
-      textures[0].size.y =
-        Math.cos(engine.getCurrentEngineTime() / 500) * 20 + 69;
-    }
-  });
+const ground = new Actor({
+  pos: vec(0, engine.environment.height - 200),
+  size: vec(engine.environment.width, 200),
 });
 
-engine.start();
+ground.preload(async () => {
+  ground.addTextureLayer(
+    new TextureLayer(dirtTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tile",
+      zIndex: 0,
+    })
+  );
+  ground.addTextureLayer(
+    new TextureLayer(grassTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tileX",
+      zIndex: 1,
+    })
+  );
+});
 
-setTimeout(() => {
-  engine.pause();
-}, 10000);
+const treeWood = new Actor({
+  pos: vec(256, engine.environment.height - 584),
+  size: vec(64, 384),
+});
+
+treeWood.preload(async () => {
+  treeWood.addTextureLayer(
+    new TextureLayer(woodTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tileY",
+    })
+  );
+});
+
+const treeLeavesBase = new Actor({
+  pos: vec(128, engine.environment.height - 392 - 128),
+  size: vec(324, 128),
+});
+
+treeLeavesBase.preload(async () => {
+  treeLeavesBase.addTextureLayer(
+    new TextureLayer(leavesTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tile",
+    })
+  );
+});
+
+const treeLeavesTop = new Actor({
+  pos: vec(192, engine.environment.height - 392 - 256),
+  size: vec(192, 128),
+});
+
+treeLeavesTop.preload(async () => {
+  treeLeavesTop.addTextureLayer(
+    new TextureLayer(leavesTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tile",
+    })
+  );
+});
+
+engine.addActor(ground);
+
+engine.addActor(treeWood);
+
+engine.addActor(treeLeavesBase);
+
+engine.addActor(treeLeavesTop);
+
+engine.start();
