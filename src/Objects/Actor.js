@@ -21,7 +21,9 @@ export default class Actor {
 
     this.size = properties.size ?? vec(48);
 
-    this.clipBounds = properties.clipBounds ?? null;
+    this.isClippedToSize = properties.isClippedToSize ?? true;
+
+    this.isDebugEnabled = properties.isDebugEnabled ?? false;
 
     // create a new event handler for handling events called during clip, draw, and update cycles.
     this.eventHandler = new EventHandler(["on_draw", "on_update"], true);
@@ -94,6 +96,8 @@ export default class Actor {
    */
   vel;
 
+  isDebugEnabled = false;
+
   /**
    * Adds a new texture layer to the actor.
    *
@@ -141,17 +145,16 @@ export default class Actor {
    * @param {Function} callback a function to run as a preload function
    *
    * @returns {Promise} a promise that resolves when the preload function is finished
-   *
    */
-  preload = (callback) => {
+  preload = (callback, onFulfilled) => {
     return new Promise((resolve, reject) => {
       resolve(callback());
     })
-      .then((onFulfilledCallback) => {
-        onFulfilledCallback();
+      .then((res) => {
+        onFulfilled(res);
       })
       .catch((err) => {
-        reject(`Error attempting to preload actor: ${err}`);
+        console.error(`Error attempting to preload actor: ${err}`);
       });
   };
 
@@ -172,33 +175,39 @@ export default class Actor {
     };
 
     // split texture layers into those that render below main draw call and those that render above
-    // const negTextureLayers = this.textures.filter(
-    //   (textureLayer) => textureLayer.properties.zIndex < 0
-    // );
-    // const posTextureLayers = this.textures.filter(
-    //   (textureLayer) => textureLayer.properties.zIndex >= 0
-    // );
+    const activeTextureLayers = this.textures.filter(
+      (textureLayer) => textureLayer.isActive
+    );
+
+    // sort active texture layers by z-index
+    activeTextureLayers.sort(
+      (a, b) => a.drawProperties.zIndex - b.drawProperties.zIndex
+    );
 
     // ****************************************************************
     // perform draw operations
 
     ctx.save();
 
-    // draw texture layers with a z-index below 0
-    // if (negTextureLayers.length > 0) {
-    //   this.#drawTextureLayers(ctx, negTextureLayers);
-    // }
+    if (this.isClippedToSize) {
+      ctx.beginPath();
+      ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
+      ctx.clip();
+    }
+
+    // draw active texture layers
+    activeTextureLayers.forEach((textureLayer) => {
+      this.drawTextureLayer(textureLayer, ctx);
+    });
 
     // execute draw callback
     if (this.eventHandler.eventHandlers["on_draw"])
       this.eventHandler.eventHandlers["on_draw"](ctx);
 
-    // draw texture layers with a z-index geater than 0
-    // if (posTextureLayers.length > 0) {
-    //   this.#drawTextureLayers(ctx, posTextureLayers);
-    // }
-
+    // restore before we draw debug info, so that debug info is not clipped
     ctx.restore();
+
+    if (this.isDebugEnabled) this.#drawDebug(ctx);
   };
 
   /**
@@ -207,7 +216,8 @@ export default class Actor {
    * @param {TextureLayer} textureLayer
    * @param {CanvasRenderingContext2D} ctx
    */
-  drawTextureLayer = (textureLayer, ctx) =>
+  drawTextureLayer = (textureLayer, ctx) => {
+    console.log(textureLayer.size);
     ctx.drawImage(
       textureLayer.imageBitmap,
       this.pos.x + textureLayer.pos.x,
@@ -215,6 +225,7 @@ export default class Actor {
       textureLayer.size.x,
       textureLayer.size.y
     );
+  };
 
   /**
    * Calls update callback function for actor
@@ -256,16 +267,24 @@ export default class Actor {
     vel: vec(),
   };
 
-  // #drawTextureLayers = (ctx, textureLayers) => {
-  //   textureLayers.forEach((textureLayer) => {
-  //     const offsetPos = sub(this.pos, div(textureLayer.properties.size, 2));
-  //     ctx.drawImage(
-  //       textureLayer.imageBitmap,
-  //       offsetPos.x,
-  //       offsetPos.y,
-  //       textureLayer.properties.size.x,
-  //       textureLayer.properties.size.y
-  //     );
-  //   });
-  // };
+  #drawDebug = (ctx) => {
+    ctx.save();
+
+    // draw bounds border
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
+
+    ctx.fillStyle = "black";
+
+    const texts = [
+      `pos: ${this.pos.x}, ${this.pos.y}`,
+      `vel: ${this.vel.x}, ${this.vel.y}`,
+    ];
+
+    texts.forEach((text, i) => {
+      ctx.fillText(text, this.pos.x, this.pos.y - 12 * (i + 0.5));
+    });
+
+    ctx.restore();
+  };
 }
