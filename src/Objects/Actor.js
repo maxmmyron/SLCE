@@ -187,13 +187,56 @@ export default class Actor {
    * @param {CanvasRenderingContext2D} ctx
    */
   drawTextureLayer = (textureLayer, ctx) => {
-    ctx.drawImage(
-      textureLayer.imageBitmap,
-      this.pos.x + textureLayer.pos.x,
-      this.pos.y + textureLayer.pos.y,
-      textureLayer.size.x,
-      textureLayer.size.y
-    );
+    switch (textureLayer.drawProperties.tileMode) {
+      case "tile": {
+        for (let x = 0; x < this.size.x; x += textureLayer.size.x) {
+          for (let y = 0; y < this.size.y; y += textureLayer.size.y) {
+            ctx.drawImage(
+              textureLayer.imageBitmap,
+              this.pos.x + x,
+              this.pos.y + y,
+              textureLayer.size.x,
+              textureLayer.size.y
+            );
+          }
+        }
+        break;
+      }
+      case "tileX": {
+        for (let x = 0; x < this.size.x; x += textureLayer.size.x) {
+          ctx.drawImage(
+            textureLayer.imageBitmap,
+            this.pos.x + x,
+            this.pos.y,
+            textureLayer.size.x,
+            textureLayer.size.y
+          );
+        }
+        break;
+      }
+      case "tileY": {
+        for (let y = 0; y < this.size.y; y += textureLayer.size.y) {
+          ctx.drawImage(
+            textureLayer.imageBitmap,
+            this.pos.x,
+            this.pos.y + y,
+            textureLayer.size.x,
+            textureLayer.size.y
+          );
+        }
+        break;
+      }
+      default: {
+        ctx.drawImage(
+          textureLayer.imageBitmap,
+          this.pos.x + textureLayer.pos.x,
+          this.pos.y + textureLayer.pos.y,
+          textureLayer.size.x,
+          textureLayer.size.y
+        );
+        break;
+      }
+    }
   };
 
   /**
