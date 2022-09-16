@@ -35,6 +35,6 @@ export const assertIsVector = val => {
     throw new TypeError("Error asserting vector: value is not of type Object with 2 properties");
 
   // ensure n contains properties x and y, and that they are numbers
-  if(!(Object.hasOwn(val, "x") && Object.hasOwn(val, "y") && assertIsNumber(val.x) && assertIsNumber(val.y)))
+  if(!(Object.hasOwn(val, "x") && Object.hasOwn(val, "y") && typeof(val.x) === "number" && typeof(val.y) === "number"))
     throw new TypeError("Error asserting vector: value does not contain properties x and y with values of type number");
 }

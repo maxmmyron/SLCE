@@ -1,4 +1,6 @@
 import { vec } from "../Math/Vector";
+import EventHandler from "../util/EventHandler";
+import Actor from "../Objects/Actor";
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -34,26 +36,43 @@ export default class Engine {
       },
     };
 
-    this.#init(); // call first time init to set up canvas
+    this.eventHandler = new EventHandler(["update", "draw", "pause", "resume"]);
+
+    // listen for resize events and update canvas size
+    document.addEventListener("resize", (e) => {
+      dimensions = this.#fixDPI();
+      // set canvas width and height to scaled width and height
+      this.environment.width = dimensions[0];
+      this.environment.height = dimensions[1];
+    });
+    this.#fixDPI();
   }
 
   // ****************************************************************
   // Public defs
 
   /**
-   * An array of actors to be updated and drawn by the canvas
+   * An EventHandler object for handling engine events
+   *
+   * @private
+   * @type {EventHandler}
    */
-  actors = [];
+  eventHandler;
 
   /**
    * Starts engine update loop. Used only once at startup.
    */
   start = () => {
-    if (!this.#hasInit) {
+    if (!this.#isStarted) {
       this.#fixDPI();
-      this.#animationFrameID = requestAnimationFrame(this.#update);
-      this.#hasInit = true;
+      this.#updateMetrics.animationFrameID = requestAnimationFrame(
+        this.#update
+      );
+      this.#isStarted = true;
       this.#isPaused = false;
+      this.#debugMetrics.startTime = performance.now();
+    } else {
+      throw new Error(`Error starting engine: engine has already started.`);
     }
   };
 
@@ -63,7 +82,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    this.#eventHandlers["pause"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["pause"].forEach((callback) => callback());
   };
 
   /**
@@ -71,130 +90,68 @@ export default class Engine {
    */
   resume = () => {
     this.#isPaused = false;
-    this.#eventHandlers["resume"].forEach((handler) => handler());
+    this.eventHandler.eventHandlers["resume"].forEach((callback) => callback());
   };
 
   /**
-   * Returns whether engine is paused or not
+   * Attempts to add an actor to the engine.
    *
-   * @return {Boolean} true if engine is paused, false otherwise
+   * @param {Actor} actor
+   * @return {Boolean} true if actor was added
+   *
+   * @throws {Error} if actor is not an instance of Actor
    */
-  isPaused = () => this.#isPaused;
-
-  /**
-   * Adds a handler function to execute on a specific event.
-   * @param {String} event - name of event to handle
-   * @param {Function} handler - function to execute when event is triggered
-   *
-   * @throws {Error} if event is not a string
-   * @throws {Error} if handler is not a function
-   * @throws {Error} if event is not a valid event
-   */
-  addHandler = (event, handler) => {
-    // assert event is a string
-    if (typeof event !== "string") throw new Error("event must be a string");
-    // assert handler is a function
-    if (typeof handler !== "function")
-      throw new Error("handler must be a function");
-    // assert event is a valid event
-    if (!this.#validEvents.includes(event))
-      throw new Error("event is not a valid event");
-
-    // add handler function to array of handlers for specified event
-    this.#eventHandlers[event].push(handler);
-  };
-
-  /**
-   * Removes handler fucntion from event
-   *
-   * @param {String} event - name of event to remove handler from
-   * @param {Function} handler - function to remove from event
-   * @return {Boolean} true if handler was removed, false otherwise
-   *
-   * @throws {Error} if event is not a string
-   * @throws {Error} if handler is not a function
-   * @throws {Error} if event is not a valid event
-   */
-  removeHandler = (event, handler) => {
-    // assert event is a string
-    if (typeof event !== "string") throw new Error("event must be a string");
-    // assert handler is a function
-    if (typeof handler !== "function")
-      throw new Error("handler must be a function");
-    // assert event is a valid event
-    if (!this.#validEvents.includes(event))
-      throw new Error("event is not a valid event");
-
-    // remove handler function from array of handlers for specified event
-    const index = this.#eventHandlers[event].indexOf(handler);
-    if (index !== -1) {
-      this.#eventHandlers[event].splice(index, 1);
-      return true;
+  addActor = (actor) => {
+    if (!(actor instanceof Actor)) {
+      throw new Error(
+        `Error adding actor: actor must be an instance of Actor.`
+      );
     }
-    return false;
+
+    this.#actors.push(actor);
+  };
+
+  /**
+   * Queues an actor for disposal by setting actor's disposalQueued flag to true.
+   *
+   * @param {Actor} actor
+   * @return {Boolean} true if actor was queued for disposal
+   *
+   * @throws {Error} if actor is not an instance of Actor
+   */
+  removeActor = (actor) => {
+    if (!(actor instanceof Actor)) {
+      throw new Error(
+        `Error removing actor: actor must be an instance of Actor.`
+      );
+    }
+
+    // queue actor for disposal instead of removing immediately
+    // this prevents actors from being removed from the array while iterating over it
+    actor.disposalQueued = true;
+    return true;
+  };
+
+  /**
+   * Returns an array of current actors in engine
+   *
+   * @returns {Array} an array of all actors in the engine
+   */
+  getActors = () => this.#actors;
+
+  /**
+   * Gets the current runtime of the engine.
+   * @returns {Number} the current time in milliseconds
+   */
+  getCurrentEngineTime = () => {
+    return performance.now() - this.#debugMetrics.startTime;
   };
 
   // ****************************************************************
   // Private defs
 
   /**
-   * Struct for storing useful debug values
-   *
-   * @private
-   * @type {Object}
-   * @property {Number} fps - current frames per second.
-   * @property {Boolean} showFPS - whether to show FPS
-   *
-   */
-  #debug = {
-    FPS: 0,
-    showFPS: true,
-  };
-
-  /**
-   * Timestamp of last frame. Used to calculate delta time in update method
-   *
-   * @private
-   * @type {Number}
-   */
-  #prevTimestamp = 0;
-
-  /**
-   * Accumulating lag for update method. Used to smooth out update method.
-   *
-   * @private
-   * @type {Number}
-   */
-  #lag = 0;
-
-  /**
-   * Target FPS to reach when updating
-   *
-   * @private
-   * @type {Number}
-   * @default 60
-   */
-  #targetFPS = 60;
-
-  /**
-   * Target frame rate (in ms) to reach when updating.
-   * Used as contstant timestep for update methods
-   *
-   * @private
-   * @type {Number}
-   */
-  #targetFrameTime = 1000 / this.#targetFPS;
-
-  /**
-   * holds ID of animation frame request
-   *
-   * @private
-   * @type {Number}
-   */
-  #animationFrameID = 0;
-
-  /**
-   * Stores whether Engine is paused or not
+   * Whether or not engine is paused
    *
    * @private
    * @type {Boolean}
@@ -203,59 +160,82 @@ export default class Engine {
   #isPaused = false;
 
   /**
-   * Stores whether Engine has been initialized or not
+   * Whether or not engine has started
    *
    * @private
    * @type {Boolean}
    * @default false
    */
-  #hasInit = false;
+  #isStarted = false;
 
   /**
-   * Enum of possible event types to be handled
-   *
-   * @private
-   * @type {Array}
-   *
-   * @property {String} update - triggered on during each successfuly update attempt. This may run more often than draw events due to lag
-   * @property {String} draw - triggered on each successful draw update attempt
-   * @property {String} pause - triggered on engine pause
-   * @property {String} resume - triggered on engine resume
-   */
-  #validEvents = ["update", "draw", "pause", "resume"];
-
-  /**
-   * Array of event handlers for each event type
+   * Relevant properties for debugging and performance logging. Composed primarily of either boolean flags or constant properties.
    *
    * @private
    * @type {Object}
    *
-   * @property {Array} update - array of update event handlers
-   * @property {Array} pause - array of pause event handlers
-   * @property {Array} resume - array of resume event handlers
+   * @property {Number} isPerformanceLoggingEnabled - whether Engine should log performance data to console or not
+   * @property {Boolean} isPerformanceDebugScreenEnabled - whether Engine should draw performance metrics to canvas or not
    */
-
-  #eventHandlers = {
-    update: [],
-    pause: [],
-    resume: [],
+  #debugProperties = {
+    isPerformanceDebugScreenEnabled: true,
+    isPerformanceLoggingEnabled: false,
   };
 
   /**
-   * Initializes canvas and sets up event listeners
+   * Relevant properties for update cycle. Composed primarily of either boolean flags or constant properties.
    *
    * @private
+   * @type {Object}
+   *
+   * @property {Number} maxFrameUpdates - maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
+   * @property {Number} targetFPS - target FPS for update loop to achieve during runtime
+   * @property {Number} targetFrameTimestep - timestep of individual an individual frame in ms. Used as constant timestep for update method
    */
-  #init = () => {
-    // listen for resize events and update canvas size
-    document.addEventListener("resize", (e) => {
-      dimensions = this.#fixDPI();
-      // set canvas width and height to scaled width and height
-      this.environment.width = dimensions[0];
-      this.environment.height = dimensions[1];
-    });
-    this.#fixDPI();
+  #updateProperties = {
+    maxFrameUpdates: 240,
+    targetFPS: 60,
+    targetFrameTimestep: 1000 / 60,
   };
+
+  /**
+   * Releveant metrics for debugging and performance tracking.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} FPS - current FPS of engine
+   * @property {Number} startTime - time at which Engine was started
+   * @property {Number} updatesSinceStart - number of updates since Engine was started
+   */
+  #debugMetrics = {
+    FPS: 0,
+    startTime: 0,
+    updatesSinceStart: 0,
+  };
+
+  /**
+   * Relevant metrics for update cycle.
+   *
+   * @private
+   * @type {Object}
+   *
+   * @property {Number} animationFrameID - ID of current animation frame
+   * @property {Number} lag - accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
+   * @property {Number} prevTimestamp - timestamp of last frame in ms
+   */
+  #updateMetrics = {
+    animationFrameID: -1,
+    lag: 0,
+    prevTimestamp: 0,
+  };
+
+  /**
+   * An array of actors to be updated and drawn by the canvas
+   *
+   * @type {Array<Actor>}
+   */
+  #actors = [];
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -265,44 +245,54 @@ export default class Engine {
    *
    */
   #update = (timestamp) => {
-    // calculate time between frames
-    let dt = timestamp - this.#prevTimestamp;
-    this.#prevTimestamp = timestamp;
+    this.#updateMetrics.animationFrameID = requestAnimationFrame(this.#update);
 
-    this.#lag += dt;
+    // calculate time between frames
+    let dt = timestamp - this.#updateMetrics.prevTimestamp;
+    this.#updateMetrics.prevTimestamp = timestamp;
+
+    this.#updateMetrics.lag += dt;
 
     // calculate current FPS
-    this.#debug.FPS = 1000 / dt;
+    this.#debugMetrics.FPS = 1000 / dt;
 
-    while (this.#lag >= this.#targetFrameTime) {
+    let numUpdates = 0;
+    while (
+      this.#updateMetrics.lag >= this.#updateProperties.targetFrameTimestep
+    ) {
       this.#attemptPhysicsUpdates();
 
-      this.#lag -= this.#targetFrameTime;
+      this.#updateMetrics.lag -= this.#updateProperties.targetFrameTimestep;
+
+      this.#debugMetrics.updatesSinceStart++;
+      if (++numUpdates >= this.#updateProperties.maxFrameUpdates) {
+        this.#updateMetrics.lag = 0;
+        break;
+      }
     }
 
     // interpolate between lag and target frame time
-    const interp = this.#lag / this.#targetFrameTime;
+    const interp =
+      this.#updateMetrics.lag / this.#updateProperties.targetFrameTimestep;
 
     // call draw method to draw relevant actors
     this.#draw(interp);
 
     // filter actors array by those that are NOT queued for disposal
-    this.actors.filter((actor) => !actor.disposalQueued);
-
-    this.#animationFrameID = requestAnimationFrame(this.#update);
+    this.#actors.filter((actor) => !actor.disposalQueued);
   };
 
   #attemptPhysicsUpdates = () => {
     if (this.#isPaused) return;
 
     // call update event handlers for relevant events
-    this.#eventHandlers["update"].forEach((handler) =>
-      handler(this.#targetFrameTime, this.environment)
+    this.eventHandler.eventHandlers["update"].forEach((callback) =>
+      callback(this.#updateProperties.targetFrameTimestep, this.environment)
     );
 
     // update all actors
-    this.actors.forEach((actor) =>
-      actor.update(this.#targetFrameTime, this.environment)
+    this.#actors.forEach((actor) =>
+      actor.update(this.#updateProperties.targetFrameTimestep, this.environment)
     );
   };
 
@@ -322,16 +312,32 @@ export default class Engine {
     this.ctx.fillStyle = this.environment.background;
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
 
-    this.actors.forEach((actor) => actor.draw(this.ctx, interp));
+    // call draw event handlers for relevant events
+    this.eventHandler.eventHandlers["draw"].forEach((callback) =>
+      callback(interp, this.ctx)
+    );
+
+    this.#actors.forEach((actor) => actor.draw(this.ctx, interp));
 
     // Draw FPS on screen, if enabled
-    if (this.#debug.showFPS) {
+    if (this.#debugProperties.isPerformanceDebugScreenEnabled) {
       this.ctx.fillStyle = "#333333"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
-      if (!isNaN(this.#debug.FPS)) {
-        this.ctx.fillText("FPS: " + Math.round(this.#debug.FPS), 5, 15);
-        this.ctx.fillText("dt: " + 1000 / this.#debug.FPS, 5, 25);
-        this.ctx.fillText("lag: " + this.#lag, 5, 35);
+      if (!isNaN(this.#debugMetrics.FPS)) {
+        this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
+        this.ctx.fillText("dt: " + 1000 / this.#debugMetrics.FPS, 5, 25);
+        this.ctx.fillText("lag: " + this.#updateMetrics.lag, 5, 35);
         this.ctx.fillText("interp: " + interp, 5, 45);
+        this.ctx.fillText(
+          "total updates: " + this.#debugMetrics.updatesSinceStart,
+          5,
+          55
+        );
+        this.ctx.fillText(
+          "runtime: " +
+            (performance.now() - this.#debugMetrics.startTime) / 1000,
+          5,
+          65
+        );
       }
     }
   };

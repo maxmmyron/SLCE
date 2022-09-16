@@ -1,57 +1,40 @@
 import Engine from "../src/core/Engine.js";
-import { add, sub, mult, vec } from "../src/Math/Vector.js";
+import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
+import TextureLayer from "../src/util/TextureLayer.js";
+
+import grassTexturePath from "./grassTexture.png";
+import dirtTexturePath from "./dirtTexture.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
-engine.environment.physics.accel.y = 3;
+engine.environment.physics.accel.y = 0;
 
-const actorA = new Actor(
-  (ctx, interp) => {
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(actorA.pos.x, actorA.pos.y, 5, 0, Math.PI * 2, false);
-    ctx.fill();
-  },
-  (timestep) => {
-    actorA.pos.y += actorA.vel.y / timestep;
-    if(actorA.pos.y > engine.environment.height) {
-      actorA.pos.y = 0;
-    }
-  },
-  {
-    pos: vec(500,50),
-  }
-);
+const ground = new Actor({
+  pos: vec(0, engine.environment.height - 200),
+  size: vec(engine.environment.width, 200),
+});
 
-engine.actors.push(actorA);
+ground.preload(async () => {
+  ground.addTextureLayer(
+    new TextureLayer(dirtTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tile",
+      zIndex: 0,
+    })
+  );
+  ground.addTextureLayer(
+    new TextureLayer(grassTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tileX",
+      zIndex: 1,
+    })
+  );
+});
 
-const handlePause = () => console.log("paused");
-const handleResume = () => console.log("resumed");
-
-engine.addHandler("pause", handlePause)
-engine.addHandler("resume", handleResume)
-
-const handleUpdate = (dt) => {
-  console.log(dt);
-}
-
-engine.addHandler("update", handleUpdate);
+engine.addActor(ground);
 
 engine.start();
-
-setTimeout(() => engine.pause(), 2500);
-setTimeout(() => engine.resume(), 3500);
-
-setTimeout(() => engine.pause(), 4500);
-setTimeout(() => engine.resume(), 5500);
-
-setTimeout(() => {
-  engine.removeHandler("pause", handlePause);
-  engine.removeHandler("resume", handleResume);
-  engine.removeHandler("update", handleUpdate);
-}, 6000);
-
-setTimeout(() => engine.pause(), 6500);
-setTimeout(() => engine.resume(), 7500);
