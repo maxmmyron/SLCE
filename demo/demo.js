@@ -5,8 +5,6 @@ import TextureLayer from "../src/util/TextureLayer.js";
 
 import grassTexturePath from "./grassTexture.png";
 import dirtTexturePath from "./dirtTexture.png";
-import leavesTexturePath from "./leavesTexture.png";
-import woodTexturePath from "./woodTexture.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
@@ -37,57 +35,6 @@ ground.preload(async () => {
   );
 });
 
-const treeWood = new Actor({
-  pos: vec(256, engine.environment.height - 584),
-  size: vec(64, 384),
-});
-
-treeWood.preload(async () => {
-  treeWood.addTextureLayer(
-    new TextureLayer(woodTexturePath, {
-      isActive: true,
-      size: vec(64, 64),
-      tileMode: "tileY",
-    })
-  );
-});
-
-const treeLeavesBase = new Actor({
-  pos: vec(128, engine.environment.height - 392 - 128),
-  size: vec(324, 128),
-});
-
-treeLeavesBase.preload(async () => {
-  treeLeavesBase.addTextureLayer(
-    new TextureLayer(leavesTexturePath, {
-      isActive: true,
-      size: vec(64, 64),
-      tileMode: "tile",
-    })
-  );
-});
-
-const treeLeavesTop = new Actor({
-  pos: vec(192, engine.environment.height - 392 - 256),
-  size: vec(192, 128),
-});
-
-treeLeavesTop.preload(async () => {
-  treeLeavesTop.addTextureLayer(
-    new TextureLayer(leavesTexturePath, {
-      isActive: true,
-      size: vec(64, 64),
-      tileMode: "tile",
-    })
-  );
-});
-
 engine.addActor(ground);
-
-engine.addActor(treeWood);
-
-engine.addActor(treeLeavesBase);
-
-engine.addActor(treeLeavesTop);
 
 engine.start();
