@@ -7,23 +7,22 @@ export default class TextureLayer {
   /**
    * Constructs a new TextureLayer object.
    *
-   * @param {String} texture - path to texture image file
-   * @param {Object} initialProperties - opitonal arguments for texture layer
-   * @property {Vector} initialProperties.pos - position of texture layer
-   * @property {Vector} initialProperties.size - size of texture layer
-   * @property {Number} initialProperties.zIndex - z-index of texture layer. -1 will draw texture behind actor.
+   * @param {String} path - path to texture image file
+   * @param {Object} options - options for drawing texture
    */
-  constructor(path, properties = {}) {
+  constructor(path, options = {}) {
     this.#path = path || null;
 
     // apply any options passed in; keep defaults if not provided
-    this.properties = {
-      pos: properties.pos ?? vec(),
-      size: properties.size ?? vec(48),
-      repeatX: properties.repeatX ?? false,
-      repeatY: properties.repeatY ?? false,
-      zIndex: properties.zIndex ?? 0,
+    this.drawProperties = {
+      tileMode: options.tileMode ?? "none",
+      zIndex: options.zIndex ?? 0,
     };
+
+    this.pos = options.pos ?? vec();
+    this.size = options.size ?? vec(48, 48);
+
+    this.isActive = options.isActive ?? true;
   }
 
   // ****************************************************************
@@ -35,6 +34,30 @@ export default class TextureLayer {
    * @type {ImageBitmap}
    */
   imageBitmap;
+
+  /**
+   * Current position of texture layer, relative to parent actor's position.
+   *
+   * @type {Vector}
+   * @default vec()
+   */
+  pos;
+
+  /**
+   * Size of texture layer.
+   *
+   * @type {Vector}
+   * @default vec(48)
+   */
+  size;
+
+  /**
+   * Whether or not texture layer is active. If false, texture layer will not be drawn.
+   *
+   * @type {Boolean}
+   * @default true
+   */
+  isActive;
 
   /**
    * resolves an image bitmap from an image file path

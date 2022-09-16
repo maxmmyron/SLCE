@@ -2,32 +2,39 @@ import Engine from "../src/core/Engine.js";
 import { vec } from "../src/Math/Vector.js";
 import Actor from "../src/Objects/Actor.js";
 import TextureLayer from "../src/util/TextureLayer.js";
-import test from "./testing.png";
+
+import grassTexturePath from "./grassTexture.png";
+import dirtTexturePath from "./dirtTexture.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
 engine.environment.physics.accel.y = 0;
 
-const actorA = new Actor({
-  pos: vec(engine.environment.width / 2 - 64, engine.environment.height / 2),
-  vel: vec(),
-  bounds: {
-    pos: vec(-16, -16),
-    size: vec(32),
-  },
+const ground = new Actor({
+  pos: vec(0, engine.environment.height - 200),
+  size: vec(engine.environment.width, 200),
 });
 
-actorA.eventHandler.addHandler("draw", (ctx) => {
-  ctx.save();
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(actorA.pos.x, actorA.pos.y, 25, 0, Math.PI * 2, false);
-  ctx.clip();
+ground.preload(async () => {
+  ground.addTextureLayer(
+    new TextureLayer(dirtTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tile",
+      zIndex: 0,
+    })
+  );
+  ground.addTextureLayer(
+    new TextureLayer(grassTexturePath, {
+      isActive: true,
+      size: vec(64, 64),
+      tileMode: "tileX",
+      zIndex: 1,
+    })
+  );
 });
+
+engine.addActor(ground);
 
 engine.start();
-
-setTimeout(() => {
-  engine.pause();
-}, 10000);
