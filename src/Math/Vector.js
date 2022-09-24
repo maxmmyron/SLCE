@@ -53,7 +53,7 @@ const resolveVectors = (vectors, op) => {
  */
 export const vec = (x = 0, y = 0) => {
   return {
-    x: assertIsNumber(y),
+    x: assertIsNumber(x),
     y: assertIsNumber(y),
   };
 };
