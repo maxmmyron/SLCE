@@ -9,8 +9,6 @@ import dirtTexturePath from "./dirtTexture.png";
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
-engine.environment.physics.accel.y = 0;
-
 const ground = new Actor({
   pos: vec(0, engine.environment.height - 200),
   size: vec(engine.environment.width, 500),
