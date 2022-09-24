@@ -13,16 +13,20 @@ import { assertIsNumber, assertIsVector } from "../util/Asserts";
 /**
  * Checks if all vectors passed are vectors before performing an operation
  *
- * @param {Array} vectors - an array of potential vectors to check
+ * @param {Array | Vector} vectors - a vector or array of vectors to test
  * @param {*} op - the operation to be performed on the vectors upon success
  * @returns the result of the operation on the vectors
  *
  * @throws {TypeError} if any of the vectors are not vectors
  */
-const resolveVector = (vectors, op) => {
+const resolveVectors = (vectors, op) => {
+  if (vectors instanceof Array)
+    if (vectors.every(assertIsVector)) return op(...vectors);
+
+  if (assertIsVector(vectors)) return op(vectors);
+
   // check if each element is a vector before performing operation
-  if (vectors.every(assertIsVector)) vectors.map((vector) => op(vector));
-  else reject(new TypeError("Not all elements are vectors"));
+  new TypeError("Not all elements are vectors");
 };
 
 /**
@@ -48,11 +52,10 @@ const resolveVector = (vectors, op) => {
  * v.y // 0
  */
 export const vec = (x = 0, y = 0) => {
-  // assert that x and y are numbers
-  // assertIsNumber(x);
-  // assertIsNumber(y);
-
-  return { x: x, y: y };
+  return {
+    x: assertIsNumber(x),
+    y: assertIsNumber(y),
+  };
 };
 
 /**
@@ -62,8 +65,8 @@ export const vec = (x = 0, y = 0) => {
  * @param b - The vector to add to A
  * @return {Object} the sum of the two vectors
  */
-export const add = (a, b) => vec(a.x + b.x, a.y + b.y);
-//resolveVector([a, b], (a, b) => vec(a.x + b.x, a.y + b.y));
+export const add = (a, b) =>
+  resolveVectors([a, b], (a, b) => vec(a.x + b.x, a.y + b.y));
 
 /**
  * subtracts two vectors
@@ -72,8 +75,8 @@ export const add = (a, b) => vec(a.x + b.x, a.y + b.y);
  * @param b - The vector to subtract from A
  * @return {Object} the difference of A and B
  */
-export const sub = (a, b) => vec(a.x - b.x, a.y - b.y);
-// resolveVector([a, b], (a, b) => vec(a.x - b.x, a.y - b.y));
+export const sub = (a, b) =>
+  resolveVectors([a, b], (a, b) => vec(a.x - b.x, a.y - b.y));
 
 /**
  * multiplies a vector by a scalar
@@ -85,10 +88,8 @@ export const sub = (a, b) => vec(a.x - b.x, a.y - b.y);
  * @throws {Error} if s is not a number
  */
 export const mult = (a, s) => {
-  //assertIsNumber(s);
-
-  return vec(a.x * s, a.y * s);
-  // resolveVector(a, a => vec(a.x * s, a.y * s));
+  assertIsNumber(s);
+  return resolveVectors(a, (a) => vec(a.x * s, a.y * s));
 };
 
 /**
@@ -102,12 +103,10 @@ export const mult = (a, s) => {
  * @throws {Error} if s is zero
  */
 export const div = (a, s) => {
-  assertIsNumber(s);
-
   if (s === 0) throw new Error("Cannot divide by 0");
 
-  return vec(a.x / s, a.y / s);
-  // resolveVector(a, a => vec(a.x / s, a.y / s));
+  assertIsNumber(s);
+  return resolveVectors(a, (a) => vec(a.x / s, a.y / s));
 };
 
 /**
@@ -120,14 +119,14 @@ export const div = (a, s) => {
  * @throws {Error} if angle is not a number
  */
 export const rotate = (a, angle) => {
-  if (typeof angle === Number)
-    return resolveVector(a, (a) => {
-      const s = Math.sin(angle);
-      const c = Math.cos(angle);
+  assertIsNumber(angle);
 
-      return vec(a.x * c - a.y * s, a.x * s + a.y * c);
-    });
-  else throw new Error("angle must be a number");
+  return resolveVectors(a, (a) => {
+    const s = Math.sin(angle);
+    const c = Math.cos(angle);
+
+    return vec(a.x * c - a.y * s, a.x * s + a.y * c);
+  });
 };
 
 /**
@@ -136,8 +135,8 @@ export const rotate = (a, angle) => {
  * @param a - A vector
  * @return {Number} - the magnitude of A
  */
-export const mag = (a) => Math.sqrt(a.x * a.x + a.y * a.y);
-//resolveVector(a, a => Math.sqrt(a.x * a.x + a.y * a.y));
+export const mag = (a) =>
+  resolveVectors(a, (a) => Math.sqrt(a.x * a.x + a.y * a.y));
 
 /**
  * normalizes a vector
@@ -145,7 +144,7 @@ export const mag = (a) => Math.sqrt(a.x * a.x + a.y * a.y);
  * @param a - vector to normalize
  * @return {Object} - the normalized vector
  */
-export const norm = (a) => resolveVector(a, (a) => div(a, mag(a)));
+export const norm = (a) => resolveVectors(a, (a) => div(a, mag(a)));
 
 /**
  * calculates the dot product of two vectors
@@ -155,7 +154,7 @@ export const norm = (a) => resolveVector(a, (a) => div(a, mag(a)));
  * @return {Number} - the dot product of A and B
  */
 export const dot = (a, b) =>
-  resolveVector([a, b], (a, b) => a.x * b.x + a.y * b.y);
+  resolveVectors([a, b], (a, b) => a.x * b.x + a.y * b.y);
 
 /**
  * calculates the cross product of two vectors
@@ -165,4 +164,4 @@ export const dot = (a, b) =>
  * @return {Number} - the cross product of A and B
  */
 export const cross = (a, b) =>
-  resolveVector([a, b], (a, b) => a.x * b.y - a.y * b.x);
+  resolveVectors([a, b], (a, b) => a.x * b.y - a.y * b.x);

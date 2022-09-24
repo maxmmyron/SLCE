@@ -1,4 +1,4 @@
-import { vec, add, sub, div, mag } from "../Math/Vector";
+import { vec, add, sub, div, mag, mult } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
 import EventHandler from "../util/EventHandler";
 
@@ -16,8 +16,8 @@ export default class Actor {
   constructor(properties = {}) {
     // set velocity and position to values passed in initialProperties;
     // if not provided, set to 0
-    this.pos = properties.pos ?? vec();
-    this.vel = properties.vel ?? vec();
+    this.#last.pos = this.pos = properties.pos ?? vec();
+    this.#last.vel = this.vel = properties.vel ?? vec();
 
     this.size = properties.size ?? vec(48);
 
@@ -27,9 +27,6 @@ export default class Actor {
 
     // create a new event handler for handling events called during clip, draw, and update cycles.
     this.eventHandler = new EventHandler(["on_draw", "on_update"], true);
-
-    this.#last.pos = this.pos;
-    this.#last.vel = this.vel;
   }
 
   // ****************************************************************
@@ -139,10 +136,7 @@ export default class Actor {
     // perform default draw operations
 
     // interpolate position of actor based on interpolation provided by engine loop
-    this.pos = {
-      x: this.#last.pos.x + (this.pos.x - this.#last.pos.x) * interp,
-      y: this.#last.pos.y + (this.pos.y - this.#last.pos.y) * interp,
-    };
+    this.pos = add(this.#last.pos, mult(sub(this.pos, this.#last.pos), interp));
 
     // split texture layers into those that render below main draw call and those that render above
     const activeTextureLayers = this.#textures.filter(
@@ -283,8 +277,7 @@ export default class Actor {
     this.#last.pos = this.pos;
     this.#last.vel = this.vel;
 
-    this.vel.x += env.physics.accel.x / timestep;
-    this.vel.y += env.physics.accel.y / timestep;
+    this.vel = add(this.vel, div(env.physics.accel, timestep));
 
     // ****************************************************************
     // call update callback function

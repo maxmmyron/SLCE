@@ -13,7 +13,7 @@ engine.environment.physics.accel.y = 0;
 
 const ground = new Actor({
   pos: vec(0, engine.environment.height - 200),
-  size: vec(engine.environment.width, 200),
+  size: vec(engine.environment.width, 500),
 });
 
 ground.preload(async () => {
