@@ -1,40 +1,35 @@
-import Engine from "../src/core/Engine.js";
-import { vec } from "../src/Math/Vector.js";
-import Actor from "../src/Objects/Actor.js";
-import TextureLayer from "../src/util/TextureLayer.js";
+import {
+  add,
+  cross,
+  div,
+  dot,
+  mag,
+  mult,
+  norm,
+  rotate,
+  sub,
+  vec,
+} from "../src/Math/Vector";
 
-import grassTexturePath from "./grassTexture.png";
-import dirtTexturePath from "./dirtTexture.png";
+const a = vec(1, 2);
+const b = vec(3, 4);
+const nv = null;
+const s = 3;
 
-const canvas = document.getElementById("c");
-const engine = new Engine(canvas);
+console.log(add(a, b));
 
-engine.environment.physics.accel.y = 0;
+console.log(sub(a, b));
 
-const ground = new Actor({
-  pos: vec(0, engine.environment.height - 200),
-  size: vec(engine.environment.width, 200),
-});
+console.log(mult(nv, s));
 
-ground.preload(async () => {
-  ground.addTextureLayer(
-    new TextureLayer(dirtTexturePath, {
-      isActive: true,
-      size: vec(64, 64),
-      tileMode: "tile",
-      zIndex: 0,
-    })
-  );
-  ground.addTextureLayer(
-    new TextureLayer(grassTexturePath, {
-      isActive: true,
-      size: vec(64, 64),
-      tileMode: "tileX",
-      zIndex: 1,
-    })
-  );
-});
+console.log(div(nv, s));
 
-engine.addActor(ground);
+console.log(rotate(a, Math.PI / 2));
 
-engine.start();
+console.log(mag(a));
+
+console.log(norm(a));
+
+console.log(dot(a, b));
+
+console.log(cross(a, b));
