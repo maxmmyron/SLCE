@@ -3,6 +3,11 @@ import EventHandler from "../util/EventHandler";
 import Actor from "../Objects/Actor";
 
 /**
+ * Valid events that can be handled by engine.
+ */
+export const validEvents = ["click"];
+
+/**
  * Engine for handling game update logic and actor drawing.
  * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
  * @param {Object} options optional arguments
@@ -26,7 +31,7 @@ export default class Engine {
      * @type {Object}
      */
     this.environment = {
-      background: "#ffffff",
+      background: "#121212",
       width: getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2),
       height: getComputedStyle(canvasDOM)
         .getPropertyValue("height")
@@ -36,7 +41,7 @@ export default class Engine {
       },
     };
 
-    this.eventHandler = new EventHandler(["update", "draw", "pause", "resume"]);
+    // this.eventHandler = new EventHandler(["pause", "resume"]);
 
     // listen for resize events and update canvas size
     document.addEventListener("resize", (e) => {
@@ -45,19 +50,18 @@ export default class Engine {
       this.environment.width = dimensions[0];
       this.environment.height = dimensions[1];
     });
+
     this.#fixDPI();
   }
 
   // ****************************************************************
   // Public defs
 
-  /**
-   * An EventHandler object for handling engine events
-   *
-   * @private
-   * @type {EventHandler}
-   */
-  eventHandler;
+  update = null;
+
+  draw = null;
+
+  eventQueue = [];
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -66,7 +70,7 @@ export default class Engine {
     if (!this.#isStarted) {
       this.#fixDPI();
       this.#updateMetrics.animationFrameID = requestAnimationFrame(
-        this.#update
+        this.#performGameLoopUpdates
       );
       this.#isStarted = true;
       this.#isPaused = false;
@@ -82,7 +86,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    this.eventHandler.eventHandlers["pause"].forEach((callback) => callback());
+    // this.eventHandler.eventHandlers["pause"].forEach((callback) => callback());
   };
 
   /**
@@ -90,7 +94,7 @@ export default class Engine {
    */
   resume = () => {
     this.#isPaused = false;
-    this.eventHandler.eventHandlers["resume"].forEach((callback) => callback());
+    // this.eventHandler.eventHandlers["resume"].forEach((callback) => callback());
   };
 
   /**
@@ -112,7 +116,7 @@ export default class Engine {
   };
 
   /**
-   * Queues an actor for disposal by setting actor's disposalQueued flag to true.
+   * Queues an actor for disposal by setting actor's willDispose flag to true.
    *
    * @param {Actor} actor
    * @return {Boolean} true if actor was queued for disposal
@@ -128,7 +132,7 @@ export default class Engine {
 
     // queue actor for disposal instead of removing immediately
     // this prevents actors from being removed from the array while iterating over it
-    actor.disposalQueued = true;
+    actor.willDispose = true;
     return true;
   };
 
@@ -244,56 +248,83 @@ export default class Engine {
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    *
    */
-  #update = (timestamp) => {
-    this.#updateMetrics.animationFrameID = requestAnimationFrame(this.#update);
+  #performGameLoopUpdates = (timestamp) => {
+    this.#updateMetrics.animationFrameID = requestAnimationFrame(
+      this.#performGameLoopUpdates
+    );
 
-    // calculate time between frames
+    // *****************************
+    // Calculate delta time and lag
+
     let dt = timestamp - this.#updateMetrics.prevTimestamp;
     this.#updateMetrics.prevTimestamp = timestamp;
 
     this.#updateMetrics.lag += dt;
 
-    // calculate current FPS
     this.#debugMetrics.FPS = 1000 / dt;
+
+    // *****************************
+    // Perform engine updates based on current lag
 
     let numUpdates = 0;
     while (
       this.#updateMetrics.lag >= this.#updateProperties.targetFrameTimestep
     ) {
-      this.#attemptPhysicsUpdates();
+      this.#performEngineUpdates();
 
       this.#updateMetrics.lag -= this.#updateProperties.targetFrameTimestep;
 
       this.#debugMetrics.updatesSinceStart++;
+
+      // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
       if (++numUpdates >= this.#updateProperties.maxFrameUpdates) {
         this.#updateMetrics.lag = 0;
         break;
       }
     }
 
-    // interpolate between lag and target frame time
+    // *****************************
+    // Calculate interpolation and perform draw calls
+
     const interp =
       this.#updateMetrics.lag / this.#updateProperties.targetFrameTimestep;
 
-    // call draw method to draw relevant actors
-    this.#draw(interp);
+    this.#performDrawCalls(interp);
+
+    // *****************************
+    // Post-update operations
 
     // filter actors array by those that are NOT queued for disposal
-    this.#actors.filter((actor) => !actor.disposalQueued);
+    this.#actors.filter((actor) => !actor.willDispose);
   };
 
-  #attemptPhysicsUpdates = () => {
+  #performEngineUpdates = () => {
     if (this.#isPaused) return;
 
-    // call update event handlers for relevant events
-    this.eventHandler.eventHandlers["update"].forEach((callback) =>
-      callback(this.#updateProperties.targetFrameTimestep, this.environment)
+    // *****************************
+    // actor update operations
+
+    this.#actors.forEach((actor) =>
+      actor.performUpdates(
+        this.#updateProperties.targetFrameTimestep,
+        this.environment
+      )
     );
 
-    // update all actors
-    this.#actors.forEach((actor) =>
-      actor.update(this.#updateProperties.targetFrameTimestep, this.environment)
-    );
+    // perform user-defined update callback (if provided)
+    if (this.update)
+      this.update(this.#updateProperties.targetFrameTimestep, this.environment);
+
+    // perform event callbacks
+    this.eventQueue.forEach((event) => {
+      const filteredActors = this.#actors.filter((actor) =>
+        actor.subscribedEvents.includes(event.type)
+      );
+
+      filteredActors.forEach((actor) => {
+        actor.eventCallbacks[event.type](event.payload);
+      });
+    });
   };
 
   /**
@@ -302,7 +333,10 @@ export default class Engine {
    * @private
    * @param {CanvasRenderingContext2D} ctx - rendering context of canvas
    */
-  #draw = (interp) => {
+  #performDrawCalls = (interp) => {
+    // *****************************
+    // pre-draw operations
+
     if (this.#isPaused) return;
 
     // clear canvas
@@ -312,33 +346,46 @@ export default class Engine {
     this.ctx.fillStyle = this.environment.background;
     this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
 
-    // call draw event handlers for relevant events
-    this.eventHandler.eventHandlers["draw"].forEach((callback) =>
-      callback(interp, this.ctx)
-    );
+    // *****************************
+    // primary draw operations
 
-    this.#actors.forEach((actor) => actor.draw(this.ctx, interp));
+    this.#actors.forEach((actor) => actor.performDrawCalls(this.ctx, interp));
 
-    // Draw FPS on screen, if enabled
-    if (this.#debugProperties.isPerformanceDebugScreenEnabled) {
-      this.ctx.fillStyle = "#333333"; // TODO: remove magic number (i.e. dynamically set color to opposite of background color)
-      if (!isNaN(this.#debugMetrics.FPS)) {
-        this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
-        this.ctx.fillText("dt: " + 1000 / this.#debugMetrics.FPS, 5, 25);
-        this.ctx.fillText("lag: " + this.#updateMetrics.lag, 5, 35);
-        this.ctx.fillText("interp: " + interp, 5, 45);
-        this.ctx.fillText(
-          "total updates: " + this.#debugMetrics.updatesSinceStart,
-          5,
-          55
-        );
-        this.ctx.fillText(
-          "runtime: " +
-            (performance.now() - this.#debugMetrics.startTime) / 1000,
-          5,
-          65
-        );
-      }
+    // call user-defined draw callback (if provided)
+    if (this.draw) this.draw(interp, this.ctx);
+
+    // *****************************
+    // post-draw operations
+
+    if (this.#debugProperties.isPerformanceDebugScreenEnabled)
+      this.#performDebugDrawCalls(interp);
+  };
+
+  #performDebugDrawCalls = (interp) => {
+    this.ctx.fillStyle = "white";
+    if (!isNaN(this.#debugMetrics.FPS)) {
+      this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
+      this.ctx.fillText("dt: " + 1000 / this.#debugMetrics.FPS, 5, 25);
+      this.ctx.fillText("lag: " + this.#updateMetrics.lag, 5, 35);
+      this.ctx.fillText("interp: " + interp, 5, 45);
+      this.ctx.fillText(
+        "total updates: " + this.#debugMetrics.updatesSinceStart,
+        5,
+        55
+      );
+      this.ctx.fillText(
+        "runtime: " + (performance.now() - this.#debugMetrics.startTime) / 1000,
+        5,
+        65
+      );
+    }
+  };
+
+  #publishEvent = (event, payload) => {
+    // ensure event is valid
+    if (validEvents.includes(event)) {
+      // push details to event queue for listener
+      this.eventQueue.push({ type: event, payload: payload });
     }
   };
 
@@ -350,19 +397,19 @@ export default class Engine {
    * @returns {[number, number]} - [scaledWidth, scaledHeight]
    */
   #fixDPI = () => {
-    let dpi = window.devicePixelRatio;
+    const dpi = window.devicePixelRatio;
 
     // set current computed canvas dimensions
-    var style_width = getComputedStyle(this.canvasDOM)
+    const style_width = getComputedStyle(this.canvasDOM)
       .getPropertyValue("width")
-      .slice(0, -2); //get width attribute
-    var style_height = getComputedStyle(this.canvasDOM)
+      .slice(0, -2);
+    const style_height = getComputedStyle(this.canvasDOM)
       .getPropertyValue("height")
-      .slice(0, -2); //get height attribute
+      .slice(0, -2);
 
     // scale dimensions by DPI
-    var w = style_width * dpi;
-    var h = style_height * dpi;
+    const w = style_width * dpi;
+    const h = style_height * dpi;
 
     // set canvas element dimensions to scaled dimensions
     this.canvasDOM.setAttribute("width", w);
