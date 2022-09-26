@@ -1,11 +1,11 @@
-const path = require("path")
+const path = require("path");
 
 module.exports = {
   devServer: {
-    "static": "./demo",
+    static: "./demo",
   },
   entry: {
-    index: "./demo/demo.js"
+    index: "./demo/demo.js",
   },
   mode: "development",
   module: {
@@ -14,7 +14,7 @@ module.exports = {
         test: /\.(png|jpe?g)$/i,
         use: [
           {
-            loader: 'file-loader',
+            loader: "file-loader",
           },
         ],
       },
@@ -23,5 +23,5 @@ module.exports = {
   output: {
     filename: "bundle.demo.js",
     path: path.resolve(__dirname, "demo"),
-  }
-}
+  },
+};
