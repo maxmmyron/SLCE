@@ -1,6 +1,6 @@
 import { vec, add, sub, div, mag, mult } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
-import EventHandler from "../util/EventHandler";
+import { validEvents } from "../core/Engine";
 
 /**
  * An actor function represents an actor that can be placed within the canvas.
@@ -24,46 +24,18 @@ export default class Actor {
     this.isClippedToSize = properties.isClippedToSize ?? true;
 
     this.isDebugEnabled = properties.isDebugEnabled ?? false;
-
-    // create a new event handler for handling events called during clip, draw, and update cycles.
-    this.eventHandler = new EventHandler(["on_draw", "on_update"], true);
   }
 
   // ****************************************************************
-  // Pubic defs
-
-  /**
-   * Clip bounds of actor, which represents the region in which draw calls and texture drawing is confined to. If defined, the actor will be clipped to within these bounds.
-   * Clip bounds default to null, meaning that the actor will not be clipped. May be defined in one of two states, "clipToSize", or as a function using context draw calls to form a clip region.
-   *
-   * @type {String|Function}
-   * @default null
-   *
-   * @example
-   * // clip to size
-   * actor.clipBounds = "clipToSize";
-   *
-   * @example
-   * // clip to a circle
-   * actor.clipBounds = (ctx) => {
-   *  ctx.arc(0, 0, 48, 0, 2 * Math.PI);
-   * }
-   *
-   */
-  clipBounds;
+  // Public defs
 
   /**
    * Notifies engine that an actor should be disposed of at next update cycle.
    * @type {Boolean}
    */
-  disposalQueued = false;
+  willDispose = false;
 
-  /**
-   * An EventHandler object for accessing and handling engine events
-   *
-   * @type {EventHandler}
-   */
-  eventHandler;
+  isDebugEnabled = false;
 
   /**
    * Current position of actor. Defaults to a zero-vector on initialization
@@ -86,44 +58,68 @@ export default class Actor {
    */
   vel;
 
-  isDebugEnabled = false;
+  /**
+   * An array containing a series of structs that list out subscribed events and their respective callbacks.
+   *
+   * @type {Array}
+   *
+   * @example
+   * [{
+   *     event: "click",
+   *     callbacks: [()=>{...}, ()=>{...}]
+   * },
+   * {
+   *     event: "...",
+   *     callbacks: [()=>{}]
+   * }]
+   */
+  subscribedEvents = [];
+
+  draw = null;
+
+  update = null;
 
   /**
-   * Adds a new texture layer to the actor.
+   * Preload function is called once before the first draw cycle.
+   * Accepts a function to run as a preload function, and a function
+   * that is called after the preload function is finished.
    *
-   * @param {TextureLayer} textureLayer TextureLayer object to attempt to add to actor
+   * @param {Function} callback a function to run as a preload function
+   *
+   * @returns {Promise} a promise that resolves when the preload function is finished
    */
-  addTextureLayer = (textureLayer) => {
-    new Promise((resolve, reject) => {
-      if (textureLayer.imageBitmap) {
-        this.#textures.push(textureLayer);
-        resolve("Success");
-      } else {
-        textureLayer
-          .resolveImageBitmap()
-          .then(() => {
-            this.#textures.push(textureLayer);
-            resolve("Success");
-          })
-          .catch((err) => {
-            reject(`Error adding texture layer to actor: ${err}`);
-          });
-      }
-    });
+  preload = (callback, onFulfilled) => {
+    return new Promise((resolve, reject) => {
+      resolve(callback());
+    })
+      .then((res) => {
+        onFulfilled && onFulfilled(res);
+      })
+      .catch((err) => {
+        console.error(`Error attempting to preload actor: ${err}`);
+      });
   };
 
   /**
-   * Adds a callback, if one is not already present, to the event handler for the given event.
+   * Calls update callback function for actor
    *
-   * @param {String} event event to add callback to
-   * @param {Function} callback callback to add to event handler
-   *
-   * @returns true if callback was added, false if callback was already present
+   * @param {Number} timestep - update timestep
+   * @param {Object} env - environment variables defined by engine
    */
-  addEventHandler = (event, callback) =>
-    this.eventHandler.addEventHandler(event, callback);
+  performUpdates = (timestep, env) => {
+    // ****************************************************************
+    // pre-update operations
 
-  getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
+    this.#last.pos = this.pos;
+    this.#last.vel = this.vel;
+
+    // ****************************************************************
+    // primary update operations
+
+    this.vel = add(this.vel, div(env.physics.accel, timestep));
+
+    if (this.update) this.update(timestep, env);
+  };
 
   /**
    * Calls draw callback function for actor.
@@ -131,9 +127,9 @@ export default class Actor {
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
-  draw = (ctx, interp) => {
+  performDrawCalls = (ctx, interp) => {
     // ****************************************************************
-    // perform default draw operations
+    // pre-draw operations
 
     // interpolate position of actor based on interpolation provided by engine loop
     this.pos = add(this.#last.pos, mult(sub(this.pos, this.#last.pos), interp));
@@ -149,10 +145,11 @@ export default class Actor {
     );
 
     // ****************************************************************
-    // perform draw operations
+    // primary draw operations
 
     ctx.save();
 
+    // if clipping is enabled then set context clip to actor bounds
     if (this.isClippedToSize) {
       ctx.beginPath();
       ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
@@ -164,11 +161,13 @@ export default class Actor {
       this.drawTextureLayer(textureLayer, ctx);
     });
 
-    // execute draw callback
-    if (this.eventHandler.eventHandlers["on_draw"])
-      this.eventHandler.eventHandlers["on_draw"](ctx);
+    // call user-defined update callback function
+    if (this.draw) this.draw(ctx, interp);
 
-    // restore before we draw debug info, so that debug info is not clipped
+    // ****************************************************************
+    // restore & debug operations
+
+    // restore canvas context to previous state so we don't clip debug content
     ctx.restore();
 
     if (this.isDebugEnabled) this.#drawDebug(ctx);
@@ -234,57 +233,53 @@ export default class Actor {
   };
 
   /**
-   * Preload function is called once before the first draw cycle.
-   * Accepts a function to run as a preload function, and a function
-   * that is called after the preload function is finished.
+   * Adds a new texture layer to the actor.
    *
-   * @param {Function} callback a function to run as a preload function
-   *
-   * @returns {Promise} a promise that resolves when the preload function is finished
+   * @param {TextureLayer} textureLayer TextureLayer object to attempt to add to actor
    */
-  preload = (callback, onFulfilled) => {
-    return new Promise((resolve, reject) => {
-      resolve(callback());
-    })
-      .then((res) => {
-        onFulfilled && onFulfilled(res);
-      })
-      .catch((err) => {
-        console.error(`Error attempting to preload actor: ${err}`);
-      });
+  addTextureLayer = (textureLayer) => {
+    new Promise((resolve, reject) => {
+      if (textureLayer.imageBitmap) {
+        this.#textures.push(textureLayer);
+        resolve("Success");
+      } else {
+        textureLayer
+          .resolveImageBitmap()
+          .then(() => {
+            this.#textures.push(textureLayer);
+            resolve("Success");
+          })
+          .catch((err) => {
+            reject(`Error adding texture layer to actor: ${err}`);
+          });
+      }
+    });
   };
 
-  /**
-   * Removes a callback from the event handler for the given event.
-   *
-   * @param {Function} callback - function to remove
-   *
-   * @returns true if callback was removed, false if callback was not present
-   */
-  removeEventHandler = (callback) =>
-    this.eventHandler.removeEventHandler(callback);
+  getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
 
-  /**
-   * Calls update callback function for actor
-   *
-   * @param {Number} timestep - update timestep
-   * @param {Object} env - environment variables defined by engine
-   */
-  update = (timestep, env) => {
-    // ****************************************************************
-    // perform default updates
+  subscribe(event, callback) {
+    // ensure event is valid from engine event list
+    if (!engineEvents.includes(event)) {
+      throw new Error(
+        `Error attempting to subscribe to invalid event ${event}: Event does not exist in validEvents list.`
+      );
+    }
 
-    this.#last.pos = this.pos;
-    this.#last.vel = this.vel;
+    const specifiedEvent = this.subscribedEvents.find(
+      (subscribedEvent) => subscribedEvent.event === event
+    );
 
-    this.vel = add(this.vel, div(env.physics.accel, timestep));
+    // add a new struct to subscribedEvent array if it doesn't already exist
+    if (!specifiedEvent) {
+      this.subscribedEvents.push({ event: event, callbacks: [callback] });
+    }
 
-    // ****************************************************************
-    // call update callback function
-
-    if (this.eventHandler.eventHandlers["on_update"])
-      this.eventHandler.eventHandlers["on_update"](timestep, env);
-  };
+    // add callback to subscribedEvent struct as element in array if it exists
+    else {
+      specifiedEvent.callbacks.push(callback);
+    }
+  }
 
   // ****************************************************************
   // Private defs
@@ -311,6 +306,9 @@ export default class Actor {
    */
   #textures = [];
 
+  // ****************************************************************
+  // Draw debug information
+
   #drawDebug = (ctx) => {
     ctx.save();
 
@@ -318,7 +316,7 @@ export default class Actor {
     ctx.strokeStyle = "red";
     ctx.strokeRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "white";
 
     const texts = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
