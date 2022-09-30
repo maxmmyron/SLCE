@@ -33,9 +33,12 @@ ground.preload(async () => {
   );
 });
 
-ground.update = (timestamp) => {
-  ground.pos.x += 0.1 * Math.cos(engine.getCurrentEngineTime() / 1000) * 10;
-};
+ground.subscribe("mousedown", (payload) => {
+  console.log(`received mousedown event payload`);
+  console.log(payload);
+});
+
+console.log(ground.subscribedEvents);
 
 engine.addActor(ground);
 
