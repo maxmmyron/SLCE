@@ -1,11 +1,9 @@
 import { vec } from "../Math/Vector";
-import EventHandler from "../util/EventHandler";
+// import EventHandler from "../util/EventHandler";
 import Actor from "../Objects/Actor";
+import EventHandler from "./EventHandler";
 
-/**
- * Valid events that can be handled by engine.
- */
-export const validEvents = ["click"];
+export const validEvents = ["mousedown", "mouseup"];
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -41,8 +39,6 @@ export default class Engine {
       },
     };
 
-    // this.eventHandler = new EventHandler(["pause", "resume"]);
-
     // listen for resize events and update canvas size
     document.addEventListener("resize", (e) => {
       dimensions = this.#fixDPI();
@@ -52,6 +48,8 @@ export default class Engine {
     });
 
     this.#fixDPI();
+
+    this.#eventHandler = new EventHandler(canvasDOM, this.#isPaused);
   }
 
   // ****************************************************************
@@ -60,8 +58,6 @@ export default class Engine {
   update = null;
 
   draw = null;
-
-  eventQueue = [];
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -72,9 +68,14 @@ export default class Engine {
       this.#updateMetrics.animationFrameID = requestAnimationFrame(
         this.#performGameLoopUpdates
       );
+
       this.#isStarted = true;
       this.#isPaused = false;
+
       this.#debugMetrics.startTime = performance.now();
+
+      // initialize events
+      this.#eventHandler.attachAllEvents();
     } else {
       throw new Error(`Error starting engine: engine has already started.`);
     }
@@ -86,7 +87,7 @@ export default class Engine {
    */
   pause = () => {
     this.#isPaused = true;
-    // this.eventHandler.eventHandlers["pause"].forEach((callback) => callback());
+    this.#eventHandler.isEnginePaused = true;
   };
 
   /**
@@ -94,7 +95,7 @@ export default class Engine {
    */
   resume = () => {
     this.#isPaused = false;
-    // this.eventHandler.eventHandlers["resume"].forEach((callback) => callback());
+    this.#eventHandler.isEnginePaused = false;
   };
 
   /**
@@ -242,6 +243,13 @@ export default class Engine {
   #actors = [];
 
   /**
+   * An instance of EventHandler to handle events
+   *
+   * @type {EventHandler}
+   */
+  #eventHandler;
+
+  /**
    * keeps track of FPS and updates all relevant actors
    *
    * @private
@@ -316,7 +324,7 @@ export default class Engine {
       this.update(this.#updateProperties.targetFrameTimestep, this.environment);
 
     // perform event callbacks
-    this.eventQueue.forEach((event) => {
+    this.#eventHandler.eventQueue.forEach((event) => {
       const filteredActors = this.#actors.filter((actor) =>
         actor.subscribedEvents.includes(event.type)
       );
@@ -378,14 +386,6 @@ export default class Engine {
         5,
         65
       );
-    }
-  };
-
-  #publishEvent = (event, payload) => {
-    // ensure event is valid
-    if (validEvents.includes(event)) {
-      // push details to event queue for listener
-      this.eventQueue.push({ type: event, payload: payload });
     }
   };
 
