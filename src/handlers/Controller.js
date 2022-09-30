@@ -9,10 +9,10 @@ export default class Controller {
     this.keyBuffer = [];
 
     //default values for W,S,A,D
-    this.keyBuffer[87] = false;
-    this.keyBuffer[83] = false;
-    this.keyBuffer[65] = false;
-    this.keyBuffer[68] = false;
+    this.keyBuffer[87] = false; // W
+    this.keyBuffer[83] = false; // S
+    this.keyBuffer[65] = false; // A
+    this.keyBuffer[68] = false; // D
 
     this.touching = false;
     this.controllerType = controllerType || 0;
