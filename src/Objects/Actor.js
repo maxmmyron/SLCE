@@ -1,6 +1,7 @@
 import { vec, add, sub, div, mag, mult } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
-import { validEvents } from "../core/Engine";
+
+import { validEvents } from "../core/EventHandler";
 
 /**
  * An actor function represents an actor that can be placed within the canvas.
@@ -65,11 +66,11 @@ export default class Actor {
    *
    * @example
    * [{
-   *     event: "click",
+   *     type: "click",
    *     callbacks: [()=>{...}, ()=>{...}]
    * },
    * {
-   *     event: "...",
+   *     type: "...",
    *     callbacks: [()=>{}]
    * }]
    */
@@ -258,21 +259,21 @@ export default class Actor {
 
   getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
 
-  subscribe(event, callback) {
+  subscribe(eventType, callback) {
     // ensure event is valid from engine event list
-    if (!engineEvents.includes(event)) {
+    if (!validEvents.includes(eventType)) {
       throw new Error(
-        `Error attempting to subscribe to invalid event ${event}: Event does not exist in validEvents list.`
+        `Error attempting to subscribe to invalid event ${eventType}: Event does not exist in validEvents list.`
       );
     }
 
     const specifiedEvent = this.subscribedEvents.find(
-      (subscribedEvent) => subscribedEvent.event === event
+      (subscribedEvent) => subscribedEvent.event === eventType
     );
 
     // add a new struct to subscribedEvent array if it doesn't already exist
     if (!specifiedEvent) {
-      this.subscribedEvents.push({ event: event, callbacks: [callback] });
+      this.subscribedEvents.push({ type: eventType, callbacks: [callback] });
     }
 
     // add callback to subscribedEvent struct as element in array if it exists
