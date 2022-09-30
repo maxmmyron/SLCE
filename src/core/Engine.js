@@ -1,9 +1,7 @@
 import { vec } from "../Math/Vector";
 // import EventHandler from "../util/EventHandler";
 import Actor from "../Objects/Actor";
-import EventHandler from "./EventHandler";
-
-export const validEvents = ["mousedown", "mouseup"];
+import EventHandler, { validEvents } from "./EventHandler";
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -312,27 +310,46 @@ export default class Engine {
     // *****************************
     // actor update operations
 
-    this.#actors.forEach((actor) =>
+    this.#actors.forEach((actor) => {
       actor.performUpdates(
         this.#updateProperties.targetFrameTimestep,
         this.environment
-      )
-    );
+      );
+    });
 
     // perform user-defined update callback (if provided)
     if (this.update)
       this.update(this.#updateProperties.targetFrameTimestep, this.environment);
 
-    // perform event callbacks
-    this.#eventHandler.eventQueue.forEach((event) => {
-      const filteredActors = this.#actors.filter((actor) =>
-        actor.subscribedEvents.includes(event.type)
-      );
+    // get a list of current events in the queue
+    const eventQueueList = this.#eventHandler.eventQueue.map(
+      (event) => event.type
+    );
 
-      filteredActors.forEach((actor) => {
-        actor.eventCallbacks[event.type](event.payload);
-      });
-    });
+    // get a list of all actors that currently have events that match queued events
+    const relevantActors = this.#actors.filter((actor) =>
+      actor.subscribedEvents.some((event) =>
+        eventQueueList.includes(event.type)
+      )
+    );
+
+    if (relevantActors.length > 0) {
+      while (this.#eventHandler.eventQueue.length > 0) {
+        const eventType = this.#eventHandler.eventQueue[0].type;
+        const eventPayload = this.#eventHandler.eventQueue[0].payload;
+
+        // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
+        relevantActors.forEach((actor) => {
+          actor.subscribedEvents.forEach((subscribedEvent) => {
+            if (subscribedEvent.type === eventType) {
+              subscribedEvent.callbacks[0](eventPayload);
+            }
+          });
+        });
+
+        this.#eventHandler.eventQueue.shift();
+      }
+    }
   };
 
   /**

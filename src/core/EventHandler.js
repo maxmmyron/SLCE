@@ -1,3 +1,5 @@
+export const validEvents = ["mousedown", "mouseup"];
+
 /**
  * A series of events that can be subscribed to by actors.
  *
@@ -9,7 +11,6 @@ export default class EventHandler {
     this.#canvasDOM = canvasDOM;
     this.isEnginePaused = isEnginePaused;
 
-    this.validEvents = ["mousedown", "mouseup"];
     this.eventQueue = [];
 
     this.#eventMap = new Map();
@@ -30,7 +31,7 @@ export default class EventHandler {
   dispatch = (event, payload) => {
     if (this.isEnginePaused) return;
 
-    if (this.validEvents.includes(event)) {
+    if (validEvents.includes(event)) {
       this.eventQueue.push({ type: event, payload: payload });
     }
   };
@@ -79,6 +80,7 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseDown = (e) => {
+    console.log("dispatching mousedown event");
     this.dispatch("mousedown", e);
   };
 
@@ -89,6 +91,7 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseUp = (e) => {
+    console.log("dispatching mouseup event");
     this.dispatch("mouseup", e);
   };
 }
