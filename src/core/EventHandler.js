@@ -80,7 +80,6 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseDown = (e) => {
-    console.log("dispatching mousedown event");
     this.dispatch("mousedown", e);
   };
 
@@ -91,7 +90,6 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseUp = (e) => {
-    console.log("dispatching mouseup event");
     this.dispatch("mouseup", e);
   };
 }
