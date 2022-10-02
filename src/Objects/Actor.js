@@ -1,7 +1,7 @@
 import { vec, add, sub, div, mag, mult } from "../Math/Vector";
 import TextureLayer from "../util/TextureLayer";
 
-import { validEvents } from "../core/EventHandler";
+import { EVENT_IDENTIFIERS, validEvents } from "../core/EventHandler";
 
 /**
  * An actor function represents an actor that can be placed within the canvas.
@@ -261,7 +261,7 @@ export default class Actor {
 
   subscribe(eventType, callback) {
     // ensure event is valid from engine event list
-    if (!validEvents.includes(eventType)) {
+    if (!EVENT_IDENTIFIERS.includes(eventType)) {
       throw new Error(
         `Error attempting to subscribe to invalid event ${eventType}: Event does not exist in validEvents list.`
       );

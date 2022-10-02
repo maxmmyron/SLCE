@@ -1,4 +1,65 @@
-export const validEvents = ["mousedown", "mouseup", "keydown", "keyup"];
+/**
+ * An array containing all valid event types that can be handled by the engine.
+ */
+export const EVENT_IDENTIFIERS = [
+  "onmousedown",
+  "whilemousedown",
+  "onmouseup",
+  "onkeydown",
+  "whilekeydown",
+  "onkeyup",
+];
+
+/**
+ * An Event class containing information about an event.
+ * @param {String} type event type. Serves as a unique identifier for the event.
+ * @param {*} payload data associated with the event.
+ * @param {String | null} comparatorKey a key to compare events with. If null, the event will not be compared.
+ * @param {Boolean} isPersistent whether or not the event should be removed from the event list after it is handled.
+ */
+class Event {
+  constructor(type, payload, comparatorKey = null, isPersistent = false) {
+    this.type = type;
+    this.payload = payload;
+    this.comparatorKey = comparatorKey;
+    this.isPersistent = isPersistent;
+  }
+
+  /**
+   * The type of event. Used as an "ID" of sorts and is what is used to determine what event handler to call.
+   *
+   * @type {String}
+   */
+  type;
+
+  /**
+   * The payload of the event. This data is passed to the event handler for the event type in question.
+   *
+   * @type {*}
+   */
+  payload;
+
+  /**
+   * Key that can be used to compare one event to another. This is useful for events that are persistent,
+   * and need to be manually updated to remove. If null, then the event will not be compared against and,
+   * if persistent, will be queued for removal after the event's inverse is recieved (for example, a keyup
+   * event).
+   *
+   * @type {String | null}
+   * @default null
+   */
+  comparatorKey;
+
+  /**
+   * Whether or not this event should remain within the event list over multiple update cycles.
+   * If true, then the event will be removed from the event list after a seperate event dispatch
+   * asks to remove it from the event list.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  isPersistent;
+}
 
 /**
  * A series of events that can be subscribed to by actors.
@@ -11,7 +72,7 @@ export default class EventHandler {
     this.#canvasDOM = canvasDOM;
     this.isEnginePaused = isEnginePaused;
 
-    this.eventQueue = [];
+    this.eventList = [];
 
     this.#eventMap = new Map();
 
@@ -25,17 +86,29 @@ export default class EventHandler {
   // Public defs
 
   /**
-   * Dispatches a payload to the queue for a given event type.
+   * Dispatches a payload to the queue for a given event if the following conditions are met:
+   * 1. The event is a valid event
+   * 2. The event does not have a comparably equal event in the queue (for example, two
+   *    keydown events with the same keyCode)
+   * 3. the engine is not paused
    *
-   * @param {Event} event event to dispatch to eventQueue
-   * @param {*} payload - the payload to dispatch for the specified event
+   * @param {Event} event event instance to dispatch
    */
-  dispatch = (event, payload) => {
-    if (this.isEnginePaused) return;
+  dispatch = (event) => {
+    if (this.isEnginePaused) return false;
 
-    if (validEvents.includes(event)) {
-      this.eventQueue.push({ type: event, payload: payload });
+    if (!EVENT_IDENTIFIERS.includes(event.type))
+      throw new Error(
+        `Error dispatching event: ${event.type} is not a valid event type.`
+      );
+
+    if (event.comparatorKey) {
+      if (this.eventList.some((e) => this.#areEventsEquivalent(e, event)))
+        return false;
     }
+
+    this.eventList.push(event);
+    return true;
   };
 
   /**
@@ -54,12 +127,6 @@ export default class EventHandler {
     for (const [event, handler] of this.#eventMap) {
       this.#canvasDOM.removeEventListener(event, handler);
     }
-  };
-
-  handlePersistentEvents = () => {
-    this.#persistentEvents.forEach((event) => {
-      this.dispatch(event.event, event.payload);
-    });
   };
 
   // ****************************************************************
@@ -81,18 +148,37 @@ export default class EventHandler {
    */
   #eventMap;
 
-  #persistentEvents = [];
+  #areEventsEquivalent = (eventA, eventB, comapreEventType = true) => {
+    if (eventA.type !== eventB.type && comapreEventType) return false;
 
-  #addPersistentEvent = (event, payload) => {
-    this.#persistentEvents.push({ event, payload });
+    if (eventA.comparatorKey !== eventB.comparatorKey) return false;
+
+    if (
+      eventA.payload[eventA.comparatorKey] !==
+      eventB.payload[eventB.comparatorKey]
+    )
+      return false;
+
+    return true;
   };
 
-  #removePersistentEvent = (event, payload) => {
-    this.#persistentEvents = this.#persistentEvents.filter(
-      (persistentPayload) =>
-        persistentPayload.event !== event &&
-        persistentPayload.payload !== payload
-    );
+  /**
+   *
+   * @param {String} eventType The event type to check for in the event list.
+   * @param {Event} comparatorEvent an event to compare against.
+   */
+  #removeEventPersistence = (eventType, comparatorEvent) => {
+    // ensure comparatorEvent has a comparatorKey
+    if (comparatorEvent.comparatorKey === null)
+      throw new Error(
+        `Event ${comparatorEvent.type} does not have a comparator key compare against.`
+      );
+
+    this.eventList.forEach((event) => {
+      if (this.#areEventsEquivalent(event, comparatorEvent, false)) {
+        event.isPersistent = false;
+      }
+    });
   };
 
   /**
@@ -102,7 +188,11 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseDown = (e) => {
-    this.dispatch("mousedown", e);
+    let whileMouseDownEvent = new Event("whilemousedown", e, "button", true);
+    let onMouseDownEvent = new Event("onmousedown", e);
+
+    this.dispatch(whileMouseDownEvent);
+    this.dispatch(onMouseDownEvent);
   };
 
   /**
@@ -112,7 +202,12 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleMouseUp = (e) => {
-    this.dispatch("mouseup", e);
+    let onMouseUpEvent = new Event("onmouseup", e, "button");
+
+    // flip matching inverse event to non-persistent
+    this.#removeEventPersistence("whilemousedown", onMouseUpEvent);
+
+    this.dispatch(onMouseUpEvent);
   };
 
   /**
@@ -122,7 +217,20 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleKeyDown = (e) => {
-    this.#addPersistentEvent("keydown", e);
+    let whileKeyDownEvent = new Event("whilekeydown", e, "keyCode", true);
+    let onKeyDownEvent = new Event("onkeydown", e);
+
+    // dont dispatch onKeyDown if whileKeyDown is already in the queue
+
+    if (
+      !this.eventList.some(
+        (event) =>
+          event.type === "whilekeydown" && event.payload.keyCode === e.keyCode
+      )
+    )
+      this.dispatch(onKeyDownEvent);
+
+    this.dispatch(whileKeyDownEvent);
   };
 
   /**
@@ -132,9 +240,11 @@ export default class EventHandler {
    * @param {*} e event payload
    */
   #handleKeyUp = (e) => {
-    // remove keydown event and payload from persistent events
-    this.#removePersistentEvent("keydown", e);
+    let keyUpEvent = new Event("onkeyup", e, "keyCode");
 
-    this.dispatch("keyup", e);
+    // flip matching inverse event to non-persistent
+    this.#removeEventPersistence("whilekeydown", keyUpEvent);
+
+    this.dispatch(keyUpEvent);
   };
 }

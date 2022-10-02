@@ -1,6 +1,6 @@
 import { vec } from "../Math/Vector";
 import Actor from "../Objects/Actor";
-import EventHandler, { validEvents } from "./EventHandler";
+import EventHandler from "./EventHandler";
 
 /**
  * Engine for handling game update logic and actor drawing.
@@ -325,21 +325,21 @@ export default class Engine {
       this.update(this.#updateProperties.targetFrameTimestep, this.environment);
 
     // get a list of current events in the queue
-    const eventQueueList = this.#eventHandler.eventQueue.map(
+    const queuedEventTypes = this.#eventHandler.eventList.map(
       (event) => event.type
     );
 
     // get a list of all actors that currently have events that match queued events
     const relevantActors = this.#actors.filter((actor) =>
       actor.subscribedEvents.some((event) =>
-        eventQueueList.includes(event.type)
+        queuedEventTypes.includes(event.type)
       )
     );
 
     if (relevantActors.length > 0) {
-      while (this.#eventHandler.eventQueue.length > 0) {
-        const eventType = this.#eventHandler.eventQueue[0].type;
-        const eventPayload = this.#eventHandler.eventQueue[0].payload;
+      this.#eventHandler.eventList.forEach((event, i) => {
+        const eventType = event.type;
+        const eventPayload = event.payload;
 
         // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
         relevantActors.forEach((actor) => {
@@ -349,12 +349,13 @@ export default class Engine {
             }
           });
         });
-
-        this.#eventHandler.eventQueue.shift();
-      }
+      });
     }
 
-    this.#eventHandler.handlePersistentEvents();
+    // remove events labeled as non persistent from queue.
+    this.#eventHandler.eventList = this.#eventHandler.eventList.filter(
+      (event) => event.isPersistent
+    );
   };
 
   /**
