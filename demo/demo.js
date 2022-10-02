@@ -29,8 +29,6 @@ ground.preload(async () => {
 
 engine.addActor(ground);
 
-let pX = 0;
-
 const player = new Actor({
   pos: vec(300, engine.environment.height - 200 - 48),
   size: vec(48, 48),
@@ -46,13 +44,10 @@ player.preload(async () => {
   );
 });
 
-player.subscribe("keydown", (e) => {
-  console.log(e);
+player.subscribe("whilekeydown", (e) => {
   if (e.key === "ArrowRight") {
-    console.log("right");
     player.vel.x = 5;
   } else if (e.key === "ArrowLeft") {
-    console.log("left");
     player.vel.x = -5;
   }
 });
