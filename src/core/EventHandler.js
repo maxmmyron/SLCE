@@ -1,4 +1,4 @@
-export const validEvents = ["mousedown", "mouseup"];
+export const validEvents = ["mousedown", "mouseup", "keydown", "keyup"];
 
 /**
  * A series of events that can be subscribed to by actors.
@@ -17,6 +17,8 @@ export default class EventHandler {
 
     this.#eventMap.set("mousedown", this.#handleMouseDown);
     this.#eventMap.set("mouseup", this.#handleMouseUp);
+    this.#eventMap.set("keydown", this.#handleKeyDown);
+    this.#eventMap.set("keyup", this.#handleKeyUp);
   }
 
   // ****************************************************************
@@ -54,6 +56,12 @@ export default class EventHandler {
     }
   };
 
+  handlePersistentEvents = () => {
+    this.#persistentEvents.forEach((event) => {
+      this.dispatch(event.event, event.payload);
+    });
+  };
+
   // ****************************************************************
   // Private defs
 
@@ -73,6 +81,20 @@ export default class EventHandler {
    */
   #eventMap;
 
+  #persistentEvents = [];
+
+  #addPersistentEvent = (event, payload) => {
+    this.#persistentEvents.push({ event, payload });
+  };
+
+  #removePersistentEvent = (event, payload) => {
+    this.#persistentEvents = this.#persistentEvents.filter(
+      (persistentPayload) =>
+        persistentPayload.event !== event &&
+        persistentPayload.payload !== payload
+    );
+  };
+
   /**
    * Handles the "mousedown" event
    *
@@ -91,5 +113,28 @@ export default class EventHandler {
    */
   #handleMouseUp = (e) => {
     this.dispatch("mouseup", e);
+  };
+
+  /**
+   * Handles the "keydown" event. Registers a new persistent payload that will hold through update cycles.
+   *
+   * @private
+   * @param {*} e event payload
+   */
+  #handleKeyDown = (e) => {
+    this.#addPersistentEvent("keydown", e);
+  };
+
+  /**
+   * Handles the "keyup" event. Removes the persistent payload that was registered on respective keydown event.
+   *
+   * @private
+   * @param {*} e event payload
+   */
+  #handleKeyUp = (e) => {
+    // remove keydown event and payload from persistent events
+    this.#removePersistentEvent("keydown", e);
+
+    this.dispatch("keyup", e);
   };
 }

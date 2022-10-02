@@ -1,5 +1,4 @@
 import { vec } from "../Math/Vector";
-// import EventHandler from "../util/EventHandler";
 import Actor from "../Objects/Actor";
 import EventHandler, { validEvents } from "./EventHandler";
 
@@ -66,6 +65,10 @@ export default class Engine {
       this.#updateMetrics.animationFrameID = requestAnimationFrame(
         this.#performGameLoopUpdates
       );
+
+      // focus onto canvas on start so we can pick up key events
+      this.canvasDOM.tabIndex = -1;
+      this.canvasDOM.focus();
 
       this.#isStarted = true;
       this.#isPaused = false;
@@ -350,6 +353,8 @@ export default class Engine {
         this.#eventHandler.eventQueue.shift();
       }
     }
+
+    this.#eventHandler.handlePersistentEvents();
   };
 
   /**
