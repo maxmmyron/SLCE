@@ -6,6 +6,8 @@ import TextureLayer from "../src/util/TextureLayer.js";
 import grassTexturePath from "./grassTexture.png";
 import dirtTexturePath from "./dirtTexture.png";
 
+import testingTexturePath from "./testTexture.png";
+
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
@@ -16,30 +18,50 @@ const ground = new Actor({
 
 ground.preload(async () => {
   ground.addTextureLayer(
-    new TextureLayer(dirtTexturePath, {
+    new TextureLayer(testingTexturePath, {
       isActive: true,
       size: vec(64, 64),
       tileMode: "tile",
       zIndex: 0,
     })
   );
-  ground.addTextureLayer(
-    new TextureLayer(grassTexturePath, {
+});
+
+engine.addActor(ground);
+
+let pX = 0;
+
+const player = new Actor({
+  pos: vec(300, engine.environment.height - 200 - 48),
+  size: vec(48, 48),
+});
+
+player.preload(async () => {
+  player.addTextureLayer(
+    new TextureLayer(testingTexturePath, {
       isActive: true,
-      size: vec(64, 64),
-      tileMode: "tileX",
+      size: vec(48, 48),
       zIndex: 1,
     })
   );
 });
 
-ground.subscribe("mousedown", (payload) => {
-  console.log(`received mousedown event payload`);
-  console.log(payload);
+player.subscribe("keydown", (e) => {
+  console.log(e);
+  if (e.key === "ArrowRight") {
+    console.log("right");
+    player.vel.x = 5;
+  } else if (e.key === "ArrowLeft") {
+    console.log("left");
+    player.vel.x = -5;
+  }
 });
 
-console.log(ground.subscribedEvents);
+player.update = (dt, env) => {
+  player.vel.x *= 0.9;
+  player.pos.x += player.vel.x;
+};
 
-engine.addActor(ground);
+engine.addActor(player);
 
 engine.start();
