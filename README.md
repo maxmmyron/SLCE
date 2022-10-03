@@ -1,88 +1,117 @@
+#SLiCE
 
-# SLCE
+a **s**weet **li**ttle **c**anvas **e**ngine created by [mmyron](https://mmyron.com)
 
-## (This README is currently out of date and will be updated.)
+## Installing
 
-###### (pronounced "slice")
+To install SLiCE, clone the repository and run `npm install` in the root directory.
 
- a **s**weet **l**ittle **c**anvas **e**ngine created by [mmyron](https://mmyron.com/)
-  
-
-## What is SLCE?
-SLCE is a pure-javascript canvas engine. It was formed with a few basic principles in mind:
--  **Organization**
-   - Everything in SCLE is built with organization in mind. Creating, deleting, and manipulating objects should be a simple process.
-- **Iteration**
-  - SCLE was built for quick, successive iteration, both on the developer and end-user side. Updates are pushed quickly, and users are encouraged to use debugging capabilities to experiment quickly and efficently.
-- **Stability**
-  - SCLE is built with stability in mind. An ongoing goal is to be able to run simulations with a high number of objects at high frame rates. It is also a common goal to quickly isolate the root causes of bugs, and eliminate them with minimal change to end-user functionality.
-- **Accessibility**
-  - SCLE is built to be accessable for users who are new to JavaScript, yet still powerful for those who would like to tinker with the programming themselves.
-
-## Dependencies
-
-Luckily, SLCE is built using pure javascript. No JQuery, no nothing. However, ECMA Script is used for necessary imports, so it is reccomended that your editor of choice is configured to properly recognise ECMAScript 6 features.
+Run the demo project with `npm run demo`.
 
 ## Getting Started
 
-To begin any SCLE project, you must create an instance of the engine. You may do this by first importing the game class.
-```import Game from "src/core/game.js"```
+To begin, import the Engine class and create a new instance that is bound to a canvas element.
 
-You will also want to import the start function from the core gameLoop file, in order to run the engine.
-```import {start} from  "./core/gameLoop.js";```
+```javascript
+import Engine from "./src/core/engine.js";
 
-Then, define the canvas (and canvas context) that SCLE will render onto.
-```
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d');
+const canvasElement = document.getElementById("gameCanvas");
+
+let engine = new Engine(canvasElement);
 ```
 
-You can then define a new Game, with the only input needed being the canavs to render onto.
-`let game =  new Game(canvas);`
+### Adding actors
 
-Finally, we can start the game with our start function from the gameLoop import.
-```
-start(game, ctx);
-```
+Actors are what interacts with the SLiCE engine. The can take many forms and are designed to be abstract in order to allow for a wide range of use cases.
 
-Our final JavaScript file will look something like this:
-```
-import Game from  "./core/game.js";
-import {start} from  "./core/gameLoop.js";
+```javascript
+import Actor from "./src/objects/Actor.js";
+import {vec} from "./src/math/Vector.js";
 
-//define a new canvas given a canvas in DOM
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d'); //define a new drawing context on our canvas
-
-let game =  new Game(canvas); //create a new game
-
-start(game, ctx); //start the gameLoop
+let actor = new Actor({
+  pos: vec(400, 400)
+  size: vec(64,64)
+});
 ```
 
-## Adding Objects
-We can use the add function in the game class to add a new object to the list of game objects.  Luckily, this method allows us to add objects quickly and efficently. We can declare new objects inside the add method itself, to keep it condensed. 
-Here is an example of adding a new circle using the game class' add function:
-```
-game.add(new circleObject(game, 5, new Color().getRandomColor(), 500, 500, 5, 0, 0));
-```
-This will create a circle with a radius of five, a random color, an x position and y position of 500 pixels (from the top left), and x and v velocities of zero.
+Actors can accept a preload function that will be called before the engine starts, allowing for asynchronous loading of assets.
 
-## Adding Physics
-We can add physics to our game from our main class as well. It is not dissimilar to adding objects, however instead of adding physics through a function, we can define them with variables within the game class.
-As an example, here is a definition of a new simulator that will calculate (and update) the positions, velocities, and accelerations of the gameObjects onscreen:
+```javascript
+import texturePath from "./image.png";
+
+actor.preload(async () => {
+  actor.addTextureLayer(
+    new TextureLayer(texturePath, {
+      isActive: true,
+      size: vec(64, 64),
+    })
+  );
+});
 ```
-game.nBodySimulator =  new nBody(1, 0.001, 100, game.gameObjects);
+
+Likewise, actors can accept an update or draw function that is called every frame.
+
+The draw update accepts a canvas context object that can be used to called canvas draw functions.
+
+The update function accepts a delta time parameter that can be used to calculate movement based on the time since the last frame, as well as an environment object from the engine that contains useful information about the engine state.
+
+```javascript
+player.draw = (ctx) => {
+  // perform draw updates
+};
+
+player.update = (dt, env) => {
+  // perform update logic
+};
 ```
-While we now have a simulator, it won't actually be updating the positions, velocities, or accelerations of the gameObjects. We have to pass through the respective update functions of each simulator we create. We can do this by defining a new array and adding our simulators update methods into it: 
+
+Actors can subscribe to events dispatched by the engine. Events are dispatched by the engine when certain conditions are met, like when a mouse or key is pressed.
+
+```javascript
+actor.subscribe("whilekeydown", (e) => {
+  if (e.key === "ArrowRight") {
+    actor.vel.x = 5;
+  } else if (e.key === "ArrowLeft") {
+    player.vel.x = -5;
+  }
+});
 ```
-let simulatorUpdates = [
-	game.nBodySimulator.updatePositionVectors(),
-	game.nBodySimulator.updateVelocityVectors(),
-	game.nBodySimulator.updateAccelerationVectors()
-];
+
+Actors can be added to the engine with the `addActor` method:
+
+```javascript
+engine.addActor(actor);
 ```
-Then, we can add our defined array (in this case `simulatorUpdates[]`)  to the arguments of our start method.
+
+Actors can also be removed from the engine with the `removeActor` method:
+
+```javascript
+engine.removeActor(actor);
 ```
-start(game, ctx, simulatorUpdates);
+
+### Managing the engine
+
+The engine can be started with the `start` method. This method will run all actor preload functions and will initalize the engine loop.
+
+```javascript
+engine.start();
 ```
-(In the future, this will be much easier to do.  Simulators will have their own "get update methods" method to ease this process further).
+
+Pausing and resuming the engine can be done with the `pause` and `resume` methods, respectively.
+
+```javascript
+engine.pause();
+engine.resume();
+```
+
+Like actors, the engine has its own update and draw functions that can be overrided to perform custom logic:
+
+```javascript
+engine.draw = (ctx) => {
+  // perform draw updates
+};
+
+engine.update = (dt, env) => {
+  // perform update logic
+};
+```
