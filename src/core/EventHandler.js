@@ -1,5 +1,7 @@
 /**
  * An array containing all valid event types that can be handled by the engine.
+ *
+ * @type {string[]}
  */
 export const EVENT_IDENTIFIERS = [
   "onmousedown",
@@ -11,13 +13,19 @@ export const EVENT_IDENTIFIERS = [
 ];
 
 /**
- * An Event class containing information about an event.
- * @param {String} type event type. Serves as a unique identifier for the event.
- * @param {*} payload data associated with the event.
- * @param {String | null} comparatorKey a key to compare events with. If null, the event will not be compared.
- * @param {Boolean} isPersistent whether or not the event should be removed from the event list after it is handled.
+ * A utility class that handles a custom Event class.
  */
 class Event {
+  /**
+   * Creates a new Event.
+   *
+   * @constructor
+   *
+   * @param {String} type event type. Serves as a unique identifier for the event.
+   * @param {*} payload data associated with the event.
+   * @param {String | null} comparatorKey a key to compare events with. If null, the event will not be compared.
+   * @param {Boolean} isPersistent whether or not the event should be removed from the event list after it is handled.
+   */
   constructor(type, payload, comparatorKey = null, isPersistent = false) {
     this.type = type;
     this.payload = payload;
@@ -48,7 +56,7 @@ class Event {
    * @type {String | null}
    * @default null
    */
-  comparatorKey;
+  comparatorKey = null;
 
   /**
    * Whether or not this event should remain within the event list over multiple update cycles.
@@ -58,24 +66,26 @@ class Event {
    * @type {boolean}
    * @default false
    */
-  isPersistent;
+  isPersistent = false;
 }
 
 /**
- * A series of events that can be subscribed to by actors.
- *
- * @param {HTMLCanvasElement} canvasDOM the canvas element to attach event listeners to
- * @param {Boolean} isEnginePaused current pause state of engine. Used to prevent event propagation when engine is paused
+ * A class that handles creation and destruction of eventlistners, as well as dispatching of custom event types.
  */
 export default class EventHandler {
+  /**
+   * Creates a new EventHandler instance.
+   *
+   * @constructor
+   *
+   * @param {HTMLCanvasElement} canvasDOM the canvas element to attach event listeners to
+   * @param {Boolean} isEnginePaused current pause state of engine. Used to prevent event propagation when engine is paused
+   */
   constructor(canvasDOM, isEnginePaused) {
     this.#canvasDOM = canvasDOM;
     this.isEnginePaused = isEnginePaused;
 
-    this.eventList = [];
-
-    this.#eventMap = new Map();
-
+    // Set up event listeners for each event type.
     this.#eventMap.set("mousedown", this.#handleMouseDown);
     this.#eventMap.set("mouseup", this.#handleMouseUp);
     this.#eventMap.set("keydown", this.#handleKeyDown);
@@ -86,6 +96,23 @@ export default class EventHandler {
   // Public defs
 
   /**
+   * An array of current Events that have been dispatched and are waiting to be handled by the engine.
+   *
+   * @type {Event[]}
+   * @default []
+   */
+  eventList = [];
+
+  /**
+   * The current pause state of the engine. Used to prevent event propagation when engine is paused.
+   * Ideally the engine pause state can be passe in as an object reference so it can be updated without
+   * directly modifying the EventHandler isEnginePaused property.
+   *
+   * @type {Boolean}
+   */
+  isEnginePaused;
+
+  /**
    * Dispatches a payload to the queue for a given event if the following conditions are met:
    * 1. The event is a valid event
    * 2. The event does not have a comparably equal event in the queue (for example, two
@@ -93,20 +120,25 @@ export default class EventHandler {
    * 3. the engine is not paused
    *
    * @param {Event} event event instance to dispatch
+   *
+   * @returns {Boolean} whether or not the event was dispatched
    */
   dispatch = (event) => {
     if (this.isEnginePaused) return false;
 
+    // Check if event type is valid
     if (!EVENT_IDENTIFIERS.includes(event.type))
       throw new Error(
         `Error dispatching event: ${event.type} is not a valid event type.`
       );
 
+    // Check if an equivalent event is already in the eventList
     if (event.comparatorKey) {
       if (this.eventList.some((e) => this.#areEventsEquivalent(e, event)))
         return false;
     }
 
+    // Add event to eventList
     this.eventList.push(event);
     return true;
   };
@@ -145,9 +177,17 @@ export default class EventHandler {
    *
    * @private
    * @type {Map<Event, Function>}
+   * @default new Map()
    */
-  #eventMap;
+  #eventMap = new Map();
 
+  /**
+   *
+   * @param {*} eventA
+   * @param {*} eventB
+   * @param {*} comapreEventType
+   * @returns {Boolean} whether or not the events are equivalent
+   */
   #areEventsEquivalent = (eventA, eventB, comapreEventType = true) => {
     if (eventA.type !== eventB.type && comapreEventType) return false;
 

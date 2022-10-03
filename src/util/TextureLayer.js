@@ -1,4 +1,4 @@
-import { vec } from "../Math/Vector";
+import { vec } from "../math/Vector";
 
 /**
  * TextureLayer.js - A helper class that encapsulates a texture and its draw arguments for drawing to the canvas.
@@ -6,6 +6,8 @@ import { vec } from "../Math/Vector";
 export default class TextureLayer {
   /**
    * Constructs a new TextureLayer object.
+   *
+   * @constructor
    *
    * @param {String} path - path to texture image file
    * @param {Object} options - options for drawing texture
@@ -61,6 +63,8 @@ export default class TextureLayer {
 
   /**
    * resolves an image bitmap from an image file path
+   *
+   * @returns {Promise<ImageBitmap>}
    */
   resolveImageBitmap = () => {
     return new Promise((resolve, reject) => {
