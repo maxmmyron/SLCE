@@ -1,6 +1,6 @@
 import Engine from "../src/core/Engine.js";
-import { vec } from "../src/Math/Vector.js";
-import Actor from "../src/Objects/Actor.js";
+import { vec } from "../src/math/Vector.js";
+import Actor from "../src/objects/Actor.js";
 import TextureLayer from "../src/util/TextureLayer.js";
 
 import grassTexturePath from "./grassTexture.png";
@@ -12,8 +12,9 @@ const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
 const ground = new Actor({
-  pos: vec(0, engine.environment.height - 200),
-  size: vec(engine.environment.width, 500),
+  pos: vec(0, engine.environment.properties.size.y - 200),
+  size: vec(engine.environment.properties.size.x, 500),
+  isDebugEnabled: true,
 });
 
 ground.preload(async () => {
@@ -30,8 +31,9 @@ ground.preload(async () => {
 engine.addActor(ground);
 
 const player = new Actor({
-  pos: vec(300, engine.environment.height - 200 - 48),
+  pos: vec(300, engine.environment.properties.size.y - 200 - 48),
   size: vec(48, 48),
+  isDebugEnabled: true,
 });
 
 player.preload(async () => {
@@ -53,7 +55,7 @@ player.subscribe("whilekeydown", (e) => {
 });
 
 player.update = (dt, env) => {
-  player.vel.x *= 0.9;
+  player.vel.x *= 0.85;
   player.pos.x += player.vel.x;
 };
 
