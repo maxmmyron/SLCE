@@ -1,4 +1,4 @@
-#SLiCE
+# SLiCE
 
 a **s**weet **li**ttle **c**anvas **e**ngine created by [mmyron](https://mmyron.com)
 
@@ -91,7 +91,7 @@ engine.removeActor(actor);
 
 ### Managing the engine
 
-The engine can be started with the `start` method. This method will run all actor preload functions and will initalize the engine loop.
+The engine can be started with the `start` method. This method will run all actor preload functions and will initialize the engine loop.
 
 ```javascript
 engine.start();
@@ -104,7 +104,7 @@ engine.pause();
 engine.resume();
 ```
 
-Like actors, the engine has its own update and draw functions that can be overrided to perform custom logic:
+Like actors, the engine has its own update and draw functions that can be overridden to perform custom logic:
 
 ```javascript
 engine.draw = (ctx) => {
