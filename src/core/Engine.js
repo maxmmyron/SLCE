@@ -1,14 +1,22 @@
-import { vec } from "../Math/Vector";
-import Actor from "../Objects/Actor";
+import { vec } from "../math/Vector";
+import Actor from "../objects/Actor";
 import EventHandler from "./EventHandler";
 
+const TARGET_FPS = 60,
+  MAX_UPDATES_PER_CYCLE = 240;
+
 /**
- * Engine for handling game update logic and actor drawing.
- * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
- * @param {Object} options optional arguments
+ * Engine class. Handles actor management, update game loop, and rendering.
  */
 export default class Engine {
-  constructor(canvasDOM, options = {}) {
+  /**
+   * Creates a new instance of an Engine.
+   *
+   * @constructor
+   * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
+   * @param {Object} properties optional property arguments for engine
+   */
+  constructor(canvasDOM, properties = {}) {
     if (!(canvasDOM instanceof HTMLCanvasElement)) {
       throw new Error("canvasDOM must be an instance of HTMLCanvasElement");
     }
@@ -21,36 +29,81 @@ export default class Engine {
      */
     this.ctx = canvasDOM.getContext("2d");
 
-    /**
-     * A struct of global variables.
-     * @type {Object}
-     */
-    this.environment = {
-      background: "#121212",
-      width: getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2),
-      height: getComputedStyle(canvasDOM)
-        .getPropertyValue("height")
-        .slice(0, -2),
-      physics: {
-        accel: vec(),
-      },
-    };
+    this.environment.properties.size = vec(
+      getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2), // width
+      getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2) // height
+    );
 
     // listen for resize events and update canvas size
     document.addEventListener("resize", (e) => {
       dimensions = this.#fixDPI();
       // set canvas width and height to scaled width and height
-      this.environment.width = dimensions[0];
-      this.environment.height = dimensions[1];
+      this.environment.properties.size = (dimensions[0], dimensions[1]);
     });
 
     this.#fixDPI();
 
-    this.#eventHandler = new EventHandler(canvasDOM, this.#isPaused);
+    this.#eventHandler = new EventHandler(
+      canvasDOM,
+      this.#engineRecord.properties.isPaused
+    );
   }
 
   // ****************************************************************
   // Public defs
+
+  /**
+   * Current environment variables. Stores canvas runtime info and physics settings.
+   *
+   * @namespace environment
+   */
+  environment = {
+    /**
+     * Boolean flags and (primarily) static variables
+     */
+    properties: {
+      /**
+       * The background color of the canvas
+       *
+       * @type {String}
+       * @default "#121212"
+       */
+      background: "#121212",
+
+      /**
+       * The current size of the canvas
+       *
+       * @type {Vector}
+       * @default vec()
+       */
+      size: vec(),
+
+      /**
+       * A variety of environment physics settings
+       */
+      physics: {
+        /**
+         * The current global acceleration (gravity) within the environment. Acts upon all non-static actors.
+         *
+         * @type {Vector}
+         * @default vec()
+         */
+        accel: vec(),
+      },
+    },
+    /**
+     * Frequently updated variables. Used to keep track of information related to performance logging and debugging
+     */
+    metrics: {
+      /**
+       * Current time in milliseconds since engine was started.
+       *
+       * @type {Number}
+       * @default 0
+       */
+      currentEngineTime: 0,
+    },
+  };
 
   update = null;
 
@@ -60,9 +113,9 @@ export default class Engine {
    * Starts engine update loop. Used only once at startup.
    */
   start = () => {
-    if (!this.#isStarted) {
+    if (!this.#engineRecord.properties.isStarted) {
       this.#fixDPI();
-      this.#updateMetrics.animationFrameID = requestAnimationFrame(
+      this.#updateRecord.metrics.animationFrameID = requestAnimationFrame(
         this.#performGameLoopUpdates
       );
 
@@ -70,10 +123,10 @@ export default class Engine {
       this.canvasDOM.tabIndex = -1;
       this.canvasDOM.focus();
 
-      this.#isStarted = true;
-      this.#isPaused = false;
+      this.#engineRecord.properties.isStarted = true;
+      this.#engineRecord.properties.isPaused = false;
 
-      this.#debugMetrics.startTime = performance.now();
+      this.#debugRecord.metrics.startTime = performance.now();
 
       // initialize events
       this.#eventHandler.attachAllEvents();
@@ -87,7 +140,7 @@ export default class Engine {
    * animation frames, but will not continue to update or draw.
    */
   pause = () => {
-    this.#isPaused = true;
+    this.#engineRecord.properties.isPaused = true;
     this.#eventHandler.isEnginePaused = true;
   };
 
@@ -95,7 +148,7 @@ export default class Engine {
    * Resumes engine update loop.
    */
   resume = () => {
-    this.#isPaused = false;
+    this.#engineRecord.properties.isPaused = false;
     this.#eventHandler.isEnginePaused = false;
   };
 
@@ -145,100 +198,166 @@ export default class Engine {
    */
   getActors = () => this.#actors;
 
-  /**
-   * Gets the current runtime of the engine.
-   * @returns {Number} the current time in milliseconds
-   */
-  getCurrentEngineTime = () => {
-    return performance.now() - this.#debugMetrics.startTime;
-  };
-
   // ****************************************************************
   // Private defs
 
   /**
-   * Whether or not engine is paused
+   * Relevant generic engine properties
    *
+   * @namespace engineRecord
    * @private
-   * @type {Boolean}
-   * @default false
    */
-  #isPaused = false;
+  #engineRecord = {
+    /**
+     * Boolean flags and (primarily) static properties
+     */
+    properties: {
+      /**
+       * Whether or not engine is paused
+       *
+       * @type {Boolean}
+       * @default false
+       */
+      isPaused: false,
+
+      /**
+       * Whether or not engine has started
+       *
+       * @type {Boolean}
+       * @default false
+       */
+      isStarted: false,
+    },
+  };
 
   /**
-   * Whether or not engine has started
+   * Relevant properties used exclusively during the update cycle.
    *
+   * @namespace updateRecord
    * @private
-   * @type {Boolean}
-   * @default false
    */
-  #isStarted = false;
+  #updateRecord = {
+    /**
+     * Boolean flags and (primarily) static variables
+     */
+    properties: {
+      /**
+       * Maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
+       *
+       * @type {Number}
+       * @default MAX_UPDATES_PER_CYCLE (240)
+       */
+      maxFrameUpdates: MAX_UPDATES_PER_CYCLE,
+
+      /**
+       * UNUSED
+       * Target FPS to attempt to achive when running updates.
+       *
+       * @type {Number}
+       * @default TARGET_FPS (60)
+       */
+      targetFPS: TARGET_FPS,
+
+      /**
+       * timestep of individual an individual frame in ms. Used as constant timestep for update method
+       *
+       * @type {Number}
+       * @default 1000 / TARGET_FPS
+       */
+      targetFrameTimestep: 1000 / TARGET_FPS,
+    },
+    /**
+     * Frequently updated variables
+     */
+    metrics: {
+      /**
+       * ID of current animation frame
+       *
+       * @type {Number}
+       * @default -1
+       */
+      animationFrameID: -1,
+
+      /**
+       * Accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
+       *
+       * @type {Number}
+       * @default 0
+       */
+      lag: 0,
+
+      /**
+       * Timestamp of last frame in ms
+       *
+       * @type {Number}
+       * @default 0
+       */
+      prevTimestamp: 0,
+    },
+  };
 
   /**
    * Relevant properties for debugging and performance logging. Composed primarily of either boolean flags or constant properties.
    *
+   * @namespace debugRecord
    * @private
-   * @type {Object}
-   *
-   * @property {Number} isPerformanceLoggingEnabled - whether Engine should log performance data to console or not
-   * @property {Boolean} isPerformanceDebugScreenEnabled - whether Engine should draw performance metrics to canvas or not
    */
-  #debugProperties = {
-    isPerformanceDebugScreenEnabled: true,
-    isPerformanceLoggingEnabled: false,
-  };
+  #debugRecord = {
+    /**
+     * Boolean flags and (primarily) static variables
+     */
+    properties: {
+      /**
+       * Whether or not the engine will display a debug overlay with performance diagnostics.
+       *
+       * @type {Boolean}
+       * @default true
+       */
+      isPerformanceDebugScreenEnabled: true,
 
-  /**
-   * Relevant properties for update cycle. Composed primarily of either boolean flags or constant properties.
-   *
-   * @private
-   * @type {Object}
-   *
-   * @property {Number} maxFrameUpdates - maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
-   * @property {Number} targetFPS - target FPS for update loop to achieve during runtime
-   * @property {Number} targetFrameTimestep - timestep of individual an individual frame in ms. Used as constant timestep for update method
-   */
-  #updateProperties = {
-    maxFrameUpdates: 240,
-    targetFPS: 60,
-    targetFrameTimestep: 1000 / 60,
-  };
+      /**
+       * Whether or not the engine will log out performance diagnostics to the console.
+       *
+       * @type {Boolean}
+       * @default true
+       */
+      isPerformanceLoggingEnabled: false,
+    },
 
-  /**
-   * Releveant metrics for debugging and performance tracking.
-   *
-   * @private
-   * @type {Object}
-   *
-   * @property {Number} FPS - current FPS of engine
-   * @property {Number} startTime - time at which Engine was started
-   * @property {Number} updatesSinceStart - number of updates since Engine was started
-   */
-  #debugMetrics = {
-    FPS: 0,
-    startTime: 0,
-    updatesSinceStart: 0,
-  };
+    /**
+     * Frequently updated variables. Used to keep track of information related to performance logging and debugging
+     */
+    metrics: {
+      /**
+       * current FPS of engine
+       *
+       * @type {Number}
+       * @default 0
+       */
+      FPS: 0,
 
-  /**
-   * Relevant metrics for update cycle.
-   *
-   * @private
-   * @type {Object}
-   *
-   * @property {Number} animationFrameID - ID of current animation frame
-   * @property {Number} lag - accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
-   * @property {Number} prevTimestamp - timestamp of last frame in ms
-   */
-  #updateMetrics = {
-    animationFrameID: -1,
-    lag: 0,
-    prevTimestamp: 0,
+      /**
+       * Unix timestamp of when engine was started
+       *
+       * @type {Number}
+       * @default 0
+       */
+      startTime: 0,
+
+      /**
+       * Cumulative number of updates performed since engine was started
+       *
+       * @type {Number}
+       * @default 0
+       */
+      updatesSinceStart: 0,
+    },
   };
 
   /**
    * An array of actors to be updated and drawn by the canvas
    *
+   * @private
    * @type {Array<Actor>}
    */
   #actors = [];
@@ -246,6 +365,7 @@ export default class Engine {
   /**
    * An instance of EventHandler to handle events
    *
+   * @private
    * @type {EventHandler}
    */
   #eventHandler;
@@ -258,36 +378,39 @@ export default class Engine {
    *
    */
   #performGameLoopUpdates = (timestamp) => {
-    this.#updateMetrics.animationFrameID = requestAnimationFrame(
+    this.#updateRecord.metrics.animationFrameID = requestAnimationFrame(
       this.#performGameLoopUpdates
     );
 
     // *****************************
     // Calculate delta time and lag
 
-    let dt = timestamp - this.#updateMetrics.prevTimestamp;
-    this.#updateMetrics.prevTimestamp = timestamp;
+    let dt = timestamp - this.#updateRecord.metrics.prevTimestamp;
+    this.#updateRecord.metrics.prevTimestamp = timestamp;
 
-    this.#updateMetrics.lag += dt;
+    this.#updateRecord.metrics.lag += dt;
+    this.environment.metrics.currentEngineTime += dt;
 
-    this.#debugMetrics.FPS = 1000 / dt;
+    this.#debugRecord.metrics.FPS = 1000 / dt;
 
     // *****************************
     // Perform engine updates based on current lag
 
     let numUpdates = 0;
     while (
-      this.#updateMetrics.lag >= this.#updateProperties.targetFrameTimestep
+      this.#updateRecord.metrics.lag >=
+      this.#updateRecord.properties.targetFrameTimestep
     ) {
       this.#performEngineUpdates();
 
-      this.#updateMetrics.lag -= this.#updateProperties.targetFrameTimestep;
+      this.#updateRecord.metrics.lag -=
+        this.#updateRecord.properties.targetFrameTimestep;
 
-      this.#debugMetrics.updatesSinceStart++;
+      this.#debugRecord.metrics.updatesSinceStart++;
 
       // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
-      if (++numUpdates >= this.#updateProperties.maxFrameUpdates) {
-        this.#updateMetrics.lag = 0;
+      if (++numUpdates >= this.#updateRecord.properties.maxFrameUpdates) {
+        this.#updateRecord.metrics.lag = 0;
         break;
       }
     }
@@ -296,7 +419,8 @@ export default class Engine {
     // Calculate interpolation and perform draw calls
 
     const interp =
-      this.#updateMetrics.lag / this.#updateProperties.targetFrameTimestep;
+      this.#updateRecord.metrics.lag /
+      this.#updateRecord.properties.targetFrameTimestep;
 
     this.#performDrawCalls(interp);
 
@@ -308,21 +432,24 @@ export default class Engine {
   };
 
   #performEngineUpdates = () => {
-    if (this.#isPaused) return;
+    if (this.#engineRecord.properties.isPaused) return;
 
     // *****************************
     // actor update operations
 
     this.#actors.forEach((actor) => {
       actor.performUpdates(
-        this.#updateProperties.targetFrameTimestep,
+        this.#updateRecord.properties.targetFrameTimestep,
         this.environment
       );
     });
 
     // perform user-defined update callback (if provided)
     if (this.update)
-      this.update(this.#updateProperties.targetFrameTimestep, this.environment);
+      this.update(
+        this.#updateRecord.properties.targetFrameTimestep,
+        this.environment
+      );
 
     // get a list of current events in the queue
     const queuedEventTypes = this.#eventHandler.eventList.map(
@@ -368,14 +495,24 @@ export default class Engine {
     // *****************************
     // pre-draw operations
 
-    if (this.#isPaused) return;
+    if (this.#engineRecord.properties.isPaused) return;
 
     // clear canvas
-    this.ctx.clearRect(0, 0, this.environment.width, this.environment.height);
+    this.ctx.clearRect(
+      0,
+      0,
+      this.environment.properties.size.x,
+      this.environment.properties.size.y
+    );
 
     // reset context fill color
-    this.ctx.fillStyle = this.environment.background;
-    this.ctx.fillRect(0, 0, this.environment.width, this.environment.height);
+    this.ctx.fillStyle = this.environment.properties.background;
+    this.ctx.fillRect(
+      0,
+      0,
+      this.environment.properties.size.x,
+      this.environment.properties.size.y
+    );
 
     // *****************************
     // primary draw operations
@@ -388,24 +525,26 @@ export default class Engine {
     // *****************************
     // post-draw operations
 
-    if (this.#debugProperties.isPerformanceDebugScreenEnabled)
+    if (this.#debugRecord.properties.isPerformanceDebugScreenEnabled) {
       this.#performDebugDrawCalls(interp);
+    }
   };
 
   #performDebugDrawCalls = (interp) => {
     this.ctx.fillStyle = "white";
-    if (!isNaN(this.#debugMetrics.FPS)) {
-      this.ctx.fillText("FPS: " + this.#debugMetrics.FPS, 5, 15);
-      this.ctx.fillText("dt: " + 1000 / this.#debugMetrics.FPS, 5, 25);
-      this.ctx.fillText("lag: " + this.#updateMetrics.lag, 5, 35);
+    if (!isNaN(this.#debugRecord.metrics.FPS)) {
+      this.ctx.fillText("FPS: " + this.#debugRecord.metrics.FPS, 5, 15);
+      this.ctx.fillText("dt: " + 1000 / this.#debugRecord.metrics.FPS, 5, 25);
+      this.ctx.fillText("lag: " + this.#updateRecord.metrics.lag, 5, 35);
       this.ctx.fillText("interp: " + interp, 5, 45);
       this.ctx.fillText(
-        "total updates: " + this.#debugMetrics.updatesSinceStart,
+        "total updates: " + this.#debugRecord.metrics.updatesSinceStart,
         5,
         55
       );
       this.ctx.fillText(
-        "runtime: " + (performance.now() - this.#debugMetrics.startTime) / 1000,
+        "runtime: " +
+          (performance.now() - this.#debugRecord.metrics.startTime) / 1000,
         5,
         65
       );

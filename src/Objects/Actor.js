@@ -1,26 +1,40 @@
-import { vec, add, sub, div, mag, mult } from "../Math/Vector";
+import { vec, add, sub, div, mult } from "../math/Vector";
 import TextureLayer from "../util/TextureLayer";
 
-import { EVENT_IDENTIFIERS, validEvents } from "../core/EventHandler";
+import { EVENT_IDENTIFIERS } from "../core/EventHandler";
+import { assertIsVector } from "../util/Asserts";
 
 /**
- * An actor function represents an actor that can be placed within the canvas.
- * @param {Function} draw a draw function that is called every frame
- * @param {Function} update an update function that is called every frame
- * @param {Object} initialProperties optional arguments for velocity and position
- * @property {Vector} initialProperties.pos - starting position of actor (with respect to origin of canvas)
- * @property {Vector} initialProperties.vel - velocity of actor
- * @property {Number} initialProperties.bounds.size - size of actor's bounds
- * @property {Number} initialProperties.zIndex - z-index of actor. -1 will draw actor behind canvas.
+ * An actor that can be added to the engine and manipulated.
  */
 export default class Actor {
+  /**
+   * Creates a new Actor instance.
+   *
+   * @constructor
+   *
+   * @param {Object} properties optional arguments for actor upon initialization
+   * @param {Vector} properties.pos position of the actor with respect to canvas origin
+   * @param {Vector} properties.vel velocity of the actor
+   * @param {Vector} properties.size size of the actor
+   * @param {Boolean} properties.isClippedToSize whether or not the actor will automatically clip draw calls to actor's size
+   * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
+   */
   constructor(properties = {}) {
-    // set velocity and position to values passed in initialProperties;
-    // if not provided, set to 0
-    this.#last.pos = this.pos = properties.pos ?? vec();
-    this.#last.vel = this.vel = properties.vel ?? vec();
+    // set default pos and vel
+    // assert that provided pos and vel are vectors
+    if (assertIsVector(properties.pos ?? vec()))
+      this.#last.pos = this.pos = properties.pos ?? vec();
 
-    this.size = properties.size ?? vec(48);
+    if (assertIsVector(properties.vel ?? vec()))
+      this.#last.vel = this.vel = properties.vel ?? vec();
+
+    if (!properties.size)
+      throw new Error(`Error initalizing actor: Size is not defined`);
+    if (!assertIsVector(properties.size))
+      throw new Error(`Error initalizing actor: Size is not a vector`);
+
+    this.size = properties.size;
 
     this.isClippedToSize = properties.isClippedToSize ?? true;
 
@@ -111,13 +125,19 @@ export default class Actor {
     // ****************************************************************
     // pre-update operations
 
+    // round down position and velocity if less than EPSILON
+    if (Math.abs(this.pos.x) < Number.EPSILON) this.pos.x = 0;
+    if (Math.abs(this.pos.y) < Number.EPSILON) this.pos.y = 0;
+    if (Math.abs(this.vel.x) < Number.EPSILON) this.vel.x = 0;
+    if (Math.abs(this.vel.y) < Number.EPSILON) this.vel.y = 0;
+
     this.#last.pos = this.pos;
     this.#last.vel = this.vel;
 
     // ****************************************************************
     // primary update operations
 
-    this.vel = add(this.vel, div(env.physics.accel, timestep));
+    this.vel = add(this.vel, div(env.properties.physics.accel, timestep));
 
     if (this.update) this.update(timestep, env);
   };
