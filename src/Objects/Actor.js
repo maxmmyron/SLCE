@@ -1,13 +1,13 @@
 import { vec, add, sub, div, mult } from "../math/Vector";
 import TextureLayer from "../util/TextureLayer";
 
-import { EVENT_IDENTIFIERS } from "../core/EventHandler";
 import { assertIsVector } from "../util/Asserts";
+import EventSubscriber from "../core/EventSubscriber";
 
 /**
  * An actor that can be added to the engine and manipulated.
  */
-export default class Actor {
+export default class Actor extends EventSubscriber {
   /**
    * Creates a new Actor instance.
    *
@@ -21,6 +21,8 @@ export default class Actor {
    * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
    */
   constructor(properties = {}) {
+    super();
+
     // set default pos and vel
     // assert that provided pos and vel are vectors
     if (assertIsVector(properties.pos ?? vec()))
@@ -30,9 +32,9 @@ export default class Actor {
       this.#last.vel = this.vel = properties.vel ?? vec();
 
     if (!properties.size)
-      throw new Error(`Error initalizing actor: Size is not defined`);
+      throw new Error(`Error initializing actor: Size is not defined`);
     if (!assertIsVector(properties.size))
-      throw new Error(`Error initalizing actor: Size is not a vector`);
+      throw new Error(`Error initializing actor: Size is not a vector`);
 
     this.size = properties.size;
 
@@ -72,23 +74,6 @@ export default class Actor {
    * @type {Vector}
    */
   vel;
-
-  /**
-   * An array containing a series of structs that list out subscribed events and their respective callbacks.
-   *
-   * @type {Array}
-   *
-   * @example
-   * [{
-   *     type: "click",
-   *     callbacks: [()=>{...}, ()=>{...}]
-   * },
-   * {
-   *     type: "...",
-   *     callbacks: [()=>{}]
-   * }]
-   */
-  subscribedEvents = [];
 
   draw = null;
 
@@ -278,29 +263,6 @@ export default class Actor {
   };
 
   getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
-
-  subscribe(eventType, callback) {
-    // ensure event is valid from engine event list
-    if (!EVENT_IDENTIFIERS.includes(eventType)) {
-      throw new Error(
-        `Error attempting to subscribe to invalid event ${eventType}: Event does not exist in validEvents list.`
-      );
-    }
-
-    const specifiedEvent = this.subscribedEvents.find(
-      (subscribedEvent) => subscribedEvent.event === eventType
-    );
-
-    // add a new struct to subscribedEvent array if it doesn't already exist
-    if (!specifiedEvent) {
-      this.subscribedEvents.push({ type: eventType, callbacks: [callback] });
-    }
-
-    // add callback to subscribedEvent struct as element in array if it exists
-    else {
-      specifiedEvent.callbacks.push(callback);
-    }
-  }
 
   // ****************************************************************
   // Private defs
