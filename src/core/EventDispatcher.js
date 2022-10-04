@@ -10,6 +10,7 @@ export const EVENT_IDENTIFIERS = [
   "onkeydown",
   "whilekeydown",
   "onkeyup",
+  "onscreenresize",
 ];
 
 /**
@@ -70,11 +71,11 @@ class Event {
 }
 
 /**
- * A class that handles creation and destruction of eventlistners, as well as dispatching of custom event types.
+ * A class that handles creation and destruction of event listeners, as well as dispatching of custom event types.
  */
-export default class EventHandler {
+export default class EventDispatcher {
   /**
-   * Creates a new EventHandler instance.
+   * Creates a new EventDispatcher instance.
    *
    * @constructor
    *
@@ -90,6 +91,7 @@ export default class EventHandler {
     this.#eventMap.set("mouseup", this.#handleMouseUp);
     this.#eventMap.set("keydown", this.#handleKeyDown);
     this.#eventMap.set("keyup", this.#handleKeyUp);
+    this.#eventMap.set("resize", this.#handleScreenResize);
   }
 
   // ****************************************************************
@@ -286,5 +288,11 @@ export default class EventHandler {
     this.#removeEventPersistence("whilekeydown", keyUpEvent);
 
     this.dispatch(keyUpEvent);
+  };
+
+  #handleScreenResize = (e) => {
+    let onScreenResizeEvent = new Event("onscreenresize", e);
+
+    this.dispatch(onScreenResizeEvent);
   };
 }
