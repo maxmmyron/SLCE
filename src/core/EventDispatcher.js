@@ -10,10 +10,13 @@ export const EVENT_IDENTIFIERS = [
   "onkeydown",
   "whilekeydown",
   "onkeyup",
+  "oncanvasresize",
 ];
 
 /**
  * A utility class that handles a custom Event class.
+ *
+ * @class
  */
 class Event {
   /**
@@ -70,11 +73,11 @@ class Event {
 }
 
 /**
- * A class that handles creation and destruction of eventlistners, as well as dispatching of custom event types.
+ * A class that handles creation and destruction of event listeners, as well as dispatching of custom event types.
  */
-export default class EventHandler {
+export default class EventDispatcher {
   /**
-   * Creates a new EventHandler instance.
+   * Creates a new EventDispatcher instance.
    *
    * @constructor
    *
@@ -90,6 +93,7 @@ export default class EventHandler {
     this.#eventMap.set("mouseup", this.#handleMouseUp);
     this.#eventMap.set("keydown", this.#handleKeyDown);
     this.#eventMap.set("keyup", this.#handleKeyUp);
+    this.#eventMap.set("resize", null);
   }
 
   // ****************************************************************
@@ -144,20 +148,33 @@ export default class EventHandler {
   };
 
   /**
-   * Attaches all events to canvasDOM. Run at engine initialization.
+   * Attaches all event listeners and sets up unique resizeObserver for canvas element resize events.
    */
   attachAllEvents = () => {
     for (const [event, handler] of this.#eventMap) {
-      this.#canvasDOM.addEventListener(event, handler);
+      switch (event) {
+        case "resize":
+          this.#resizeObserver.observe(this.#canvasDOM);
+          this.break;
+        default:
+          this.#canvasDOM.addEventListener(event, handler);
+      }
     }
   };
 
   /**
-   * Detaches all events from canvasDOM. Run at engine disposal.
+   * Detaches all events from canvasDOM and resizeObserver.
    */
   detachAllEvents = () => {
     for (const [event, handler] of this.#eventMap) {
-      this.#canvasDOM.removeEventListener(event, handler);
+      switch (event) {
+        case "resize":
+          this.#resizeObserver.unobserve(this.#canvasDOM);
+          break;
+        default:
+          this.#canvasDOM.removeEventListener(event, handler);
+          break;
+      }
     }
   };
 
@@ -180,6 +197,16 @@ export default class EventHandler {
    * @default new Map()
    */
   #eventMap = new Map();
+
+  #resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width, height } = entry.contentRect;
+
+      let onCanvasResizeEvent = new Event("oncanvasresize", { width, height });
+
+      this.dispatch(onCanvasResizeEvent);
+    }
+  });
 
   /**
    *
@@ -260,7 +287,7 @@ export default class EventHandler {
     let whileKeyDownEvent = new Event("whilekeydown", e, "keyCode", true);
     let onKeyDownEvent = new Event("onkeydown", e);
 
-    // dont dispatch onKeyDown if whileKeyDown is already in the queue
+    // don't dispatch onKeyDown if whileKeyDown is already in the queue
 
     if (
       !this.eventList.some(

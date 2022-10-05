@@ -1,6 +1,7 @@
 import { vec } from "../math/Vector";
 import Actor from "../objects/Actor";
-import EventHandler from "./EventHandler";
+import EventDispatcher from "./EventDispatcher";
+import EventSubscriber from "./EventSubscriber";
 
 const TARGET_FPS = 60,
   MAX_UPDATES_PER_CYCLE = 240;
@@ -8,7 +9,7 @@ const TARGET_FPS = 60,
 /**
  * Engine class. Handles actor management, update game loop, and rendering.
  */
-export default class Engine {
+export default class Engine extends EventSubscriber {
   /**
    * Creates a new instance of an Engine.
    *
@@ -17,6 +18,8 @@ export default class Engine {
    * @param {Object} properties optional property arguments for engine
    */
   constructor(canvasDOM, properties = {}) {
+    super();
+
     if (!(canvasDOM instanceof HTMLCanvasElement)) {
       throw new Error("canvasDOM must be an instance of HTMLCanvasElement");
     }
@@ -34,16 +37,16 @@ export default class Engine {
       getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2) // height
     );
 
-    // listen for resize events and update canvas size
-    document.addEventListener("resize", (e) => {
-      dimensions = this.#fixDPI();
-      // set canvas width and height to scaled width and height
-      this.environment.properties.size = (dimensions[0], dimensions[1]);
-    });
+    // // listen for resize events and update canvas size
+    // document.addEventListener("resize", (e) => {
+    //   dimensions = this.#fixDPI();
+    //   // set canvas width and height to scaled width and height
+    //   this.environment.properties.size = (dimensions[0], dimensions[1]);
+    // });
 
     this.#fixDPI();
 
-    this.#eventHandler = new EventHandler(
+    this.#eventDispatcher = new EventDispatcher(
       canvasDOM,
       this.#engineRecord.properties.isPaused
     );
@@ -111,13 +114,12 @@ export default class Engine {
 
   /**
    * Starts engine update loop. Used only once at startup.
+   *
+   * @throws {Error} if the start function has already been called.
    */
   start = () => {
     if (!this.#engineRecord.properties.isStarted) {
       this.#fixDPI();
-      this.#updateRecord.metrics.animationFrameID = requestAnimationFrame(
-        this.#performGameLoopUpdates
-      );
 
       // focus onto canvas on start so we can pick up key events
       this.canvasDOM.tabIndex = -1;
@@ -126,10 +128,20 @@ export default class Engine {
       this.#engineRecord.properties.isStarted = true;
       this.#engineRecord.properties.isPaused = false;
 
+      this.subscribe("oncanvasresize", () => {
+        const dimensions = this.#fixDPI();
+        // set canvas width and height to scaled width and height
+        this.environment.properties.size = vec(dimensions[0], dimensions[1]);
+      });
+
+      // start update loop
       this.#debugRecord.metrics.startTime = performance.now();
+      this.#updateRecord.metrics.animationFrameID = requestAnimationFrame(
+        this.#performGameLoopUpdates
+      );
 
       // initialize events
-      this.#eventHandler.attachAllEvents();
+      this.#eventDispatcher.attachAllEvents();
     } else {
       throw new Error(`Error starting engine: engine has already started.`);
     }
@@ -141,7 +153,7 @@ export default class Engine {
    */
   pause = () => {
     this.#engineRecord.properties.isPaused = true;
-    this.#eventHandler.isEnginePaused = true;
+    this.#eventDispatcher.isEnginePaused = true;
   };
 
   /**
@@ -149,7 +161,7 @@ export default class Engine {
    */
   resume = () => {
     this.#engineRecord.properties.isPaused = false;
-    this.#eventHandler.isEnginePaused = false;
+    this.#eventDispatcher.isEnginePaused = false;
   };
 
   /**
@@ -368,7 +380,7 @@ export default class Engine {
    * @private
    * @type {EventHandler}
    */
-  #eventHandler;
+  #eventDispatcher;
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -452,7 +464,7 @@ export default class Engine {
       );
 
     // get a list of current events in the queue
-    const queuedEventTypes = this.#eventHandler.eventList.map(
+    const queuedEventTypes = this.#eventDispatcher.eventList.map(
       (event) => event.type
     );
 
@@ -463,24 +475,29 @@ export default class Engine {
       )
     );
 
-    if (relevantActors.length > 0) {
-      this.#eventHandler.eventList.forEach((event, i) => {
-        const eventType = event.type;
-        const eventPayload = event.payload;
+    this.#eventDispatcher.eventList.forEach((event) => {
+      const eventType = event.type;
+      const eventPayload = event.payload;
 
-        // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
-        relevantActors.forEach((actor) => {
-          actor.subscribedEvents.forEach((subscribedEvent) => {
-            if (subscribedEvent.type === eventType) {
-              subscribedEvent.callbacks[0](eventPayload);
-            }
-          });
+      // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
+      relevantActors.forEach((actor) => {
+        actor.subscribedEvents.forEach((subscribedEvent) => {
+          if (subscribedEvent.type === eventType) {
+            subscribedEvent.callbacks.map((callback) => callback(eventPayload));
+          }
         });
       });
-    }
+
+      // perform event callbacks for events engine has subscribed to
+      this.subscribedEvents.forEach((subscribedEvent) => {
+        if (subscribedEvent.type === eventType) {
+          subscribedEvent.callbacks.map((callback) => callback(eventPayload));
+        }
+      });
+    });
 
     // remove events labeled as non persistent from queue.
-    this.#eventHandler.eventList = this.#eventHandler.eventList.filter(
+    this.#eventDispatcher.eventList = this.#eventDispatcher.eventList.filter(
       (event) => event.isPersistent
     );
   };
@@ -559,6 +576,7 @@ export default class Engine {
    * @returns {[number, number]} - [scaledWidth, scaledHeight]
    */
   #fixDPI = () => {
+    console.log("fixing DPI");
     const dpi = window.devicePixelRatio;
 
     // set current computed canvas dimensions
