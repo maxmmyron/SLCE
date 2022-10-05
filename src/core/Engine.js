@@ -114,6 +114,8 @@ export default class Engine extends EventSubscriber {
 
   /**
    * Starts engine update loop. Used only once at startup.
+   *
+   * @throws {Error} if the start function has already been called.
    */
   start = () => {
     if (!this.#engineRecord.properties.isStarted) {
@@ -125,6 +127,12 @@ export default class Engine extends EventSubscriber {
 
       this.#engineRecord.properties.isStarted = true;
       this.#engineRecord.properties.isPaused = false;
+
+      this.subscribe("oncanvasresize", () => {
+        const dimensions = this.#fixDPI();
+        // set canvas width and height to scaled width and height
+        this.environment.properties.size = vec(dimensions[0], dimensions[1]);
+      });
 
       // start update loop
       this.#debugRecord.metrics.startTime = performance.now();
@@ -467,21 +475,26 @@ export default class Engine extends EventSubscriber {
       )
     );
 
-    if (relevantActors.length > 0) {
-      this.#eventDispatcher.eventList.forEach((event, i) => {
-        const eventType = event.type;
-        const eventPayload = event.payload;
+    this.#eventDispatcher.eventList.forEach((event) => {
+      const eventType = event.type;
+      const eventPayload = event.payload;
 
-        // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
-        relevantActors.forEach((actor) => {
-          actor.subscribedEvents.forEach((subscribedEvent) => {
-            if (subscribedEvent.type === eventType) {
-              subscribedEvent.callbacks[0](eventPayload);
-            }
-          });
+      // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
+      relevantActors.forEach((actor) => {
+        actor.subscribedEvents.forEach((subscribedEvent) => {
+          if (subscribedEvent.type === eventType) {
+            subscribedEvent.callbacks.map((callback) => callback(eventPayload));
+          }
         });
       });
-    }
+
+      // perform event callbacks for events engine has subscribed to
+      this.subscribedEvents.forEach((subscribedEvent) => {
+        if (subscribedEvent.type === eventType) {
+          subscribedEvent.callbacks.map((callback) => callback(eventPayload));
+        }
+      });
+    });
 
     // remove events labeled as non persistent from queue.
     this.#eventDispatcher.eventList = this.#eventDispatcher.eventList.filter(
