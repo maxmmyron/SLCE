@@ -1,11 +1,14 @@
 import { vec, add, sub, div, mult } from "../math/Vector";
-import TextureLayer from "../util/TextureLayer";
 
 import { assertIsVector } from "../util/Asserts";
 import EventSubscriber from "../core/EventSubscriber";
+import { textureMixin } from "../util/TextureMixin";
+import { animationMixin } from "../util/AnimationMixin";
 
 /**
  * An actor that can be added to the engine and manipulated.
+ *
+ * @type {Actor & TextureMixin}
  */
 export default class Actor extends EventSubscriber {
   /**
@@ -17,11 +20,14 @@ export default class Actor extends EventSubscriber {
    * @param {Vector} properties.pos position of the actor with respect to canvas origin
    * @param {Vector} properties.vel velocity of the actor
    * @param {Vector} properties.size size of the actor
-   * @param {Boolean} properties.isClippedToSize whether or not the actor will automatically clip draw calls to actor's size
    * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
    */
   constructor(properties = {}) {
     super();
+
+    // Provide mixins for texture and animation functionality
+    Object.assign(this, textureMixin);
+    Object.assign(this, animationMixin);
 
     // set default pos and vel
     // assert that provided pos and vel are vectors
@@ -37,8 +43,6 @@ export default class Actor extends EventSubscriber {
       throw new Error(`Error initializing actor: Size is not a vector`);
 
     this.size = properties.size;
-
-    this.isClippedToSize = properties.isClippedToSize ?? true;
 
     this.isDebugEnabled = properties.isDebugEnabled ?? false;
   }
@@ -140,32 +144,13 @@ export default class Actor extends EventSubscriber {
     // interpolate position of actor based on interpolation provided by engine loop
     this.pos = add(this.#last.pos, mult(sub(this.pos, this.#last.pos), interp));
 
-    // split texture layers into those that render below main draw call and those that render above
-    const activeTextureLayers = this.#textures.filter(
-      (textureLayer) => textureLayer.isActive
-    );
-
-    // sort active texture layers by z-index
-    activeTextureLayers.sort(
-      (a, b) => a.drawProperties.zIndex - b.drawProperties.zIndex
-    );
-
     // ****************************************************************
     // primary draw operations
 
     ctx.save();
 
-    // if clipping is enabled then set context clip to actor bounds
-    if (this.isClippedToSize) {
-      ctx.beginPath();
-      ctx.rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
-      ctx.clip();
-    }
-
-    // draw active texture layers
-    activeTextureLayers.forEach((textureLayer) => {
-      this.drawTextureLayer(textureLayer, ctx);
-    });
+    // draw texture information
+    console.log(this.textures);
 
     // call user-defined update callback function
     if (this.draw) this.draw(ctx, interp);
@@ -178,91 +163,6 @@ export default class Actor extends EventSubscriber {
 
     if (this.isDebugEnabled) this.#drawDebug(ctx);
   };
-
-  /**
-   * Draws a Texturelayer to the canvas context.
-   *
-   * @param {TextureLayer} textureLayer
-   * @param {CanvasRenderingContext2D} ctx
-   */
-  drawTextureLayer = (textureLayer, ctx) => {
-    switch (textureLayer.drawProperties.tileMode) {
-      case "tile": {
-        for (let x = 0; x < this.size.x; x += textureLayer.size.x) {
-          for (let y = 0; y < this.size.y; y += textureLayer.size.y) {
-            ctx.drawImage(
-              textureLayer.imageBitmap,
-              this.pos.x + x,
-              this.pos.y + y,
-              textureLayer.size.x,
-              textureLayer.size.y
-            );
-          }
-        }
-        break;
-      }
-      case "tileX": {
-        for (let x = 0; x < this.size.x; x += textureLayer.size.x) {
-          ctx.drawImage(
-            textureLayer.imageBitmap,
-            this.pos.x + x,
-            this.pos.y,
-            textureLayer.size.x,
-            textureLayer.size.y
-          );
-        }
-        break;
-      }
-      case "tileY": {
-        for (let y = 0; y < this.size.y; y += textureLayer.size.y) {
-          ctx.drawImage(
-            textureLayer.imageBitmap,
-            this.pos.x,
-            this.pos.y + y,
-            textureLayer.size.x,
-            textureLayer.size.y
-          );
-        }
-        break;
-      }
-      default: {
-        ctx.drawImage(
-          textureLayer.imageBitmap,
-          this.pos.x + textureLayer.pos.x,
-          this.pos.y + textureLayer.pos.y,
-          textureLayer.size.x,
-          textureLayer.size.y
-        );
-        break;
-      }
-    }
-  };
-
-  /**
-   * Adds a new texture layer to the actor.
-   *
-   * @param {TextureLayer} textureLayer TextureLayer object to attempt to add to actor
-   */
-  addTextureLayer = (textureLayer) => {
-    new Promise((resolve, reject) => {
-      if (textureLayer.imageBitmap) {
-        this.#textures.push(textureLayer);
-        resolve("Success");
-      } else {
-        textureLayer
-          .resolveImageBitmap()
-          .then(() => {
-            this.#textures.push(textureLayer);
-            resolve("Success");
-          })
-          .catch((err) => {
-            reject(`Error adding texture layer to actor: ${err}`);
-          });
-      }
-    });
-  };
-
-  getTextures = () => new Promise((resolve, reject) => resolve(this.#textures));
 
   // ****************************************************************
   // Private defs
@@ -281,14 +181,6 @@ export default class Actor extends EventSubscriber {
     vel: vec(),
   };
 
-  /**
-   * An array of TextureLayers that can be drawn to the canvas in the draw callback.
-   *
-   * @private
-   * @type {Array<TextureLayer>}
-   */
-  #textures = [];
-
   // ****************************************************************
   // Draw debug information
 
@@ -304,7 +196,6 @@ export default class Actor extends EventSubscriber {
     const texts = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
       `vel: ${this.vel.x}, ${this.vel.y}`,
-      `textures: ${this.#textures.length}`,
       `isClippedToSize: ${this.isClippedToSize}`,
     ];
 
