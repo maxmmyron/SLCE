@@ -3,8 +3,8 @@ import Actor from "../objects/Actor";
 import EventDispatcher from "./EventDispatcher";
 import EventSubscriber from "./EventSubscriber";
 
-const TARGET_FPS = 60,
-  MAX_UPDATES_PER_CYCLE = 240;
+const TARGET_FPS: number = 60;
+const MAX_UPDATES_PER_CYCLE: number = 240;
 
 /**
  * Engine class. Handles actor management, update game loop, and rendering.
@@ -17,7 +17,7 @@ export default class Engine extends EventSubscriber {
    * @param {HTMLCanvasElement} canvasDOM canvas on which to draw to
    * @param {Object} properties optional property arguments for engine
    */
-  constructor(canvasDOM, properties = {}) {
+  constructor(canvasDOM: HTMLCanvasElement, properties: any = {}) {
     super();
 
     if (!(canvasDOM instanceof HTMLCanvasElement)) {
@@ -32,9 +32,12 @@ export default class Engine extends EventSubscriber {
      */
     this.ctx = canvasDOM.getContext("2d");
 
+    let envWidth: number = Number(getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2));
+    let envHeight: number = Number(getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2));
+
     this.environment.properties.size = vec(
-      getComputedStyle(canvasDOM).getPropertyValue("width").slice(0, -2), // width
-      getComputedStyle(canvasDOM).getPropertyValue("height").slice(0, -2) // height
+      envWidth,
+      envHeight
     );
 
     // // listen for resize events and update canvas size
@@ -54,6 +57,10 @@ export default class Engine extends EventSubscriber {
 
   // ****************************************************************
   // Public defs
+
+  canvasDOM: HTMLCanvasElement;
+
+  ctx: CanvasRenderingContext2D;
 
   /**
    * Current environment variables. Stores canvas runtime info and physics settings.
@@ -108,9 +115,9 @@ export default class Engine extends EventSubscriber {
     },
   };
 
-  update = null;
+  update: Function | null = null;
 
-  draw = null;
+  draw: Function | null = null;
 
   /**
    * Starts engine update loop. Used only once at startup.
