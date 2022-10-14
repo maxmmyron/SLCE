@@ -1,27 +1,35 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
   devServer: {
-    "static": "./demo",
+    static: "./demo",
   },
   entry: {
-    index: './src/core/Engine.js'
+    index: "./src/core/Engine.tsx",
   },
-  mode: 'development',
+  mode: "development",
   module: {
     rules: [
       {
         test: /\.(png|jpe?g)$/i,
         use: [
           {
-            loader: 'file-loader',
+            loader: "file-loader",
           },
         ],
       },
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
     ],
   },
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"],
+  },
   output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'build'),
-  }
-}
+    filename: "bundle.js",
+    path: path.resolve(__dirname, "build"),
+  },
+};
