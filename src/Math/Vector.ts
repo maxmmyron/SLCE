@@ -1,10 +1,4 @@
 /**
- * A series of helper functions for for working with vectors
- */
-
-import { assertIsNumber, assertIsVector } from "../util/Asserts";
-
-/**
  * Checks if all vectors passed are vectors before performing an operation
  *
  * @param {Array<Vector> | Vector} vectors - a vector or array of vectors to test
@@ -15,12 +9,9 @@ import { assertIsNumber, assertIsVector } from "../util/Asserts";
  */
 const resolveVectors = (vectors: Array<Vector> | Vector, op: Function) => {
   if (vectors instanceof Array)
-    if (vectors.every(assertIsVector)) return op(...vectors);
+    return op(...vectors);
 
-  if (assertIsVector(vectors)) return op(vectors);
-
-  // check if each element is a vector before performing operation
-  new TypeError("Not all elements are vectors");
+  return op(vectors);
 };
 
 /**
@@ -46,8 +37,7 @@ const resolveVectors = (vectors: Array<Vector> | Vector, op: Function) => {
  * v.y // 0
  */
 export const vec = (x: number = 0, y: number = 0) => {
-  let v: Vector = { x: assertIsNumber(x), y: assertIsNumber(y) };
-  return v;
+  return { x, y };
 };
 
 /**
@@ -80,7 +70,6 @@ export const sub = (a: Vector, b: Vector): Vector =>
  * @throws {Error} if s is not a number
  */
 export const mult = (a: Vector, s: number): Vector => {
-  assertIsNumber(s);
   return resolveVectors(a, (a: Vector) => vec(a.x * s, a.y * s));
 };
 
@@ -97,7 +86,6 @@ export const mult = (a: Vector, s: number): Vector => {
 export const div = (a: Vector, s: number): Vector => {
   if (s === 0) throw new Error("Cannot divide by 0");
 
-  assertIsNumber(s);
   return resolveVectors(a, (a: Vector) => vec(a.x / s, a.y / s));
 };
 
@@ -111,8 +99,6 @@ export const div = (a: Vector, s: number): Vector => {
  * @throws {Error} if angle is not a number
  */
 export const rotate = (a: Vector, angle: number): Vector => {
-  assertIsNumber(angle);
-
   return resolveVectors(a, (a: Vector) => {
     const s = Math.sin(angle);
     const c = Math.cos(angle);
