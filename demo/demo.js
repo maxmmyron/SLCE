@@ -1,6 +1,6 @@
-import Engine from "../src/core/Engine.js";
-import { vec } from "../src/math/Vector.js";
-import Actor from "../src/objects/Actor.js";
+import Engine from "../src/core/Engine";
+import { vec } from "../src/math/Vector";
+import Actor from "../src/objects/Actor";
 
 import testingTexturePath from "./testTexture.png";
 
