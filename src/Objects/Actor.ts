@@ -1,6 +1,6 @@
 import { vec, add, sub, div, mult } from "../math/Vector";
 
-import { assert, assertIsVector } from "../util/Asserts";
+import { assert } from "../util/Asserts";
 import EventSubscriber from "../core/EventSubscriber"
 import { resolveImageBitmap } from "../util/Texture";
 
@@ -21,25 +21,20 @@ export default class Actor extends EventSubscriber {
    * @param {Vector} properties.size size of the actor
    * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(properties: any = {}) {
+  constructor(properties: ActorProperties) {
     super();
 
-    // set default pos and vel
-    // assert that provided pos and vel are vectors
-    if (assertIsVector(properties.pos ?? vec()))
-      this.last.pos = this.pos = properties.pos ?? vec();
+    const {pos = vec(), vel = vec(), size = null, isDebugEnabled = false} = properties;
 
-    if (assertIsVector(properties.vel ?? vec()))
-      this.last.vel = this.vel = properties.vel ?? vec();
+    this.last.pos = this.pos = pos
 
-    if (!properties.size)
-      throw new Error(`Error initializing actor: Size is not defined`);
-    if (!assertIsVector(properties.size))
-      throw new Error(`Error initializing actor: Size is not a vector`);
+    this.last.vel = this.vel = vel;
 
-    this.size = properties.size;
+    assert(size, "Actor must be initialized with a size");
 
-    this.isDebugEnabled = properties.isDebugEnabled ?? false;
+    this.size = size;
+
+    this.isDebugEnabled = isDebugEnabled;
   }
 
   // ****************************************************************
@@ -262,7 +257,7 @@ export default class Actor extends EventSubscriber {
    *
    * @param {number} delta the current delta time for the update loop
    */
-  updateAnimation = (delta: number): void => {
+  updateAnimation = (delta: number) => {
     if (!this.animationManager.animationID) return;
 
     this.animationManager.deltaSum += delta;
@@ -313,20 +308,16 @@ export default class Actor extends EventSubscriber {
    */
   loadTexture = async (textureID: string, path: string, options: {frameCount: number, spriteSize: Vector}) => {
     // assert path is a valid path
-    if (!path) throw new Error(`Error loading texture: Path not provided`);
+    assert(path, `Error loading texture: Path not provided`)
 
     // assert textureID is not already in use
-    if (this.textureManager.textures[textureID])
-      throw new Error(`Error loading texture: Name not provided`);
+    assert(!this.textureManager.textures[textureID], `Error loading texture: textureID must be unique`);
 
     // extract options
     const { spriteSize = null, frameCount = 1 } = options;
 
-    if (spriteSize !== null) {
-      assertIsVector(spriteSize);
-      if (spriteSize.x <= 0 || spriteSize.y <= 0)
-        throw new Error(`Error loading texture: spriteSize must be positive`);
-    }
+    // assert spriteSize is a positive Vector
+    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error loading texture: spriteSize must be a positive Vector`);
 
     await resolveImageBitmap(path)
       .then((imageBitmap: ImageBitmap) => {
@@ -354,8 +345,7 @@ export default class Actor extends EventSubscriber {
    */
   unloadTexture = (textureID: string): boolean => {
     // assert textureID is in use
-    if (!this.textureManager.textures[textureID])
-      throw new Error(`Error unloading texture: Texture not found`);
+    assert(this.textureManager.textures[textureID], `textureID must be within texture object`);
 
     delete this.textureManager.textures[textureID];
 
@@ -379,7 +369,7 @@ export default class Actor extends EventSubscriber {
         onFulfilled && onFulfilled(res);
       })
       .catch((err) => {
-        console.error(`Error attempting to preload actor: ${err}`);
+        throw new Error(`Error attempting to preload actor: ${err}`);
       });
   };
 
@@ -389,7 +379,7 @@ export default class Actor extends EventSubscriber {
    * @param {Number} timestep - update timestep
    * @param {Object} env - environment variables defined by engine
    */
-  performUpdates = (timestep: number, env: any): void => {
+  performUpdates = (timestep: number, env: any) => {
     // ****************************************************************
     // pre-update operations
 
@@ -416,7 +406,7 @@ export default class Actor extends EventSubscriber {
    * @param {CanvasRenderingContext2D} ctx - canvas context to draw to
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
-  performDrawCalls = (ctx: CanvasRenderingContext2D, interp: number): void => {
+  performDrawCalls = (ctx: CanvasRenderingContext2D, interp: number) => {
     // ****************************************************************
     // pre-draw operations
 
