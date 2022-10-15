@@ -27,3 +27,9 @@ interface Texture {
   frameCount: number;
 }
 
+type ActorProperties = {
+  pos: Vector;
+  vel: Vector;
+  size: Vector;
+  isDebugEnabled: boolean;
+}
