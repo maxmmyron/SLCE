@@ -306,21 +306,23 @@ export default class Actor extends EventSubscriber {
    * @throws Error if spriteSize provided is not a positive Vector
    * @throws Error if imageBitmap Promise is rejected
    */
-  loadTexture = async (textureID: string, path: string, options: {frameCount: number, spriteSize: Vector}) => {
+  loadTexture = async (textureID: string, path: string, options?: {frameCount: number, spriteSize: Vector}) => {
     // assert path is a valid path
-    assert(path, `Error loading texture: Path not provided`)
+    assert(path, `Error loading texture: Path not provided`);
 
     // assert textureID is not already in use
     assert(!this.textureManager.textures[textureID], `Error loading texture: textureID must be unique`);
 
     // extract options
-    const { spriteSize = null, frameCount = 1 } = options;
+    let { spriteSize = null, frameCount = 1 } = options;
 
     // assert spriteSize is a positive Vector
     assert(spriteSize.x > 0 && spriteSize.y > 0, `Error loading texture: spriteSize must be a positive Vector`);
 
     await resolveImageBitmap(path)
       .then((imageBitmap: ImageBitmap) => {
+        if(!spriteSize) spriteSize = vec(imageBitmap.width, imageBitmap.height);
+
         this.textureManager.textures[textureID] = {
           imageBitmap,
           spriteSize,
@@ -330,8 +332,6 @@ export default class Actor extends EventSubscriber {
       .catch((err: Error) => {
         throw new Error(`Error loading texture: ${err}`);
       });
-
-    return true;
   };
 
   /**
