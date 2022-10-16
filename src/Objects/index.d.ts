@@ -1,5 +1,5 @@
 interface AnimationManager {
-  animationStates: {[index: string]: AnimationState};
+  animations: {[index: string]: AnimationState};
   animationID: string | null;
   animationFrame: number;
   deltaSum: number;

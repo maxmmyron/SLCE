@@ -55,7 +55,7 @@ export default class Actor extends EventSubscriber {
      * @type {Object}
      * @default {}
      */
-    animationStates: {},
+    animations: {},
 
     /**
      * Current animation state to animate for actor.
@@ -157,7 +157,7 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
    */
   addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>}) : boolean => {
-    assert(!this.animationManager.animationStates[animationID], `animationID must be unique`);
+    assert(!this.animationManager.animations[animationID], `animationID must be unique`);
 
     const texture: Texture = this.textureManager.textures[textureID];
 
@@ -188,7 +188,7 @@ export default class Actor extends EventSubscriber {
         frames,
       };
 
-      this.animationManager.animationStates[animationID] = animationState;
+      this.animationManager.animations[animationID] = animationState;
 
       return true;
     }
@@ -206,7 +206,7 @@ export default class Actor extends EventSubscriber {
         frames
       };
 
-      this.animationManager.animationStates[animationID] = animationState;
+      this.animationManager.animations[animationID] = animationState;
 
       return true;
     }
@@ -223,12 +223,12 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} animationID must exist
    */
   removeAnimationState = (animationID: string): boolean => {
-    assert(this.animationManager.animationStates[animationID], `animationID must exist`);
+    assert(this.animationManager.animations[animationID], `animationID must exist`);
 
     this.animationManager.animationID = null;
     this.animationManager.animationFrame = 0;
 
-    delete this.animationManager.animationStates[animationID];
+    delete this.animationManager.animations[animationID];
 
     return true;
   };
@@ -242,7 +242,7 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} animationID must exist
    */
   setAnimationState = (animationID: string): boolean => {
-    assert(this.animationManager.animationStates[animationID], `animationID must be valid`);
+    assert(this.animationManager.animations[animationID], `animationID must be valid`);
 
     if (this.animationManager.animationID) this.animationManager.animationFrame = 0;
 
@@ -262,7 +262,7 @@ export default class Actor extends EventSubscriber {
 
     this.animationManager.deltaSum += delta;
 
-    const animationState = this.animationManager.animationStates[this.animationManager.animationID];
+    const animationState = this.animationManager.animations[this.animationManager.animationID];
 
     let currentFrame = animationState.frames[this.animationManager.animationFrame];
 
