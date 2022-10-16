@@ -22,21 +22,23 @@ const player = new Actor({
 });
 
 player.preload(async () => {
-  player.loadTexture("animation", animationSpritemap, {
-    frameCount: 64,
-    spriteSize: vec(64, 64),
-  });
+  player
+    .loadTexture("animation", animationSpritemap, {
+      frameCount: 64,
+      spriteSize: vec(64, 64),
+    })
+    .then(() => {
+      player.addAnimationState("idle", "animation", {
+        frameCount: 64,
+        startIndex: 0,
+        frameDuration: 200,
+      });
+      player.setAnimationState("idle");
+    });
 });
 
 console.log(player.textureManager.textures);
-
-player.addAnimationState("idle", "animation", {
-  frameCount: 64,
-  startIndex: 0,
-  frameDuration: 200,
-});
-
-player.setAnimationState("idle");
+console.log(player.animationManager.animations);
 
 player.subscribe("whilekeydown", (e) => {
   if (e.key === "ArrowRight") {
