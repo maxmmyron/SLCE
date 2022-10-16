@@ -2,7 +2,7 @@ import Engine from "../src/core/Engine";
 import { vec } from "../src/math/Vector";
 import Actor from "../src/objects/Actor";
 
-import testingTexturePath from "./testTexture.png";
+import animationSpritemap from "./animationSpritemap.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
@@ -13,17 +13,6 @@ const ground = new Actor({
   isDebugEnabled: true,
 });
 
-// ground.preload(async () => {
-//   ground.addTextureLayer(
-//     new TextureLayer(testingTexturePath, {
-//       isActive: true,
-//       size: vec(64, 64),
-//       tileMode: "tile",
-//       zIndex: 0,
-//     })
-//   );
-// });
-
 engine.addActor(ground);
 
 const player = new Actor({
@@ -32,15 +21,22 @@ const player = new Actor({
   isDebugEnabled: true,
 });
 
-// player.preload(async () => {
-//   player.addTextureLayer(
-//     new TextureLayer(testingTexturePath, {
-//       isActive: true,
-//       size: vec(48, 48),
-//       zIndex: 1,
-//     })
-//   );
-// });
+player.preload(async () => {
+  player.loadTexture("animation", animationSpritemap, {
+    frameCount: 64,
+    spriteSize: vec(64, 64),
+  });
+});
+
+console.log(player.textureManager.textures);
+
+player.addAnimationState("idle", "animation", {
+  frameCount: 64,
+  startIndex: 0,
+  frameDuration: 200,
+});
+
+player.setAnimationState("idle");
 
 player.subscribe("whilekeydown", (e) => {
   if (e.key === "ArrowRight") {
