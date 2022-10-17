@@ -418,7 +418,6 @@ export default class Actor extends EventSubscriber {
 
     // if deltaSum exceeds
     if ((this.animationManager.deltaSum += delta) >= currentFrame.duration) {
-
       this.animationManager.deltaSum -= currentFrame.duration;
 
       this.animationManager.animationFrame =
@@ -433,12 +432,12 @@ export default class Actor extends EventSubscriber {
     const imageBitmap: ImageBitmap = texture.imageBitmap;
     const spriteSize: Vector = texture.spriteSize;
 
-    const spriteRowCount: number = imageBitmap.width / spriteSize.x;
-    const spriteColumnCount: number = imageBitmap.height / spriteSize.y;
+    const spriteRowCount: number = Math.floor(imageBitmap.width / spriteSize.x);
+    const spriteColumnCount: number = Math.floor(imageBitmap.height / spriteSize.y);
 
     this.textureManager.textureOffset = vec(
-      (this.animationManager.animationFrame % spriteRowCount) * spriteSize.x,
-      Math.floor(this.animationManager.animationFrame / spriteColumnCount) * spriteSize.y
+      this.animationManager.animationFrame % spriteRowCount * spriteSize.x,
+      (this.animationManager.animationFrame - this.animationManager.animationFrame % spriteRowCount) / spriteColumnCount * spriteSize.y
     );
   };
 
