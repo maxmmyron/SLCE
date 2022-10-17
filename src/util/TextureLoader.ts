@@ -2,7 +2,6 @@ export const TextureLoader = (() => {
   let instance: Loader = null;
 
   const Loader = (): Loader => {
-
     /**
      * A cache containing objects consisting of a path and an ImageBitmap
      */
@@ -12,7 +11,6 @@ export const TextureLoader = (() => {
      * Adds a texture to the cache. Assumes that the texture is not already in the cache.
      */
     const addToCache = (path: string, texture: ImageBitmap) => {
-      console.log(`Adding ${path} to cache`);
       cache.push({ path, texture });
     };
 
@@ -24,12 +22,7 @@ export const TextureLoader = (() => {
      * @returns {Texture} the texture if found, null if not
      */
     const searchCache = (path: string): ImageBitmap => {
-      console.log("-----------SEARCH-----------");
-      console.log("searching cache");
-      console.log(cache);
-
       for(let i = 0; i < cache.length; i++) {
-        console.log(cache[i].path, path);
         if (cache[i].path === path) {
           return cache[i].texture;
         }
@@ -47,15 +40,10 @@ export const TextureLoader = (() => {
      * @returns {Texture} the texture loaded from the path or cache
      */
     const load = async (path: string): Promise<ImageBitmap> => {
-      console.log("-----------LOAD-----------");
-      console.log(`Loading ${path}`);
-      console.log(`Current cache: ${cache}`);
-
       const cachedTexture: ImageBitmap = searchCache(path);
 
       return new Promise((resolve, reject) => {
         if (cachedTexture) {
-          console.log("loaded from cache :D");
           resolve(cachedTexture);
         } else {
           const image = new Image();
@@ -65,7 +53,6 @@ export const TextureLoader = (() => {
 
           image.onload = () => {
             createImageBitmap(image).then((imageBitmap: ImageBitmap) => {
-              console.log("loaded from path :(")
               addToCache(path, imageBitmap);
               resolve(imageBitmap);
             }).catch((error: Error) => {
