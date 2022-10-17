@@ -349,15 +349,6 @@ export default class Engine extends EventSubscriber {
   };
 
   /**
-   * A struct containing all textures loaded globally to the engine.
-   * These textures are available for use by all actors added to the engine.
-   *
-   * @private
-   * @type {{[index: string]: Texture}}
-   */
-  private engineTextures: {[index: string]: Texture} = {};
-
-  /**
    * An array of actors to be updated and drawn by the canvas
    *
    * @private
