@@ -1,6 +1,7 @@
 import Engine from "../src/core/Engine";
 import { vec } from "../src/math/Vector";
 import Actor from "../src/objects/Actor";
+import { TextureLoader } from "../src/util/TextureLoader";
 
 import animationSpritemap from "./animationSpritemap.png";
 
@@ -10,44 +11,43 @@ const engine = new Engine(canvas);
 const engineWidth = engine.environment.properties.size.x;
 const engineHeight = engine.environment.properties.size.y;
 
-const playerSize = vec(64, 64);
+const actorSize = vec(64, 64);
+const actorMargin = 32;
 
-const playerMargin = 32;
+const actorsPerRow = Math.floor(engineWidth / (actorSize.x + actorMargin));
+const actorsPerColumn = Math.floor(engineHeight / (actorSize.y + actorMargin));
 
-const playersPerRow = engineWidth / (playerSize.x + playerMargin);
-const playersPerColumn = engineHeight / (playerSize.y + playerMargin);
+const texture = TextureLoader.getInstance().load(animationSpritemap);
 
-for (let i = 0; i < playersPerRow; i++) {
-  for (let j = 0; j < playersPerColumn; j++) {
-    const player = new Actor({
-      pos: vec(
-        i * (playerSize.x + playerMargin),
-        j * (playerSize.y + playerMargin)
-      ),
-      size: playerSize,
-      isDebugEnabled: true,
-    });
+texture.then((texture) => {
+  for (let i = 0; i < actorsPerRow; i++) {
+    for (let j = 0; j < actorsPerColumn; j++) {
+      const actor = new Actor({
+        pos: vec(
+          i * (actorSize.x + actorMargin),
+          j * (actorSize.y + actorMargin)
+        ),
+        size: actorSize,
+        isDebugEnabled: true,
+      });
 
-    player
-      .preload(async () => {
-        await player.loadTexture("animation", animationSpritemap, {
+      actor.preload(async () => {
+        actor.addTexture("animation", texture, {
           frameCount: 64,
           spriteSize: vec(64, 64),
         });
-        console.log(`${i + i * j} texture loaded`);
-        player.addAnimationState("idle", "animation", {
+
+        actor.addAnimationState("idle", "animation", {
           frameCount: 64,
           startIndex: 0,
           frameDuration: 200,
         });
-        player.setAnimationState("idle");
-      })
-      .then(() => {
-        console.log(`${i + i * j} preload finished`);
+        actor.setAnimationState("idle");
       });
 
-    engine.addActor(player);
+      engine.addActor(actor);
+    }
   }
-}
+});
 
 engine.start();
