@@ -14,15 +14,13 @@ const engine = new Engine(canvas);
 const engineWidth = engine.environment.properties.size.x;
 const engineHeight = engine.environment.properties.size.y;
 
-const actorSize = vec(64, 82);
 const actorMargin = 32;
-
-const actorsPerRow = Math.floor(engineWidth / (actorSize.x + actorMargin));
-const actorsPerColumn = Math.floor(engineHeight / (actorSize.y + actorMargin));
 
 const characterTexture = TextureLoader.getInstance().load(characterSpritemap);
 
 characterTexture.then((texture) => {
+  const actorSize = vec(64, 82);
+
   const actor = new Actor({
     pos: vec(
       engineWidth / 2 - (actorSize.x + actorMargin),
@@ -52,12 +50,14 @@ characterTexture.then((texture) => {
 const testTexture = TextureLoader.getInstance().load(animationSpritemap);
 
 testTexture.then((texture) => {
+  const actorSize = vec(64, 64);
+
   const actor = new Actor({
     pos: vec(
       engineWidth / 2 + (actorSize.x + actorMargin),
-      (engineHeight - 64) / 2
+      (engineHeight - actorSize.y) / 2
     ),
-    size: vec(64, 64),
+    size: actorSize,
     isDebugEnabled: true,
   });
 
