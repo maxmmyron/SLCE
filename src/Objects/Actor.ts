@@ -44,9 +44,15 @@ export default class Actor extends EventSubscriber {
    * Notifies engine that an actor should be disposed of at next update cycle.
    * @type {Boolean}
    */
-  willDispose = false;
+  willDispose: boolean = false;
 
-  isDebugEnabled = false;
+  /**
+   * (Debug) Whether or not the actor will draw debug information.
+   *
+   * @type {Boolean}
+   * @default false
+   */
+  isDebugEnabled: boolean = false;
 
   animationManager: AnimationManager = {
     /**
