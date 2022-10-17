@@ -37,13 +37,6 @@ export default class Engine extends EventSubscriber {
       envHeight
     );
 
-    // // listen for resize events and update canvas size
-    // document.addEventListener("resize", (e) => {
-    //   dimensions = this.fixDPI();
-    //   // set canvas width and height to scaled width and height
-    //   this.environment.properties.size = (dimensions[0], dimensions[1]);
-    // });
-
     this.fixDPI();
 
     this.eventDispatcher = new EventDispatcher(
@@ -72,7 +65,7 @@ export default class Engine extends EventSubscriber {
       /**
        * The background color of the canvas
        *
-       * @type {String}
+       * @type {string}
        * @default "#121212"
        */
       background: "#121212",
@@ -105,7 +98,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Current time in milliseconds since engine was started.
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       currentEngineTime: 0,
@@ -245,7 +238,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
        *
-       * @type {Number}
+       * @type {number}
        * @default MAX_UPDATES_PER_CYCLE (240)
        */
       maxFrameUpdates: MAX_UPDATES_PER_CYCLE,
@@ -254,7 +247,7 @@ export default class Engine extends EventSubscriber {
        * UNUSED
        * Target FPS to attempt to achieve when running updates.
        *
-       * @type {Number}
+       * @type {number}
        * @default TARGET_FPS (60)
        */
       targetFPS: TARGET_FPS,
@@ -262,7 +255,7 @@ export default class Engine extends EventSubscriber {
       /**
        * timestep of individual an individual frame in ms. Used as constant timestep for update method
        *
-       * @type {Number}
+       * @type {number}
        * @default 1000 / TARGET_FPS
        */
       targetFrameTimestep: 1000 / TARGET_FPS,
@@ -274,7 +267,7 @@ export default class Engine extends EventSubscriber {
       /**
        * ID of current animation frame
        *
-       * @type {Number}
+       * @type {number}
        * @default -1
        */
       animationFrameID: -1,
@@ -282,7 +275,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       lag: 0,
@@ -290,7 +283,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Timestamp of last frame in ms
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       prevTimestamp: 0,
@@ -311,7 +304,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Whether or not the engine will display a debug overlay with performance diagnostics.
        *
-       * @type {Boolean}
+       * @type {boolean}
        * @default true
        */
       isPerformanceDebugScreenEnabled: true,
@@ -319,7 +312,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Whether or not the engine will log out performance diagnostics to the console.
        *
-       * @type {Boolean}
+       * @type {boolean}
        * @default true
        */
       isPerformanceLoggingEnabled: false,
@@ -332,7 +325,7 @@ export default class Engine extends EventSubscriber {
       /**
        * current FPS of engine
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       FPS: 0,
@@ -340,7 +333,7 @@ export default class Engine extends EventSubscriber {
       /**
        * Unix timestamp of when engine was started
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       startTime: 0,
@@ -348,12 +341,21 @@ export default class Engine extends EventSubscriber {
       /**
        * Cumulative number of updates performed since engine was started
        *
-       * @type {Number}
+       * @type {number}
        * @default 0
        */
       updatesSinceStart: 0,
     },
   };
+
+  /**
+   * A struct containing all textures loaded globally to the engine.
+   * These textures are available for use by all actors added to the engine.
+   *
+   * @private
+   * @type {{[index: string]: Texture}}
+   */
+  private engineTextures: {[index: string]: Texture} = {};
 
   /**
    * An array of actors to be updated and drawn by the canvas
