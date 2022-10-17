@@ -2,7 +2,6 @@ import { vec, add, sub, div, mult } from "../math/Vector";
 
 import { assert } from "../util/Asserts";
 import EventSubscriber from "../core/EventSubscriber"
-import { resolveImageBitmap } from "../util/Texture";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -162,19 +161,23 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} startIndex must be positive and less than provided texture's frame count.
    * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
    */
-  addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>}) : boolean => {
+  addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>} = {frameCount: -1, frameDuration: 200, frames: null, startIndex: 0}) : boolean => {
     assert(!this.animationManager.animations[animationID], `animationID must be unique`);
 
     const texture: Texture = this.textureManager.textures[textureID];
 
     // extract options and set defaults if not provided
     const {
-      startIndex = 0,
-      frameDuration = 200,
-      frames = null,
+      startIndex,
+      frameDuration,
+      frames,
     } = options;
 
-    let { frameCount = texture.frameCount - startIndex } = options;
+    let { frameCount } = options;
+
+    if(frameCount === -1 && frames === null) {
+      frameCount = texture.frameCount - startIndex;
+    }
 
     // assert various conditions
     assert(frameCount > 0, `frameCount must be positive`);
@@ -256,47 +259,34 @@ export default class Actor extends EventSubscriber {
   };
 
   /**
-   * Loads a texture from path and assigns it and associated texturing properties to the actor.
+   * Creates a new Texture from an existing imageBitmap and assigns it to the actor.
    *
-   * @param {String} textureID identifier to assign to texture. Must be unique.
-   * @param {String} path path to texture image file
+   * @param {string} textureID identifier to assign to texture. Must be unique.
+   * @param {ImageBitmap} imageBitmap ImageBitmap to assign to texture
    * @param {Object} options (optional) options for texture
-   * @param {Number} options.frameCount (optional) number of sprite frames in texture
+   * @param {number} options.frameCount (optional) number of sprite frames in texture
    * @param {Vector} options.spriteSize size of individual sprite frames. If frameCount is provided this property is required.
    *
-   * @returns true if texture was successfully added to actor
+   * @returns {boolean} true if texture was successfully added to actor. False if textureID already exists.
    *
-   * @throws Error if path is not provided
-   * @throws Error if textureID is not unique
    * @throws Error if spriteSize provided is not a positive Vector
-   * @throws Error if imageBitmap Promise is rejected
    */
-  loadTexture = async (textureID: string, path: string, options?: {frameCount: number, spriteSize: Vector}) => {
-    // assert path is a valid path
-    assert(path, `Error loading texture: Path not provided`);
-
-    // assert textureID is not already in use
-    assert(!this.textureManager.textures[textureID], `Error loading texture: textureID must be unique`);
+  addTexture = (textureID: string, imageBitmap: ImageBitmap, options?: {frameCount: number, spriteSize: Vector}): boolean => {
+    if(this.textureManager.textures[textureID]) return false;
 
     // extract options
     let { spriteSize = null, frameCount = 1 } = options;
 
     // assert spriteSize is a positive Vector
-    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error loading texture: spriteSize must be a positive Vector`);
+    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
 
-    await resolveImageBitmap(path)
-      .then((imageBitmap: ImageBitmap) => {
-        if(!spriteSize) spriteSize = vec(imageBitmap.width, imageBitmap.height);
+    this.textureManager.textures[textureID] = {
+      imageBitmap,
+      spriteSize,
+      frameCount
+    };
 
-        this.textureManager.textures[textureID] = {
-          imageBitmap,
-          spriteSize,
-          frameCount,
-        };
-      })
-      .catch((err: Error) => {
-        throw new Error(`Error loading texture: ${err}`);
-      });
+    return true;
   };
 
   /**
@@ -304,13 +294,10 @@ export default class Actor extends EventSubscriber {
    *
    * @param {string} textureID identifier of texture to remove
    *
-   * @returns {boolean} true if texture was successfully removed
-   *
-   * @throws {Error} textureID must be within texture object
+   * @returns {boolean} True if texture was successfully removed. False if textureID does not exist.
    */
   unloadTexture = (textureID: string): boolean => {
-    // assert textureID is in use
-    assert(this.textureManager.textures[textureID], `textureID must be within texture object`);
+    if(!this.textureManager.textures[textureID]) return false;
 
     delete this.textureManager.textures[textureID];
 
