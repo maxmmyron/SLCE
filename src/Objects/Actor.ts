@@ -2,7 +2,6 @@ import { vec, add, sub, div, mult } from "../math/Vector";
 
 import { assert } from "../util/Asserts";
 import EventSubscriber from "../core/EventSubscriber"
-import { resolveImageBitmap } from "../util/Texture";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -44,9 +43,15 @@ export default class Actor extends EventSubscriber {
    * Notifies engine that an actor should be disposed of at next update cycle.
    * @type {Boolean}
    */
-  willDispose = false;
+  willDispose: boolean = false;
 
-  isDebugEnabled = false;
+  /**
+   * (Debug) Whether or not the actor will draw debug information.
+   *
+   * @type {Boolean}
+   * @default false
+   */
+  isDebugEnabled: boolean = false;
 
   animationManager: AnimationManager = {
     /**
@@ -55,7 +60,7 @@ export default class Actor extends EventSubscriber {
      * @type {Object}
      * @default {}
      */
-    animationStates: {},
+    animations: {},
 
     /**
      * Current animation state to animate for actor.
@@ -156,19 +161,23 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} startIndex must be positive and less than provided texture's frame count.
    * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
    */
-  addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>}) : boolean => {
-    assert(!this.animationManager.animationStates[animationID], `animationID must be unique`);
+  addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>} = {frameCount: -1, frameDuration: 200, frames: null, startIndex: 0}) : boolean => {
+    assert(!this.animationManager.animations[animationID], `animationID must be unique`);
 
     const texture: Texture = this.textureManager.textures[textureID];
 
     // extract options and set defaults if not provided
     const {
-      startIndex = 0,
-      frameDuration = 200,
-      frames = null,
+      startIndex,
+      frameDuration,
+      frames,
     } = options;
 
-    let { frameCount = texture.frameCount - startIndex } = options;
+    let { frameCount } = options;
+
+    if(frameCount === -1 && frames === null) {
+      frameCount = texture.frameCount - startIndex;
+    }
 
     // assert various conditions
     assert(frameCount > 0, `frameCount must be positive`);
@@ -188,25 +197,23 @@ export default class Actor extends EventSubscriber {
         frames,
       };
 
-      this.animationManager.animationStates[animationID] = animationState;
+      this.animationManager.animations[animationID] = animationState;
 
       return true;
     }
     else {
       // create a new frames array based on frameCount and frameDuration
-      const frames: Array<AnimationKeyframe> = Array(frameCount).map((_,i) => {
-        return {
-          index: startIndex + i,
-          duration: frameDuration,
-        };
-      });
+      const frames: Array<AnimationKeyframe> = Array.from({length: frameCount}, (_,i) => ({
+        index: startIndex + i,
+        duration: frameDuration,
+      }));
 
       const animationState: AnimationState = {
         textureID,
         frames
       };
 
-      this.animationManager.animationStates[animationID] = animationState;
+      this.animationManager.animations[animationID] = animationState;
 
       return true;
     }
@@ -223,12 +230,12 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} animationID must exist
    */
   removeAnimationState = (animationID: string): boolean => {
-    assert(this.animationManager.animationStates[animationID], `animationID must exist`);
+    assert(this.animationManager.animations[animationID], `animationID must exist`);
 
     this.animationManager.animationID = null;
     this.animationManager.animationFrame = 0;
 
-    delete this.animationManager.animationStates[animationID];
+    delete this.animationManager.animations[animationID];
 
     return true;
   };
@@ -242,7 +249,7 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} animationID must exist
    */
   setAnimationState = (animationID: string): boolean => {
-    assert(this.animationManager.animationStates[animationID], `animationID must be valid`);
+    assert(this.animationManager.animations[animationID], `animationID must be valid`);
 
     if (this.animationManager.animationID) this.animationManager.animationFrame = 0;
 
@@ -252,84 +259,32 @@ export default class Actor extends EventSubscriber {
   };
 
   /**
-   * Tracks delta time and increments the current animation frame if
-   * delta time exceeds the duration of the current frame.
+   * Creates a new Texture from an existing imageBitmap and assigns it to the actor.
    *
-   * @param {number} delta the current delta time for the update loop
-   */
-  updateAnimation = (delta: number) => {
-    if (!this.animationManager.animationID) return;
-
-    this.animationManager.deltaSum += delta;
-
-    const animationState = this.animationManager.animationStates[this.animationManager.animationID];
-
-    let currentFrame = animationState.frames[this.animationManager.animationFrame];
-
-    if (this.animationManager.deltaSum >= currentFrame.duration) {
-      this.animationManager.deltaSum -= currentFrame.duration;
-
-      this.animationManager.animationFrame =
-        (this.animationManager.animationFrame + 1) % animationState.frames.length;
-    } else return;
-
-    // update current frame
-    currentFrame = animationState.frames[this.animationManager.animationFrame];
-
-    const texture = this.textureManager.textures[animationState.textureID];
-
-    const imageBitmap = texture.imageBitmap;
-    const spriteSize = texture.spriteSize;
-
-    const spriteRowCount = imageBitmap.width / spriteSize.x;
-    const spriteColumnCount = imageBitmap.height / spriteSize.y;
-
-    this.textureManager.textureOffset = vec(
-      (this.animationManager.animationFrame % spriteRowCount) * spriteSize.x,
-      Math.floor(this.animationManager.animationFrame / spriteColumnCount) * spriteSize.y
-    );
-  };
-
-  /**
-   * Loads a texture from path and assigns it and associated texturing properties to the actor.
-   *
-   * @param {String} textureID identifier to assign to texture. Must be unique.
-   * @param {String} path path to texture image file
+   * @param {string} textureID identifier to assign to texture. Must be unique.
+   * @param {ImageBitmap} imageBitmap ImageBitmap to assign to texture
    * @param {Object} options (optional) options for texture
-   * @param {Number} options.frameCount (optional) number of sprite frames in texture
+   * @param {number} options.frameCount (optional) number of sprite frames in texture
    * @param {Vector} options.spriteSize size of individual sprite frames. If frameCount is provided this property is required.
    *
-   * @returns true if texture was successfully added to actor
+   * @returns {boolean} true if texture was successfully added to actor. False if textureID already exists.
    *
-   * @throws Error if path is not provided
-   * @throws Error if textureID is not unique
    * @throws Error if spriteSize provided is not a positive Vector
-   * @throws Error if imageBitmap Promise is rejected
    */
-  loadTexture = async (textureID: string, path: string, options: {frameCount: number, spriteSize: Vector}) => {
-    // assert path is a valid path
-    assert(path, `Error loading texture: Path not provided`)
-
-    // assert textureID is not already in use
-    assert(!this.textureManager.textures[textureID], `Error loading texture: textureID must be unique`);
+  addTexture = (textureID: string, imageBitmap: ImageBitmap, options?: {frameCount: number, spriteSize: Vector}): boolean => {
+    if(this.textureManager.textures[textureID]) return false;
 
     // extract options
-    const { spriteSize = null, frameCount = 1 } = options;
+    let { spriteSize = null, frameCount = 1 } = options;
 
     // assert spriteSize is a positive Vector
-    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error loading texture: spriteSize must be a positive Vector`);
+    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
 
-    await resolveImageBitmap(path)
-      .then((imageBitmap: ImageBitmap) => {
-        this.textureManager.textures[textureID] = {
-          imageBitmap,
-          spriteSize,
-          frameCount,
-        };
-      })
-      .catch((err: Error) => {
-        throw new Error(`Error loading texture: ${err}`);
-      });
+    this.textureManager.textures[textureID] = {
+      imageBitmap,
+      spriteSize,
+      frameCount
+    };
 
     return true;
   };
@@ -339,13 +294,10 @@ export default class Actor extends EventSubscriber {
    *
    * @param {string} textureID identifier of texture to remove
    *
-   * @returns {boolean} true if texture was successfully removed
-   *
-   * @throws {Error} textureID must be within texture object
+   * @returns {boolean} True if texture was successfully removed. False if textureID does not exist.
    */
   unloadTexture = (textureID: string): boolean => {
-    // assert textureID is in use
-    assert(this.textureManager.textures[textureID], `textureID must be within texture object`);
+    if(!this.textureManager.textures[textureID]) return false;
 
     delete this.textureManager.textures[textureID];
 
@@ -397,6 +349,7 @@ export default class Actor extends EventSubscriber {
 
     this.vel = add(this.vel, div(env.properties.physics.accel, timestep));
 
+    this.updateAnimation(timestep);
     if (this.update) this.update(timestep, env);
   };
 
@@ -417,6 +370,9 @@ export default class Actor extends EventSubscriber {
     // primary draw operations
 
     ctx.save();
+
+    if(this.textureManager.textureID) this.drawTexture(ctx);
+    if(this.animationManager.animationID) this.drawTextureFromMap(ctx);
 
     // call user-defined update callback function
     if (this.draw) this.draw(ctx, interp);
@@ -447,9 +403,95 @@ export default class Actor extends EventSubscriber {
     vel: vec(),
   };
 
-  // ****************************************************************
-  // Draw debug information
+  /**
+   * Tracks delta time and increments the current animation frame if
+   * delta time exceeds the duration of the current frame.
+   *
+   * @param {number} delta the current delta time for the update loop
+   */
+  private updateAnimation = (delta: number) => {
+    if (!this.animationManager.animationID) return;
 
+    const animationState: AnimationState = this.animationManager.animations[this.animationManager.animationID];
+
+    let currentFrame: AnimationKeyframe = animationState.frames[this.animationManager.animationFrame];
+
+    // if deltaSum exceeds
+    if ((this.animationManager.deltaSum += delta) >= currentFrame.duration) {
+      this.animationManager.deltaSum -= currentFrame.duration;
+
+      this.animationManager.animationFrame =
+        (this.animationManager.animationFrame + 1) % animationState.frames.length;
+    } else return;
+
+    // update current frame
+    currentFrame = animationState.frames[this.animationManager.animationFrame];
+
+    const texture: Texture = this.textureManager.textures[animationState.textureID];
+
+    const imageBitmap: ImageBitmap = texture.imageBitmap;
+    const spriteSize: Vector = texture.spriteSize;
+
+    const spriteRowCount: number = Math.floor(imageBitmap.width / spriteSize.x);
+    const spriteColumnCount: number = Math.floor(imageBitmap.height / spriteSize.y);
+
+    this.textureManager.textureOffset = vec(
+      this.animationManager.animationFrame % spriteRowCount * spriteSize.x,
+      (this.animationManager.animationFrame - this.animationManager.animationFrame % spriteRowCount) / spriteColumnCount * spriteSize.y
+    );
+  };
+
+  /**
+   * Draws the current static texture of the actor to the canvas context.
+   *
+   * @param {CanvasRenderingContext2D} ctx the canvas context to draw to
+   */
+  private drawTexture = (ctx: CanvasRenderingContext2D) => {
+    const texture: Texture = this.textureManager.textures[this.textureManager.textureID];
+
+    const imageBitmap: ImageBitmap = texture.imageBitmap;
+
+    ctx.drawImage(
+      imageBitmap,  // image source
+      this.pos.x,   // actor x on canvas
+      this.pos.y,   // actor y on canvas
+      this.size.x,  // actor width
+      this.size.y   // actor height
+    );
+  };
+
+  /**
+   * Draws a texture based on the current animation frame of the
+   * actor to the canvas context.
+   *
+   * @param {CanvasRenderingContext2D} ctx the canvas context to draw to
+   */
+  private drawTextureFromMap = (ctx: CanvasRenderingContext2D) => {
+    const animationState: AnimationState = this.animationManager.animations[this.animationManager.animationID];
+
+    const texture: Texture = this.textureManager.textures[animationState.textureID];
+
+    const imageBitmap: ImageBitmap = texture.imageBitmap;
+    const spriteSize: Vector = texture.spriteSize;
+
+    ctx.drawImage(
+      imageBitmap,                          // image source
+      this.textureManager.textureOffset.x,  // starting x from source
+      this.textureManager.textureOffset.y,  // starting y from source
+      spriteSize.x,                         // width of source to draw
+      spriteSize.y,                         // height of source to draw
+      this.pos.x,                           // actor x on canvas
+      this.pos.y,                           // actor y on canvas
+      this.size.x,                          // actor width
+      this.size.y                           // actor height
+    );
+  }
+
+  /**
+   * (DEBUG) Renders debug information
+   *
+   * @param {CanvasRenderingContext2D} ctx canvas context to render debug information to
+   */
   private drawDebug = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
 
@@ -459,7 +501,7 @@ export default class Actor extends EventSubscriber {
 
     ctx.fillStyle = "white";
 
-    const texts = [
+    const texts: string[] = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
       `vel: ${this.vel.x}, ${this.vel.y}`,
     ];

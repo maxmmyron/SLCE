@@ -1,60 +1,81 @@
+// Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
+
 import Engine from "../src/core/Engine";
 import { vec } from "../src/math/Vector";
 import Actor from "../src/objects/Actor";
+import { TextureLoader } from "../src/util/TextureLoader";
 
-import testingTexturePath from "./testTexture.png";
+import animationSpritemap from "./animationSpritemap.png";
+import characterSpritemap from "./characterSpritemap.png";
 
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
-const ground = new Actor({
-  pos: vec(0, engine.environment.properties.size.y - 200),
-  size: vec(engine.environment.properties.size.x, 500),
-  isDebugEnabled: true,
+const engineWidth = engine.environment.properties.size.x;
+const engineHeight = engine.environment.properties.size.y;
+
+const actorMargin = 32;
+
+const characterTexture = TextureLoader.getInstance().load(characterSpritemap);
+
+characterTexture.then((texture) => {
+  const actorSize = vec(64, 82);
+
+  const actor = new Actor({
+    pos: vec(
+      engineWidth / 2 - (actorSize.x + actorMargin),
+      (engineHeight - actorSize.y) / 2
+    ),
+    size: actorSize,
+    isDebugEnabled: true,
+  });
+
+  actor.preload(async () => {
+    actor.addTexture("walkSpritemap", texture, {
+      frameCount: 4,
+      spriteSize: vec(32, 41),
+    });
+
+    actor.addAnimationState("walk", "walkSpritemap", {
+      frameCount: 4,
+      startIndex: 0,
+      frameDuration: 200,
+    });
+    actor.setAnimationState("walk");
+  });
+
+  engine.addActor(actor);
 });
 
-// ground.preload(async () => {
-//   ground.addTextureLayer(
-//     new TextureLayer(testingTexturePath, {
-//       isActive: true,
-//       size: vec(64, 64),
-//       tileMode: "tile",
-//       zIndex: 0,
-//     })
-//   );
-// });
+const testTexture = TextureLoader.getInstance().load(animationSpritemap);
 
-engine.addActor(ground);
+testTexture.then((texture) => {
+  const actorSize = vec(64, 64);
 
-const player = new Actor({
-  pos: vec(300, engine.environment.properties.size.y - 200 - 48),
-  size: vec(48, 48),
-  isDebugEnabled: true,
+  const actor = new Actor({
+    pos: vec(
+      engineWidth / 2 + (actorSize.x + actorMargin),
+      (engineHeight - actorSize.y) / 2
+    ),
+    size: actorSize,
+    isDebugEnabled: true,
+  });
+
+  actor.preload(async () => {
+    actor.addTexture("testSpritemap", texture, {
+      frameCount: 64,
+      spriteSize: vec(64, 64),
+    });
+
+    actor.addAnimationState("testAnimation", "testSpritemap", {
+      frameCount: 64,
+      startIndex: 0,
+      frameDuration: 200,
+    });
+    actor.setAnimationState("testAnimation");
+  });
+
+  engine.addActor(actor);
 });
-
-// player.preload(async () => {
-//   player.addTextureLayer(
-//     new TextureLayer(testingTexturePath, {
-//       isActive: true,
-//       size: vec(48, 48),
-//       zIndex: 1,
-//     })
-//   );
-// });
-
-player.subscribe("whilekeydown", (e) => {
-  if (e.key === "ArrowRight") {
-    player.vel.x = 5;
-  } else if (e.key === "ArrowLeft") {
-    player.vel.x = -5;
-  }
-});
-
-player.update = (dt, env) => {
-  player.vel.x *= 0.85;
-  player.pos.x += player.vel.x;
-};
-
-engine.addActor(player);
 
 engine.start();
