@@ -114,7 +114,7 @@ export default class Engine extends EventSubscriber {
    *
    * @throws {Error} if the start function has already been called.
    */
-  start = () => {
+  start = async () => {
     assert(!this.engineRecord.properties.isStarted, "Engine has already been started.");
 
     this.fixDPI();
@@ -137,6 +137,13 @@ export default class Engine extends EventSubscriber {
     this.updateRecord.metrics.animationFrameID = requestAnimationFrame(
       this.performGameLoopUpdates
     );
+
+    // preload all actors
+    await Promise.all(
+      this.actors.map((actor) => {
+        // return actor.preload();
+      })
+    )
 
     // initialize events
     this.eventDispatcher.attachAllEvents();
