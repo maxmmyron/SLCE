@@ -20,10 +20,13 @@ export default class Actor extends EventSubscriber {
    * @param {Vector} properties.size size of the actor
    * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(properties: ActorProperties) {
+  constructor(ID: string, properties: ActorProperties) {
     super();
 
     const {pos = vec(), vel = vec(), size = null, isDebugEnabled = false} = properties;
+
+    assert(ID, "Actor must have an ID");
+    this.ID = ID;
 
     this.lastState.pos = this.pos = pos
 
@@ -342,6 +345,8 @@ export default class Actor extends EventSubscriber {
    * @param {Object} env - environment variables defined by engine
    */
   performUpdates = (timestep: number, env: any) => {
+    if(!this.doUpdate) return;
+
     // ****************************************************************
     // pre-update operations
 
@@ -370,6 +375,8 @@ export default class Actor extends EventSubscriber {
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
   performDrawCalls = (ctx: CanvasRenderingContext2D, interp: number) => {
+    if(!this.doDraw) return;
+
     // ****************************************************************
     // pre-draw operations
 
