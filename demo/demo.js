@@ -16,66 +16,60 @@ const engineHeight = engine.environment.properties.size.y;
 
 const actorMargin = 32;
 
-const characterTexture = TextureLoader.getInstance().load(characterSpritemap);
+let actorSize = vec(64, 82);
 
-characterTexture.then((texture) => {
-  const actorSize = vec(64, 82);
-
-  const actor = new Actor({
-    pos: vec(
-      engineWidth / 2 - (actorSize.x + actorMargin),
-      (engineHeight - actorSize.y) / 2
-    ),
-    size: actorSize,
-    isDebugEnabled: true,
-  });
-
-  actor.preload(async () => {
-    actor.addTexture("walkSpritemap", texture, {
-      frameCount: 4,
-      spriteSize: vec(32, 41),
-    });
-
-    actor.addAnimationState("walk", "walkSpritemap", {
-      frameCount: 4,
-      startIndex: 0,
-      frameDuration: 200,
-    });
-    actor.setAnimationState("walk");
-  });
-
-  engine.addActor(actor);
+let actorA = new Actor({
+  pos: vec(engineWidth / 2 - (actorSize.x + actorMargin), (engineHeight - actorSize.y) / 2),
+  size: actorSize,
+  isDebugEnabled: true,
 });
 
-const testTexture = TextureLoader.getInstance().load(animationSpritemap);
-
-testTexture.then((texture) => {
-  const actorSize = vec(64, 64);
-
-  const actor = new Actor({
-    pos: vec(
-      engineWidth / 2 + (actorSize.x + actorMargin),
-      (engineHeight - actorSize.y) / 2
-    ),
-    size: actorSize,
-    isDebugEnabled: true,
+actorA.preload = async () => {
+  let texture = await TextureLoader.getInstance().load(characterSpritemap);
+  actorA.addTexture("walkSpritemap", texture, {
+    frameCount: 4,
+    spriteSize: vec(32, 41),
   });
 
-  actor.preload(async () => {
-    actor.addTexture("testSpritemap", texture, {
-      frameCount: 64,
-      spriteSize: vec(64, 64),
-    });
-
-    actor.addAnimationState("testAnimation", "testSpritemap", {
-      frameCount: 64,
-      startIndex: 0,
-      frameDuration: 200,
-    });
-    actor.setAnimationState("testAnimation");
+  actorA.addAnimationState("walk", "walkSpritemap", {
+    frameCount: 4,
+    startIndex: 0,
+    frameDuration: 200,
   });
 
-  engine.addActor(actor);
+  actorA.setAnimationState("walk");
+
+  console.log("finished loading actorA");
+};
+
+engine.addActor(actorA);
+
+actorSize = vec(64, 64);
+
+const actorB = new Actor({
+  pos: vec(engineWidth / 2 + (actorSize.x + actorMargin), (engineHeight - actorSize.y) / 2),
+  size: actorSize,
+  isDebugEnabled: true,
 });
+
+actorB.preload = async () => {
+  let texture = await TextureLoader.getInstance().load(animationSpritemap);
+  actorB.addTexture("spritemap", texture, {
+    frameCount: 64,
+    spriteSize: vec(64, 64),
+  });
+
+  actorB.addAnimationState("testAnimation", "spritemap", {
+    frameCount: 64,
+    startIndex: 0,
+    frameDuration: 200,
+  });
+
+  actorB.setAnimationState("testAnimation");
+
+  console.log("finished loading actorB");
+};
+
+engine.addActor(actorB);
 
 engine.start();
