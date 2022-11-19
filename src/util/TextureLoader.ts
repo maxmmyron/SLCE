@@ -8,28 +8,23 @@ export const TextureLoader = (() => {
     let cache: Array<{ path: string, texture: ImageBitmap }> = [];
 
     /**
-     * Adds a texture to the cache. Assumes that the texture is not already in the cache.
+     * Adds a texture to the cache, assuming that the texture is not already in the cache.
+     *
+     * @param {string} path The path of the texture
+     * @param {ImageBitmap} texture The texture to add to the cache
+     *
+     * @returns {number} length of the cache after adding the texture
      */
-    const addToCache = (path: string, texture: ImageBitmap) => {
-      cache.push({ path, texture });
-    };
+    const addToCache = (path: string, texture: ImageBitmap): number => cache.push({ path, texture });
 
     /**
      * Searches the cache for a texture.
      *
      * @param {string} path the path of the texture to search for
      *
-     * @returns {Texture} the texture if found, null if not
+     * @returns {Texture} the texture if found, undefined if not
      */
-    const searchCache = (path: string): ImageBitmap => {
-      for(let i = 0; i < cache.length; i++) {
-        if (cache[i].path === path) {
-          return cache[i].texture;
-        }
-      }
-
-      return null;
-    };
+    const searchCache = (path: string): ImageBitmap | undefined => cache.find((texture) => texture.path === path)?.texture; // use optional chaining since .find() may return undefined
 
     /**
      * Loads a texture. If the texture is already cached, it will be returned from the cache.
@@ -43,9 +38,8 @@ export const TextureLoader = (() => {
       const cachedTexture: ImageBitmap = searchCache(path);
 
       return new Promise((resolve, reject) => {
-        if (cachedTexture) {
-          resolve(cachedTexture);
-        } else {
+        if(cachedTexture) resolve(cachedTexture);
+        else {
           const image = new Image();
 
           image.src = path;
