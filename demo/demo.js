@@ -18,7 +18,7 @@ const actorMargin = 32;
 
 let actorSize = vec(64, 82);
 
-let actorA = new Actor({
+let actorA = new Actor("ActorA", {
   pos: vec(engineWidth / 2 - (actorSize.x + actorMargin), (engineHeight - actorSize.y) / 2),
   size: actorSize,
   isDebugEnabled: true,
@@ -44,7 +44,7 @@ engine.addActor(actorA);
 
 actorSize = vec(64, 64);
 
-const actorB = new Actor({
+const actorB = new Actor("ActorB", {
   pos: vec(engineWidth / 2 + (actorSize.x + actorMargin), (engineHeight - actorSize.y) / 2),
   size: actorSize,
   isDebugEnabled: true,
