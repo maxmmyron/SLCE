@@ -34,29 +34,36 @@ let actor = new Actor({
 });
 ```
 
-Actors can accept a preload function that will be called before the engine starts, allowing for asynchronous loading of assets.
+Actors can accept an async preload function that will be called and completed upon engine start (but before engine update cycle), allowing for asynchronous loading of assets.
 
 ```javascript
+import { TextureLoader } from "../src/util/TextureLoader";
+
 import texturePath from "./image.png";
 
-actor.preload(async () => {
-  actor.addTextureLayer(
-    new TextureLayer(texturePath, {
-      isActive: true,
-      size: vec(64, 64),
-    })
-  );
-});
+actor.preload = async () => {
+  let texture = await TextureLoader.getInstance().load(texturePath);
+
+  actor.addTexture("texture", texture, {
+    spriteSize: vec(64, 64),
+  });
+};
 ```
 
 Likewise, actors can accept an update or draw function that is called every frame.
 
-The draw update accepts a canvas context object that can be used to called canvas draw functions.
+The draw update passes two args:
 
-The update function accepts a delta time parameter that can be used to calculate movement based on the time since the last frame, as well as an environment object from the engine that contains useful information about the engine state.
+- a canvas context object that can be used to called canvas draw functions.
+- an interp value that represents the interpolation between the current and previous frame
+
+The update function passes two args:
+
+- a delta time parameter that can be used to calculate movement based on the time since the last frame
+- an environment object from the engine that contains useful information about the engine state.
 
 ```javascript
-player.draw = (ctx) => {
+player.draw = (ctx, interp) => {
   // perform draw updates
 };
 
