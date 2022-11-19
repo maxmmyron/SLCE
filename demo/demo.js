@@ -38,8 +38,6 @@ actorA.preload = async () => {
   });
 
   actorA.setAnimationState("walk");
-
-  console.log("finished loading actorA");
 };
 
 engine.addActor(actorA);
@@ -66,8 +64,6 @@ actorB.preload = async () => {
   });
 
   actorB.setAnimationState("testAnimation");
-
-  console.log("finished loading actorB");
 };
 
 engine.addActor(actorB);
