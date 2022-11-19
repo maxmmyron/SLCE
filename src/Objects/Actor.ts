@@ -25,9 +25,9 @@ export default class Actor extends EventSubscriber {
 
     const {pos = vec(), vel = vec(), size = null, isDebugEnabled = false} = properties;
 
-    this.last.pos = this.pos = pos
+    this.lastState.pos = this.pos = pos
 
-    this.last.vel = this.vel = vel;
+    this.lastState.vel = this.vel = vel;
 
     assert(size, "Actor must be initialized with a size");
 
@@ -52,6 +52,12 @@ export default class Actor extends EventSubscriber {
    * @default false
    */
   isDebugEnabled: boolean = false;
+
+  doUpdate: boolean = true;
+
+  doDraw: boolean = true;
+
+  ID: string = null;
 
   animationManager: AnimationManager = {
     /**
@@ -315,13 +321,13 @@ export default class Actor extends EventSubscriber {
   };
 
   /**
-   * Unloads a texture from the textures array.
+   * Removes a texture from the textures array.
    *
    * @param {string} textureID identifier of texture to remove
    *
    * @returns {boolean} True if texture was successfully removed. False if textureID does not exist.
    */
-  unloadTexture = (textureID: string): boolean => {
+  removeTexture = (textureID: string): boolean => {
     if(!this.textureManager.textures[textureID]) return false;
 
     delete this.textureManager.textures[textureID];
@@ -345,8 +351,8 @@ export default class Actor extends EventSubscriber {
     if (Math.abs(this.vel.x) < Number.EPSILON) this.vel.x = 0;
     if (Math.abs(this.vel.y) < Number.EPSILON) this.vel.y = 0;
 
-    this.last.pos = this.pos;
-    this.last.vel = this.vel;
+    this.lastState.pos = this.pos;
+    this.lastState.vel = this.vel;
 
     // ****************************************************************
     // primary update operations
@@ -368,7 +374,7 @@ export default class Actor extends EventSubscriber {
     // pre-draw operations
 
     // interpolate position of actor based on interpolation provided by engine loop
-    this.pos = add(this.last.pos, mult(sub(this.pos, this.last.pos), interp));
+    this.pos = add(this.lastState.pos, mult(sub(this.pos, this.lastState.pos), interp));
 
     // ****************************************************************
     // primary draw operations
@@ -402,7 +408,7 @@ export default class Actor extends EventSubscriber {
    * @property {Vector} pos - last calculated position of actor
    * @property {Vector} vel - last calculated velocity of actor
    */
-  private last = {
+  private lastState = {
     pos: vec(),
     vel: vec(),
   };
