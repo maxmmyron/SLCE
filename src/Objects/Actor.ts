@@ -138,9 +138,34 @@ export default class Actor extends EventSubscriber {
    */
   vel: Vector;
 
-  draw: Function | null = null;
+  /**
+   * Overridable user-defined function to run on each draw cycle.
+   *
+   * @param {CanvasRenderingContext2D} ctx the canvas context to draw to
+   * @param {number} interp the interpolation factor for the current draw cycle
+   *
+   * @default null
+   */
+  draw: (ctx: CanvasRenderingContext2D, interp: number) => void = null;
 
-  update: Function | null = null;
+  /**
+   * Overridable user-defined function to run on each update cycle.
+   *
+   * @param {number} dt the delta time since last update
+   * @param {any} env environment object passed from engine
+   *
+   * @default null
+   */
+  update: (dt: number, env: any) => void = null;
+
+  /**
+   * Preload function called once before the first frame cycle.
+   * Accepts a function that will run before the update cycle begins.
+   * Primarily used to load assets and initialize textures or animations.
+   *
+   * @default null
+   */
+  preload: () => Promise<void> = null;
 
   /**
    * Adds a new AnimationState object to the list of animation states for the actor.
@@ -302,27 +327,6 @@ export default class Actor extends EventSubscriber {
     delete this.textureManager.textures[textureID];
 
     return true;
-  };
-
-  /**
-   * Preload function is called once before the first draw cycle.
-   * Accepts a function to run as a preload function, and a function
-   * that is called after the preload function is finished.
-   *
-   * @param {Function} callback a function to run as a preload function
-   *
-   * @returns {Promise} a promise that resolves when the preload function is finished
-   */
-  preload = (callback: Function, onFulfilled: Function): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      resolve(callback());
-    })
-      .then((res) => {
-        onFulfilled && onFulfilled(res);
-      })
-      .catch((err) => {
-        throw new Error(`Error attempting to preload actor: ${err}`);
-      });
   };
 
   /**

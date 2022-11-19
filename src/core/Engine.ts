@@ -123,27 +123,23 @@ export default class Engine extends EventSubscriber {
     this.canvasDOM.tabIndex = -1;
     this.canvasDOM.focus();
 
-    this.engineRecord.properties.isStarted = true;
-    this.engineRecord.properties.isPaused = false;
-
     this.subscribe("oncanvasresize", () => {
       const dimensions = this.fixDPI();
       // set canvas width and height to scaled width and height
       this.environment.properties.size = vec(dimensions[0], dimensions[1]);
     });
 
-    // start update loop
+    // wait for each actor to load up assets and connect textures/animations
+    await Promise.all(this.actors.map((actor) => actor.preload()));
+
+    // after all actors have been preloaded, begin measuring performance and run engine.
     this.debugRecord.metrics.startTime = performance.now();
     this.updateRecord.metrics.animationFrameID = requestAnimationFrame(
       this.performGameLoopUpdates
     );
 
-    // preload all actors
-    await Promise.all(
-      this.actors.map((actor) => {
-        // return actor.preload();
-      })
-    )
+    this.engineRecord.properties.isStarted = true;
+    this.engineRecord.properties.isPaused = false;
 
     // initialize events
     this.eventDispatcher.attachAllEvents();
