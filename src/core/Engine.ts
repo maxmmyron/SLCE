@@ -168,8 +168,12 @@ export default class Engine extends EventSubscriber {
    * @param {Actor} actor
    *
    * @throws {Error} if actor is not an instance of Actor
+   * @throws {Error} if actor is already in the engine
    */
   addActor = (actor: Actor) => {
+    assert(actor instanceof Actor, "Actor must be an instance of Actor.");
+    assert(!this.getActor(actor.ID), `Actor with ID of ${actor.ID} already exists.`);
+
     this.actors.push(actor);
   };
 
@@ -179,13 +183,30 @@ export default class Engine extends EventSubscriber {
    * @param {Actor} actor
    * @return {boolean} true if actor was queued for disposal
    *
-   * @throws {Error} if actor is not an instance of Actor
+   * @throws {Error} if actor does not exist in engine
    */
   removeActor = (actor: Actor): boolean => {
+    // check if actor exists in engine actor array
+    assert (this.actors.findIndex((a) => a.ID === actor.ID) !== -1, `Actor does not exist in engine array.`);
+
     // queue actor for disposal instead of removing immediately
     // this prevents actors from being removed from the array while iterating over it
     actor.willDispose = true;
     return true;
+  };
+
+  /**
+   * Removes an actor from the engine by its ID.
+   *
+   * @param ID unique ID of actor to remove
+   * @returns true if actor was removed; false if actor was not found
+   */
+  removeActorByID = (ID: string): boolean => {
+    const actor = this.getActor(ID);
+    if (actor) {
+      return this.removeActor(actor);
+    }
+    return false;
   };
 
   /**
@@ -194,6 +215,21 @@ export default class Engine extends EventSubscriber {
    * @returns {Array<Actor>} an array of all actors in the engine
    */
   getActors = (): Array<Actor> => this.actors;
+
+  /**
+   * Searches for a specific actor by its unique ID.
+   *
+   * @param ID ID of actor to search for
+   * @returns {Actor | null} actor with matching ID; null if no actor is found
+   */
+  getActor = (ID: string): Actor | null => {
+    for (let i = 0; i < this.actors.length; i++) {
+      if (this.actors[i].ID === ID) {
+        return this.actors[i];
+      }
+    }
+    return null;
+  };
 
   // ****************************************************************
   // Private defs
