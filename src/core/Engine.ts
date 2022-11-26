@@ -1,8 +1,8 @@
-import { vec } from "../math/Vector";
-import Actor from "../objects/Actor";
-import { assert } from "../util/Asserts";
-import EventDispatcher from "./EventDispatcher";
-import EventSubscriber from "./EventSubscriber";
+import { vec } from "../Math/vector";
+import Actor from "../objects/actor";
+import { assert } from "../util/asserts";
+import EventDispatcher from "./event_dispatcher";
+import EventSubscriber from "./event_subscriber";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_CYCLE: number = 240;

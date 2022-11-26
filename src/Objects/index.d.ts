@@ -28,8 +28,7 @@ interface Texture {
 }
 
 type ActorProperties = {
-  pos: Vector;
-  vel: Vector;
-  size: Vector;
-  isDebugEnabled: boolean;
+  pos?: Vector;
+  vel?: Vector;
+  isDebugEnabled?: boolean;
 }

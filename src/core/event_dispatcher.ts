@@ -1,4 +1,4 @@
-import { assert } from "../util/Asserts";
+import { assert } from "../util/asserts";
 
 /**
  * Creates a new EngineEvent object with the specified type, payload, and associated options.

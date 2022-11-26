@@ -1,7 +1,7 @@
-import { vec, add, sub, div, mult } from "../math/Vector";
+import { vec, add, sub, div, mult } from "../Math/vector";
 
-import { assert } from "../util/Asserts";
-import EventSubscriber from "../core/EventSubscriber"
+import { assert } from "../util/asserts";
+import EventSubscriber from "../core/event_subscriber"
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -20,23 +20,18 @@ export default class Actor extends EventSubscriber {
    * @param {Vector} properties.size size of the actor
    * @param {Boolean} properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(ID: string, properties: ActorProperties) {
+  constructor(ID: string, size: Vector, properties?: ActorProperties) {
     super();
-
-    const {pos = vec(), vel = vec(), size = null, isDebugEnabled = false} = properties;
 
     assert(ID, "Actor must have an ID");
     this.ID = ID;
 
-    this.lastState.pos = this.pos = pos
-
-    this.lastState.vel = this.vel = vel;
-
     assert(size, "Actor must be initialized with a size");
-
     this.size = size;
 
-    this.isDebugEnabled = isDebugEnabled;
+    this.lastState.pos = this.pos = properties?.pos || vec(0, 0);
+    this.lastState.vel = this.vel = properties?.vel || vec(0, 0);
+    this.isDebugEnabled = properties?.isDebugEnabled || false;
   }
 
   // ****************************************************************
