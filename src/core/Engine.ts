@@ -1,4 +1,4 @@
-import { vec } from "../Math/vector";
+import { vec } from "../math/vector";
 import Actor from "../objects/actor";
 import { assert } from "../util/asserts";
 import EventDispatcher from "./event_dispatcher";

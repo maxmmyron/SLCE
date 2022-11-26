@@ -1,4 +1,4 @@
-import { vec, add, sub, div, mult } from "../Math/vector";
+import { vec, add, sub, div, mult } from "../math/vector";
 
 import { assert } from "../util/asserts";
 import EventSubscriber from "../core/event_subscriber"

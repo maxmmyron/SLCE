@@ -1,7 +1,7 @@
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
 import Engine from "../src/core/engine";
-import { vec } from "../src/Math/vector";
+import { vec } from "../src/math/vector";
 import Actor from "../src/objects/actor";
 import { TextureLoader } from "../src/util/texture_loader";
 
