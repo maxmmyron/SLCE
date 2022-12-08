@@ -1,6 +1,6 @@
 interface AnimationManager {
-  animations: {[index: string]: AnimationState};
-  animationID: string | null;
+  animations: { [index: string]: AnimationState };
+  animationID: string;
   animationFrame: number;
   deltaSum: number;
 }
@@ -11,8 +11,8 @@ interface AnimationState {
 }
 
 interface TextureManager {
-  textures: {[index: string]: Texture};
-  textureID: string | null;
+  textures: { [index: string]: Texture };
+  textureID: string;
   textureOffset: Vector;
 }
 

@@ -10,7 +10,7 @@ import { assert } from "../util/asserts";
  *
  * @returns {EngineEvent} a new EngineEvent object
  */
-const createEngineEvent = (type: EngineEvents, payload: any, comparatorKey: string = null, isPersistent: boolean = false): EngineEvent => {
+const createEngineEvent = (type: EngineEvents, payload: any, comparatorKey: string = "", isPersistent: boolean = false): EngineEvent => {
   return {
     type,
     payload,

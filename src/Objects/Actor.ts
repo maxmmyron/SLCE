@@ -39,14 +39,12 @@ export default class Actor extends EventSubscriber {
 
   /**
    * Notifies engine that an actor should be disposed of at next update cycle.
-   * @type {Boolean}
    */
   willDispose: boolean = false;
 
   /**
    * (Debug) Whether or not the actor will draw debug information.
    *
-   * @type {Boolean}
    * @default false
    */
   isDebugEnabled: boolean = false;
@@ -55,13 +53,12 @@ export default class Actor extends EventSubscriber {
 
   doDraw: boolean = true;
 
-  ID: string = null;
+  ID: string;
 
   animationManager: AnimationManager = {
     /**
      * Contains all animation states for an actor, each keyed with a unique identifier.
      *
-     * @type {Object}
      * @default {}
      */
     animations: {},
@@ -70,16 +67,12 @@ export default class Actor extends EventSubscriber {
      * Current animation state to animate for actor.
      * Overrides textureID if set.
      *
-     * @type {string | null}
-     * @default null
+     * @default ""
      */
-    animationID: null,
+    animationID: "",
 
     /**
      * Current frame of animation for a given animation state.
-     *
-     * @type {number}
-     * @default 0
      */
     animationFrame: 0,
 
@@ -87,9 +80,6 @@ export default class Actor extends EventSubscriber {
      * Current sum of delta time for a given animation frame.
      * When this exceeds the duration for the current animation frame,
      * the animation frame is incremented.
-     *
-     * @type {number}
-     * @default 0
      */
     deltaSum: 0,
   };
@@ -107,10 +97,9 @@ export default class Actor extends EventSubscriber {
      * The current texture ID to draw for the actor.
      * Overridden by AnimationID if animation is active.
      *
-     * @type {string | null}
-     * @default null
+     * @default ""
      */
-    textureID: null,
+    textureID: "",
 
     /**
      * The offset to start drawing the texture from the top left corner of the actor.
@@ -150,7 +139,7 @@ export default class Actor extends EventSubscriber {
    *
    * @default null
    */
-  draw: (ctx: CanvasRenderingContext2D, interp: number) => void = null;
+  draw: (ctx: CanvasRenderingContext2D, interp: number) => void = () => { };
 
   /**
    * Overridable user-defined function to run on each update cycle.
@@ -160,7 +149,7 @@ export default class Actor extends EventSubscriber {
    *
    * @default null
    */
-  update: (dt: number, env: any) => void = null;
+  update: (dt: number, env: any) => void = () => { };
 
   /**
    * Preload function called once before the first frame cycle.
@@ -169,7 +158,7 @@ export default class Actor extends EventSubscriber {
    *
    * @default null
    */
-  preload: () => Promise<void> = null;
+  preload: () => Promise<void> = async () => Promise.resolve();
 
   /**
    * Adds a new AnimationState object to the list of animation states for the actor.
@@ -190,7 +179,7 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} startIndex must be positive and less than provided texture's frame count.
    * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
    */
-  addAnimationState = (animationID: string, textureID: string, options: {frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe>} = {frameCount: -1, frameDuration: 200, frames: null, startIndex: 0}) : boolean => {
+  addAnimationState = (animationID: string, textureID: string, options: { frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe> } = { frameCount: -1, frameDuration: 200, frames: null, startIndex: 0 }): boolean => {
     assert(!this.animationManager.animations[animationID], `animationID must be unique`);
 
     const texture: Texture = this.textureManager.textures[textureID];
@@ -204,7 +193,7 @@ export default class Actor extends EventSubscriber {
 
     let { frameCount } = options;
 
-    if(frameCount === -1 && frames === null) {
+    if (frameCount === -1 && frames === null) {
       frameCount = texture.frameCount - startIndex;
     }
 
@@ -218,7 +207,7 @@ export default class Actor extends EventSubscriber {
     assert(frameDuration > 0, `frameDuration must be positive`);
 
     // create animation state and add it
-    if(frames) {
+    if (frames) {
       assert(frames.length > 0, `frames must have at least one frame`);
 
       const animationState: AnimationState = {
@@ -232,7 +221,7 @@ export default class Actor extends EventSubscriber {
     }
     else {
       // create a new frames array based on frameCount and frameDuration
-      const frames: Array<AnimationKeyframe> = Array.from({length: frameCount}, (_,i) => ({
+      const frames: Array<AnimationKeyframe> = Array.from({ length: frameCount }, (_, i) => ({
         index: startIndex + i,
         duration: frameDuration,
       }));
@@ -261,7 +250,7 @@ export default class Actor extends EventSubscriber {
   removeAnimationState = (animationID: string): boolean => {
     assert(this.animationManager.animations[animationID], `animationID must exist`);
 
-    this.animationManager.animationID = null;
+    this.animationManager.animationID = "";
     this.animationManager.animationFrame = 0;
 
     delete this.animationManager.animations[animationID];
@@ -300,8 +289,8 @@ export default class Actor extends EventSubscriber {
    *
    * @throws Error if spriteSize provided is not a positive Vector
    */
-  addTexture = (textureID: string, imageBitmap: ImageBitmap, options?: {frameCount: number, spriteSize: Vector}): boolean => {
-    if(this.textureManager.textures[textureID]) return false;
+  addTexture = (textureID: string, imageBitmap: ImageBitmap, options?: { frameCount: number, spriteSize: Vector }): boolean => {
+    if (this.textureManager.textures[textureID]) return false;
 
     // extract options
     let { spriteSize = null, frameCount = 1 } = options;
@@ -326,7 +315,7 @@ export default class Actor extends EventSubscriber {
    * @returns {boolean} True if texture was successfully removed. False if textureID does not exist.
    */
   removeTexture = (textureID: string): boolean => {
-    if(!this.textureManager.textures[textureID]) return false;
+    if (!this.textureManager.textures[textureID]) return false;
 
     delete this.textureManager.textures[textureID];
 
@@ -340,7 +329,7 @@ export default class Actor extends EventSubscriber {
    * @param {Object} env - environment variables defined by engine
    */
   performUpdates = (timestep: number, env: any) => {
-    if(!this.doUpdate) return;
+    if (!this.doUpdate) return;
 
     // ****************************************************************
     // pre-update operations
@@ -370,7 +359,7 @@ export default class Actor extends EventSubscriber {
    * @param {Number} interp - interpolated time between current delta and target timestep
    */
   performDrawCalls = (ctx: CanvasRenderingContext2D, interp: number) => {
-    if(!this.doDraw) return;
+    if (!this.doDraw) return;
 
     // ****************************************************************
     // pre-draw operations
@@ -383,8 +372,8 @@ export default class Actor extends EventSubscriber {
 
     ctx.save();
 
-    if(this.textureManager.textureID) this.drawTexture(ctx);
-    if(this.animationManager.animationID) this.drawTextureFromMap(ctx);
+    if (this.textureManager.textureID) this.drawTexture(ctx);
+    if (this.animationManager.animationID) this.drawTextureFromMap(ctx);
 
     // call user-defined update callback function
     if (this.draw) this.draw(ctx, interp);
