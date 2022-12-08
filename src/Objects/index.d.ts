@@ -1,19 +1,6 @@
-interface AnimationManager {
-  animations: { [index: string]: AnimationState };
-  animationID: string;
-  animationFrame: number;
-  deltaSum: number;
-}
-
 interface AnimationState {
   textureID: string;
   frames: Array<AnimationKeyframe>;
-}
-
-interface TextureManager {
-  textures: { [index: string]: Texture };
-  textureID: string;
-  textureOffset: Vector;
 }
 
 interface AnimationKeyframe {
