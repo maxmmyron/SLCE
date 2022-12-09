@@ -444,23 +444,23 @@ export default class Engine extends EventSubscriber {
   private fixDPI = (): [number, number] => {
     const dpi: number = window.devicePixelRatio;
 
-    // set current computed canvas dimensions
-    const style_width: number = Number(getComputedStyle(this.canvasElement)
+    // get canvas computed dimensions
+    const currentWidth: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("width")
       .slice(0, -2));
-    const style_height: number = Number(getComputedStyle(this.canvasElement)
+    const currentHeight: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("height")
       .slice(0, -2));
 
     // scale dimensions by DPI
-    const w: number = style_width * dpi;
-    const h: number = style_height * dpi;
+    const computedWidth: number = currentWidth * dpi;
+    const computedHeight: number = currentHeight * dpi;
 
     // set canvas element dimensions to scaled dimensions
-    this.canvasElement.setAttribute("width", String(w));
-    this.canvasElement.setAttribute("height", String(h));
+    this.canvasElement.setAttribute("width", String(computedWidth));
+    this.canvasElement.setAttribute("height", String(computedHeight));
 
-    return [w, h];
+    return [computedWidth, computedHeight];
   };
 
   // ****************************************************************
