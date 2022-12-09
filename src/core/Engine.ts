@@ -20,7 +20,7 @@ export default class Engine extends EventSubscriber {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
 
-  backgroundColor: string = "#000000";
+  backgroundColor: string = "#121212";
 
   gravity: Vector = vec(0, 0);
 
@@ -29,6 +29,8 @@ export default class Engine extends EventSubscriber {
   // ****************************************************************
 
   private _actors: Array<Actor> = [];
+
+  private _canvasSize: Vector;
 
   /**
    * Current runtime of engine in milliseconds
@@ -47,8 +49,6 @@ export default class Engine extends EventSubscriber {
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/o getters)
   // ****************************************************************
-
-  private canvasSize: Vector;
 
   private readonly eventDispatcher: EventDispatcher;
 
@@ -120,7 +120,7 @@ export default class Engine extends EventSubscriber {
     let envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
     let envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
 
-    this.canvasSize = vec(envWidth, envHeight);
+    this._canvasSize = vec(envWidth, envHeight);
 
     this.fixDPI();
 
@@ -153,7 +153,7 @@ export default class Engine extends EventSubscriber {
     this.subscribe("oncanvasresize", () => {
       const dimensions = this.fixDPI();
       // set canvas width and height to scaled width and height
-      this.canvasSize = vec(dimensions[0], dimensions[1]);
+      this._canvasSize = vec(dimensions[0], dimensions[1]);
     });
 
     // wait for each actor to load up assets and connect textures/animations
@@ -381,8 +381,8 @@ export default class Engine extends EventSubscriber {
     this.ctx.clearRect(
       0,
       0,
-      this.canvasSize.x,
-      this.canvasSize.y
+      this._canvasSize.x,
+      this._canvasSize.y
     );
 
     // reset context fill color
@@ -390,8 +390,8 @@ export default class Engine extends EventSubscriber {
     this.ctx.fillRect(
       0,
       0,
-      this.canvasSize.x,
-      this.canvasSize.y
+      this._canvasSize.x,
+      this._canvasSize.y
     );
 
     // *****************************
@@ -472,6 +472,10 @@ export default class Engine extends EventSubscriber {
    */
   get actors(): Array<Actor> {
     return this._actors;
+  }
+
+  get canvasSize(): Vector {
+    return this._canvasSize;
   }
 
   get currentEngineTime(): number {
