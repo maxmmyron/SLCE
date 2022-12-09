@@ -1,19 +1,6 @@
-interface AnimationManager {
-  animations: {[index: string]: AnimationState};
-  animationID: string | null;
-  animationFrame: number;
-  deltaSum: number;
-}
-
 interface AnimationState {
   textureID: string;
   frames: Array<AnimationKeyframe>;
-}
-
-interface TextureManager {
-  textures: {[index: string]: Texture};
-  textureID: string | null;
-  textureOffset: Vector;
 }
 
 interface AnimationKeyframe {
@@ -23,13 +10,12 @@ interface AnimationKeyframe {
 
 interface Texture {
   imageBitmap: ImageBitmap;
-  spriteSize: Vector;
+  size: Vector;
   frameCount: number;
 }
 
 type ActorProperties = {
-  pos: Vector;
-  vel: Vector;
-  size: Vector;
-  isDebugEnabled: boolean;
+  pos?: Vector;
+  vel?: Vector;
+  isDebugEnabled?: boolean;
 }

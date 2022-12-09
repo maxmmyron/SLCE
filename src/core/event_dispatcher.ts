@@ -1,16 +1,16 @@
-import { assert } from "../util/Asserts";
+import { assert } from "../util/asserts";
 
 /**
  * Creates a new EngineEvent object with the specified type, payload, and associated options.
  *
- * @param {EngineEvents} type the type of event to dispatch
- * @param {any} payload the payload to dispatch with the event
- * @param {string | null} comparatorKey (optional) a key to compare against when dispatching the event
- * @param {boolean} isPersistent (optional) whether the event should persist after being dispatched.
+ * @param type the type of event to dispatch
+ * @param payload the payload to dispatch with the event
+ * @param comparatorKey (optional) a key to compare against when dispatching the event
+ * @param isPersistent (optional) whether the event should persist after being dispatched.
  *
- * @returns {EngineEvent} a new EngineEvent object
+ * @returns a new EngineEvent object
  */
-const createEngineEvent = (type: EngineEvents, payload: any, comparatorKey: string = null, isPersistent: boolean = false): EngineEvent => {
+const createEngineEvent = (type: EngineEvents, payload: any, comparatorKey: string = "", isPersistent: boolean = false): EngineEvent => {
   return {
     type,
     payload,
@@ -23,13 +23,64 @@ const createEngineEvent = (type: EngineEvents, payload: any, comparatorKey: stri
  * A class that handles creation and destruction of event listeners, as well as dispatching of custom event types.
  */
 export default class EventDispatcher {
+  // ****************************************************************
+  // ⚓ PUBLIC DECLARATIONS
+  // ****************************************************************
+
+  /**
+   * An array of current Events that have been dispatched and are waiting to be handled by the engine.
+   */
+  eventList: Array<EngineEvent> = [];
+
+  /**
+   * The current pause state of the engine. Used to prevent event propagation when engine is paused.
+   * Ideally the engine pause state can be passed in as an object reference so it can be updated without
+   * directly modifying the EventHandler isEnginePaused property.
+   */
+  isEnginePaused: boolean;
+
+  // ****************************************************************
+  // ⚓ PRIVATE DECLARATIONS (w/o getters)
+  // ****************************************************************
+
+  /**
+   * Canvas DOM element to attach events to.
+   *
+   * @private
+   * @type {HTMLCanvasElement}
+   */
+  private canvasDOM;
+
+  /**
+   * A map containing event-function pairs. Specified what function to call when a given event is called.
+   *
+   * @private
+   * @type {Map<string, Function>}
+   * @default new Map()
+   */
+  private eventMap: Map<string, (e: Event) => void> = new Map();
+
+  private resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width, height } = entry.contentRect;
+
+      const onCanvasResizeEvent: EngineEvent = createEngineEvent("oncanvasresize", { width, height });
+
+      this.dispatch(onCanvasResizeEvent);
+    }
+  });
+
+  // ****************************************************************
+  // ⚓ CONSTRUCTOR
+  // ****************************************************************
+
   /**
    * Creates a new EventDispatcher instance.
    *
    * @constructor
    *
-   * @param {HTMLCanvasElement} canvasDOM the canvas element to attach event listeners to
-   * @param {boolean} isEnginePaused current pause state of engine. Used to prevent event propagation when engine is paused
+   * @param canvasDOM the canvas element to attach event listeners to
+   * @param isEnginePaused current pause state of engine. Used to prevent event propagation when engine is paused
    */
   constructor(canvasDOM: HTMLCanvasElement, isEnginePaused: boolean) {
     this.canvasDOM = canvasDOM;
@@ -40,39 +91,23 @@ export default class EventDispatcher {
     this.eventMap.set("mouseup", this.handleMouseUp);
     this.eventMap.set("keydown", this.handleKeyDown);
     this.eventMap.set("keyup", this.handleKeyUp);
-    this.eventMap.set("resize", null);
+    this.eventMap.set("resize", () => { });
   }
 
   // ****************************************************************
-  // Public defs
-
-  /**
-   * An array of current Events that have been dispatched and are waiting to be handled by the engine.
-   *
-   * @type {Array<EngineEvent>}
-   * @default []
-   */
-  eventList: Array<EngineEvent> = [];
-
-  /**
-   * The current pause state of the engine. Used to prevent event propagation when engine is paused.
-   * Ideally the engine pause state can be passe in as an object reference so it can be updated without
-   * directly modifying the EventHandler isEnginePaused property.
-   *
-   * @type {boolean}
-   */
-  isEnginePaused: boolean;
+  // ⚓ PUBLIC METHODS
+  // ****************************************************************
 
   /**
    * Dispatches a payload to the queue for a given event if the following conditions are met:
    * 1. The event is a valid event
    * 2. The event does not have a comparably equal event in the queue (for example, two
-   *    keydown events with the same keyCode)
+   *    keydown events with the same code)
    * 3. the engine is not paused
    *
-   * @param {EngineEvent} event event instance to dispatch
+   * @param event event instance to dispatch
    *
-   * @returns {boolean} whether or not the event was dispatched
+   * @returns {boolean} whether or not the event was successfully dispatched
    */
   dispatch = (event: EngineEvent): boolean => {
     if (this.isEnginePaused) return false;
@@ -123,37 +158,10 @@ export default class EventDispatcher {
   // Private defs
 
   /**
-   * Canvas DOM element to attach events to.
    *
-   * @private
-   * @type {HTMLCanvasElement}
-   */
-  private canvasDOM;
-
-  /**
-   * A map containing event-function pairs. Specified what function to call when a given event is called.
-   *
-   * @private
-   * @type {Map<string, Function>}
-   * @default new Map()
-   */
-  private eventMap: Map<string, EventListener> = new Map();
-
-  private resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const { width, height } = entry.contentRect;
-
-      const onCanvasResizeEvent: EngineEvent = createEngineEvent("oncanvasresize", { width, height });
-
-      this.dispatch(onCanvasResizeEvent);
-    }
-  });
-
-  /**
-   *
-   * @param {*} eventA
-   * @param {*} eventB
-   * @param {*} comapreEventType
+   * @parameventA
+   * @parameventB
+   * @paramcomapreEventType
    * @returns {Boolean} whether or not the events are equivalent
    */
   private areEventsEquivalent = (eventA: EngineEvent, eventB: EngineEvent, compareEventType: boolean = true) => {
@@ -162,8 +170,8 @@ export default class EventDispatcher {
     if (eventA.comparatorKey !== eventB.comparatorKey) return false;
 
     if (
-      eventA.payload[eventA.comparatorKey] !==
-      eventB.payload[eventB.comparatorKey]
+      eventA.payload[eventA.comparatorKey as string] !==
+      eventB.payload[eventB.comparatorKey as string]
     )
       return false;
 
@@ -173,8 +181,8 @@ export default class EventDispatcher {
   /**
    * Removes the event persistence flag from all comparably equivalent events in the eventList.
    *
-   * @param {EngineEvents} eventType The event type to check for in the event list.
-   * @param {EngineEvent} comparatorEvent an event to compare against.
+   * @param eventType The event type to check for in the event list.
+   * @param comparatorEvent an event to compare against.
    */
   private removeEventPersistence = (eventType: EngineEvents, comparatorEvent: EngineEvent) => {
     // ensure comparatorEvent has a comparatorKey
@@ -189,11 +197,8 @@ export default class EventDispatcher {
 
   /**
    * Handles the "mousedown" event
-   *
-   * @private
-   * @param {*} e event payload
    */
-  private handleMouseDown = (e: MouseEvent) => {
+  private handleMouseDown = (e: Event) => {
     const whileMouseDownEvent: EngineEvent = createEngineEvent("whilemousedown", e, "button", true);
     const onMouseDownEvent: EngineEvent = createEngineEvent("onmousedown", e);
 
@@ -203,11 +208,8 @@ export default class EventDispatcher {
 
   /**
    * Handles the "mouseup" event
-   *
-   * @private
-   * @param {*} e event payload
    */
-  private handleMouseUp = (e: MouseEvent) => {
+  private handleMouseUp = (e: Event) => {
     const onMouseUpEvent: EngineEvent = createEngineEvent("onmouseup", e, "button");
 
     // flip matching inverse event to non-persistent
@@ -218,12 +220,9 @@ export default class EventDispatcher {
 
   /**
    * Handles the "keydown" event. Registers a new persistent payload that will hold through update cycles.
-   *
-   * @private
-   * @param {*} e event payload
    */
-  private handleKeyDown = (e: KeyboardEvent) => {
-    const whileKeyDownEvent: EngineEvent = createEngineEvent("whilekeydown", e, "keyCode", true);
+  private handleKeyDown = (e: Event) => {
+    const whileKeyDownEvent: EngineEvent = createEngineEvent("whilekeydown", e, "code", true);
     const onKeyDownEvent: EngineEvent = createEngineEvent("onkeydown", e);
 
     // don't dispatch onKeyDown if whileKeyDown is already in the queue
@@ -231,7 +230,7 @@ export default class EventDispatcher {
     if (
       !this.eventList.some(
         (event) =>
-          event.type === "whilekeydown" && event.payload.keyCode === e.keyCode
+          event.type === "whilekeydown" && event.payload.code === (e as KeyboardEvent).code
       )
     )
       this.dispatch(onKeyDownEvent);
@@ -241,12 +240,9 @@ export default class EventDispatcher {
 
   /**
    * Handles the "keyup" event. Removes the persistent payload that was registered on respective keydown event.
-   *
-   * @private
-   * @param {KeyboardEvent} e event payload
    */
-  private handleKeyUp = (e: KeyboardEvent) => {
-    const keyUpEvent: EngineEvent = createEngineEvent("onkeyup", e, "keyCode");
+  private handleKeyUp = (e: Event) => {
+    const keyUpEvent: EngineEvent = createEngineEvent("onkeyup", e, "code");
 
     // flip matching inverse event to non-persistent
     this.removeEventPersistence("whilekeydown", keyUpEvent);

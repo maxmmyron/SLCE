@@ -9,7 +9,7 @@
  *
  * @throws {Error} conditional should evaluate to true
  */
-export const assert = (condition: any, message: string = null, errorType: ErrorConstructor = Error) => {
+export const assert = (condition: any, message: string, errorType: ErrorConstructor = Error) => {
   message = message || 'Assertion failed';
 
   if (!condition)

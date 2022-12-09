@@ -4,10 +4,11 @@
   "description": "sweet little canvas engine",
   "main": "main.js",
   "directories": {
-    "example": "examples"
+    "example": "examples",
+    "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "webpack --config webpack.config.js",
     "demo": "webpack serve --open --config webpack.demo.config.js --port 3000",
     "build-demo": "rm -rf ./demo/bundle.demo.js && webpack --config webpack.demo.config.js"
@@ -30,5 +31,7 @@
     "webpack-cli": "^4.10.0",
     "webpack-dev-server": "^4.9.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ts-node": "^10.9.1"
+  }
 }
