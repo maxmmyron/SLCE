@@ -2,6 +2,7 @@ import { vec, add, sub, div, mult } from "../math/vector";
 
 import { assert } from "../util/asserts";
 import EventSubscriber from "../core/event_subscriber"
+import Engine from "../core/engine";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -32,6 +33,10 @@ export default class Actor extends EventSubscriber {
 
   vel: Vector;
 
+  /**
+   * Notifies engine that an actor should be disposed of at next update cycle.
+   */
+  isQueuedForDisposal: boolean = false;
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/ getters)
@@ -42,6 +47,8 @@ export default class Actor extends EventSubscriber {
   private _currentAnimationID: string = "";
 
   private _currentAnimationFrame: number = 0;
+
+  private readonly _engine: Engine;
 
   private _textures: { [key: string]: Texture } = {};
 
@@ -77,11 +84,6 @@ export default class Actor extends EventSubscriber {
   };
 
   /**
-   * Notifies engine that an actor should be disposed of at next update cycle.
-   */
-  private willDispose: boolean = false;
-
-  /**
    * The offset to start drawing the texture from the top left corner of the actor.
    */
   private textureOffset: Vector = vec(0, 0);
@@ -114,9 +116,10 @@ export default class Actor extends EventSubscriber {
    * @param properties.size size of the actor
    * @param properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(ID: string, size: Vector, properties?: ActorProperties) {
+  constructor(engine: Engine, ID: string, size: Vector, properties?: ActorProperties) {
     super();
 
+    this._engine = engine;
     this.ID = ID;
 
     this.size = size;
@@ -142,9 +145,8 @@ export default class Actor extends EventSubscriber {
    * Overridable user-defined function to run on each update cycle.
    *
    * @param dt the delta time since last update
-   * @param env environment object passed from engine
    */
-  update: (dt: number, env: any) => void = () => { };
+  update: (dt: number) => void = () => { };
 
   /**
    * Preload function called once before the first frame cycle.
@@ -172,7 +174,7 @@ export default class Actor extends EventSubscriber {
    * @throws {Error} startIndex must be positive and less than provided texture's frame count.
    * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
    */
-  addAnimationState = (animationID: string, textureID: string, options: { frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe> } = { frameCount: -1, frameDuration: 200, frames: null, startIndex: 0 }): boolean => {
+  addAnimationState = (animationID: string, textureID: string, options: { frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe> | null } = { frameCount: -1, frameDuration: 200, frames: null, startIndex: 0 }): boolean => {
     assert(!this._animations[animationID], `animationID must be unique`);
 
     const texture: Texture = this._textures[textureID];
@@ -282,11 +284,12 @@ export default class Actor extends EventSubscriber {
    *
    * @throws Error if spriteSize provided is not a positive Vector
    */
-  addTexture = (textureID: string, imageBitmap: ImageBitmap, options?: { frameCount: number, spriteSize: Vector }): boolean => {
+  addTexture = (textureID: string, imageBitmap: ImageBitmap, options: { frameCount: number, spriteSize: Vector | null } = { frameCount: 1, spriteSize: null }): boolean => {
     if (this._textures[textureID]) return false;
 
-    // extract options
-    let { spriteSize = null, frameCount = 1 } = options;
+    if (!options.spriteSize) return false;
+
+    const spriteSize: Vector = options.spriteSize as Vector;
 
     // assert spriteSize is a positive Vector
     assert(spriteSize.x > 0 && spriteSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
@@ -294,7 +297,7 @@ export default class Actor extends EventSubscriber {
     this._textures[textureID] = {
       imageBitmap,
       spriteSize,
-      frameCount
+      frameCount: options.frameCount
     };
 
     return true;
@@ -319,9 +322,8 @@ export default class Actor extends EventSubscriber {
    * Calls update callback function for actor
    *
    * @param timestep - update timestep
-   * @param env - environment variables defined by engine
    */
-  performUpdates = (timestep: number, env: any) => {
+  performUpdates = (timestep: number) => {
     if (!this.doUpdate) return;
 
     // ****************************************************************
@@ -339,10 +341,10 @@ export default class Actor extends EventSubscriber {
     // ****************************************************************
     // primary update operations
 
-    this.vel = add(this.vel, div(env.properties.physics.accel, timestep));
+    this.vel = add(this.vel, div(this.engine.gravity, timestep));
 
     this.updateAnimation(timestep);
-    if (this.update) this.update(timestep, env);
+    if (this.update) this.update(timestep);
   };
 
   /**
@@ -512,6 +514,10 @@ export default class Actor extends EventSubscriber {
 
   get currentAnimationFrame(): number {
     return this._currentAnimationFrame;
+  }
+
+  get engine(): Engine {
+    return this._engine;
   }
 
   get textures(): { [key: string]: Texture } {
