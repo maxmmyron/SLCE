@@ -44,6 +44,7 @@ export default class Actor extends EventSubscriber {
 
   private _animations: { [key: string]: AnimationState } = {};
 
+  // TODO: switch from current animation ID to current animation state
   private _currentAnimationID: string = "";
 
   private _currentAnimationFrame: number = 0;
@@ -86,7 +87,7 @@ export default class Actor extends EventSubscriber {
   /**
    * The offset to start drawing the texture from the top left corner of the actor.
    */
-  private textureOffset: Vector = vec(0, 0);
+  private textureSourcePosition: Vector = vec(0, 0);
 
 
   // ****************************************************************
@@ -284,19 +285,19 @@ export default class Actor extends EventSubscriber {
    *
    * @throws Error if spriteSize provided is not a positive Vector
    */
-  addTexture = (textureID: string, imageBitmap: ImageBitmap, options: { frameCount: number, spriteSize: Vector | null } = { frameCount: 1, spriteSize: null }): boolean => {
+  addTexture = (textureID: string, imageBitmap: ImageBitmap, options: { frameCount: number, textureSize: Vector | null } = { frameCount: 1, textureSize: null }): boolean => {
     if (this._textures[textureID]) return false;
 
-    if (!options.spriteSize) return false;
+    if (!options.textureSize) return false;
 
-    const spriteSize: Vector = options.spriteSize as Vector;
+    const textureSize: Vector = options.textureSize as Vector;
 
     // assert spriteSize is a positive Vector
-    assert(spriteSize.x > 0 && spriteSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
+    assert(textureSize.x > 0 && textureSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
 
     this._textures[textureID] = {
       imageBitmap,
-      spriteSize,
+      size: textureSize,
       frameCount: options.frameCount
     };
 
@@ -413,12 +414,12 @@ export default class Actor extends EventSubscriber {
     const texture: Texture = this._textures[animationState.textureID];
 
     const imageBitmap: ImageBitmap = texture.imageBitmap;
-    const spriteSize: Vector = texture.spriteSize;
+    const spriteSize: Vector = texture.size;
 
     const spriteRowCount: number = Math.floor(imageBitmap.width / spriteSize.x);
     const spriteColumnCount: number = Math.floor(imageBitmap.height / spriteSize.y);
 
-    this.textureOffset = vec(
+    this.textureSourcePosition = vec(
       this._currentAnimationFrame % spriteRowCount * spriteSize.x,
       (this._currentAnimationFrame - this._currentAnimationFrame % spriteRowCount) / spriteColumnCount * spriteSize.y
     );
@@ -455,14 +456,14 @@ export default class Actor extends EventSubscriber {
     const texture: Texture = this._textures[animationState.textureID];
 
     const imageBitmap: ImageBitmap = texture.imageBitmap;
-    const spriteSize: Vector = texture.spriteSize;
+    const textureSize: Vector = texture.size;
 
     ctx.drawImage(
       imageBitmap,            // image source
-      this.textureOffset.x,   // starting x from source
-      this.textureOffset.y,   // starting y from source
-      spriteSize.x,           // width of source to draw
-      spriteSize.y,           // height of source to draw
+      this.textureSourcePosition.x,   // starting x from source
+      this.textureSourcePosition.y,   // starting y from source
+      textureSize.x,           // width of source to draw
+      textureSize.y,           // height of source to draw
       this.pos.x,             // actor x on canvas
       this.pos.y,             // actor y on canvas
       this.size.x,            // actor width
