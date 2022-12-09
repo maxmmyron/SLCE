@@ -204,7 +204,7 @@ export default class Engine extends EventSubscriber {
   };
 
   /**
-   * Queues an actor for disposal by setting actor's willDispose flag to true.
+   * Queues an actor for disposal by setting actor's isQueuedForDisposal flag to true.
    *
    * @param {Actor} actor
    * @return {boolean} true if actor was queued for disposal
@@ -217,7 +217,7 @@ export default class Engine extends EventSubscriber {
 
     // queue actor for disposal instead of removing immediately
     // this prevents actors from being removed from the array while iterating over it
-    actor.willDispose = true;
+    actor.isQueuedForDisposal = true;
     return true;
   };
 
@@ -308,7 +308,7 @@ export default class Engine extends EventSubscriber {
     // Post-update operations
 
     // filter actors array by those that are NOT queued for disposal
-    this._actors.filter((actor) => !actor.willDispose);
+    this._actors.filter((actor) => !actor.isQueuedForDisposal);
   };
 
   performEngineUpdates = () => {
@@ -318,18 +318,11 @@ export default class Engine extends EventSubscriber {
     // actor update operations
 
     this._actors.forEach((actor) => {
-      actor.performUpdates(
-        this.targetFrameTimestep,
-        this.environment
-      );
+      actor.performUpdates(this.targetFrameTimestep);
     });
 
     // perform user-defined update callback (if provided)
-    if (this.update)
-      this.update(
-        this.targetFrameTimestep,
-        this.environment
-      );
+    if (this.update) this.update(this.targetFrameTimestep);
 
     // get a list of current events in the queue
     const queuedEventTypes = this.eventDispatcher.eventList.map(
