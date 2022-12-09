@@ -10,7 +10,7 @@ interface AnimationKeyframe {
 
 interface Texture {
   imageBitmap: ImageBitmap;
-  spriteSize: Vector;
+  size: Vector;
   frameCount: number;
 }
 
