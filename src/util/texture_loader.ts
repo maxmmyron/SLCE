@@ -1,5 +1,5 @@
 export const TextureLoader = (() => {
-  let instance: Loader = null;
+  let instance: Loader;
 
   const Loader = (): Loader => {
     /**
@@ -35,10 +35,10 @@ export const TextureLoader = (() => {
      * @returns {Texture} the texture loaded from the path or cache
      */
     const load = async (path: string): Promise<ImageBitmap> => {
-      const cachedTexture: ImageBitmap = searchCache(path);
+      const cachedTexture: ImageBitmap | undefined = searchCache(path) as ImageBitmap;
 
       return new Promise((resolve, reject) => {
-        if(cachedTexture) resolve(cachedTexture);
+        if (cachedTexture) resolve(cachedTexture);
         else {
           const image = new Image();
 
