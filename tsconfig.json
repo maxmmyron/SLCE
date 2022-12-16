@@ -9,5 +9,9 @@
     "allowJs": true,
     "moduleResolution": "node",
     "strict": true,
+    "lib": [
+      "es2016",
+      "dom"
+    ]
   }
 }
