@@ -1,7 +1,7 @@
 import { vec, add, sub, div, mult } from "../math/vector";
 
 import { assert } from "../util/asserts";
-import EventSubscriber from "../core/event_subscriber"
+import EventSubscriber from "../core/events/event_subscriber"
 import Engine from "../core/engine";
 
 /**

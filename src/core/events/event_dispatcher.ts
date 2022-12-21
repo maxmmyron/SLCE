@@ -1,4 +1,4 @@
-import { assert } from "../util/asserts";
+import { assert } from "../../util/asserts";
 
 /**
  * Creates a new EngineEvent object with the specified type, payload, and associated options.
@@ -159,9 +159,9 @@ export default class EventDispatcher {
 
   /**
    *
-   * @parameventA
-   * @parameventB
-   * @paramcomapreEventType
+   * @param eventA
+   * @param eventB
+   * @param compareEventType
    * @returns {Boolean} whether or not the events are equivalent
    */
   private areEventsEquivalent = (eventA: EngineEvent, eventB: EngineEvent, compareEventType: boolean = true) => {
