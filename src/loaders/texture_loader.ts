@@ -62,13 +62,13 @@ export const TextureLoader = (() => {
     };
 
     return {
-      load: load
-    }
+      load
+    };
   };
 
   const getInstance = (): Loader => instance || (instance = Loader());
 
   return {
-    getInstance: getInstance
-  }
+    getInstance
+  };
 })();
