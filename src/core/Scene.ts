@@ -1,5 +1,4 @@
 import Actor from "../objects/actor";
-import { Camera } from "./Camera";
 import Engine from "./engine";
 
 /**
@@ -11,58 +10,68 @@ export class Scene {
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
 
-  readonly ID: string;
+  readonly engine: Engine;
+
+  readonly name: string;
+
+  actors: Map<string, Actor> = new Map();
+
+  isQueuedForDisposal: boolean = false;
+
+  isRenderEnabled: boolean = true;
+
+  isUpdateEnabled: boolean = true;
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w getters)
   // ****************************************************************
 
-  private _actors: Array<Actor>;
+  private readonly internalID: string;
 
-  private _camera: Camera;
+  // ****************************************************************
+  // ⚓ PRIVATE DECLARATIONS (w/o getters)
+  // ****************************************************************
 
   // ****************************************************************
   // ⚓ CONSTRUCTOR
   // ****************************************************************
-  constructor(engine: Engine, camera: Camera, actors: Array<Actor> = []) {
-    this.ID = Math.random().toString(36).substring(2, 9); // improve
+  constructor(name: string, engine: Engine, options: SceneOptions = {}) {
+    this.name = name;
 
-    this._camera = camera;
+    this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
-    this._actors = actors;
+    this.engine = engine;
+
+    this.engine.scenes.set(this.internalID, this);
   }
 
   // ****************************************************************
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  addActors(actors: Array<Actor>) {
-    this._actors.push(...actors);
+  dispose() {
+    this.isQueuedForDisposal = true;
   }
 
-  removeActors(actors: Array<Actor>): void {
-    this._actors
-      .filter(actor => actors.includes(actor))
-      .forEach(actor => actor.isQueuedForDisposal = true);
+  preload() {
+    return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));
+  };
+
+  update(targetFrameTimestep: number) {
+    if (this.isQueuedForDisposal) {
+      return;
+    }
   }
 
-  update() { }
-
-  render() { }
+  render(interpolationFactor: number) {
+    const ctx = this.engine.ctx;
+  }
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATION GETTERS & SETTERS
   // ****************************************************************
 
-  get camera(): Camera {
-    return this._camera;
-  }
-
-  set camera(camera: Camera) {
-    this._camera = camera;
-  }
-
-  get actors(): Array<Actor> {
-    return this._actors;
+  get ID(): string {
+    return this.internalID;
   }
 }

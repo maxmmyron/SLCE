@@ -3,6 +3,7 @@ import { vec, add, sub, div, mult } from "../math/vector";
 import { assert } from "../util/asserts";
 import EventSubscriber from "../core/events/event_subscriber"
 import Engine from "../core/engine";
+import { Scene } from "../core/Scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -26,6 +27,8 @@ export default class Actor extends EventSubscriber {
    */
   pos: Vector;
 
+  readonly scene: Scene;
+
   /**
    * Current bounds of actor.
    */
@@ -48,8 +51,6 @@ export default class Actor extends EventSubscriber {
   private _currentAnimationID: string = "";
 
   private _currentAnimationFrame: number = 0;
-
-  private readonly _engine: Engine;
 
   private _textures: { [key: string]: Texture } = {};
 
@@ -117,13 +118,16 @@ export default class Actor extends EventSubscriber {
    * @param properties.size size of the actor
    * @param properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(engine: Engine, ID: string, size: Vector, properties?: ActorProperties) {
+  constructor(ID: string, scene: Scene, properties?: ActorProperties) {
     super();
 
-    this._engine = engine;
     this.ID = ID;
 
-    this.size = size;
+    this.size = vec(0, 0); // TODO
+
+    this.scene = scene;
+
+    this.scene.actors.set(this.ID, this);
 
     this.lastState.pos = this.pos = properties?.pos || vec();
     this.lastState.vel = this.vel = properties?.vel || vec();
@@ -342,7 +346,7 @@ export default class Actor extends EventSubscriber {
     // ****************************************************************
     // primary update operations
 
-    this.vel = add(this.vel, div(this.engine.gravity, timestep));
+    this.vel = add(this.vel, div(this.scene.engine.gravity, timestep));
 
     this.updateAnimation(timestep);
     if (this.update) this.update(timestep);
@@ -515,10 +519,6 @@ export default class Actor extends EventSubscriber {
 
   get currentAnimationFrame(): number {
     return this._currentAnimationFrame;
-  }
-
-  get engine(): Engine {
-    return this._engine;
   }
 
   get textures(): { [key: string]: Texture } {
