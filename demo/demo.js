@@ -3,7 +3,7 @@
 import Engine from "../src/core/engine";
 import { vec } from "../src/math/vector";
 import Actor from "../src/objects/actor";
-import { TextureLoader } from "../src/loaders/texture_loader";
+import { TextureLoader } from "../src/util/texture_cache";
 
 import animationSpritemap from "./animationSpritemap.png";
 import characterSpritemap from "./characterSpritemap.png";
