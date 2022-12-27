@@ -13,3 +13,11 @@ type EngineEvents =
   "whilekeydown" |
   "onkeyup" |
   "oncanvasresize";
+
+type CameraOptions = {
+  position?: Vector;
+  rotation?: Vector;
+  zoom?: number;
+}
+
+type SceneOptions = {}
