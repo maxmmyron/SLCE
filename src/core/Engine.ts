@@ -493,6 +493,4 @@ export default class Engine extends EventSubscriber {
   get isPaused(): boolean {
     return this._isPaused;
   }
-
-
 }
