@@ -1,4 +1,6 @@
 import { vec } from "../math/vector";
+import Engine from "./engine";
+import { Scene } from "./Scene";
 
 /**
  * @class Camera
@@ -11,6 +13,8 @@ export class Camera {
 
   readonly ID: string;
 
+  engine: Engine;
+
   position: Vector = vec();
 
   rotation: Vector = vec();
@@ -20,14 +24,15 @@ export class Camera {
   // ****************************************************************
   // ⚓ CONSTRUCTOR
   // ****************************************************************
-  constructor(position?: Vector, rotation?: Vector, zoom?: number) {
-    this.ID = "a"; // Math.random().toString(36).substring(2, 9); or something
+  constructor(id: string, engine: Engine, options: CameraOptions = {}) {
+    // Math.random().toString(36).substring(2, 9); or something
+    this.ID = id;
 
-    this.position = position || this.position;
+    this.engine = engine;
 
-    this.rotation = rotation || this.rotation;
-
-    this.zoom = zoom || this.zoom;
+    this.position = options.position ?? this.position;
+    this.rotation = options.rotation ?? this.rotation;
+    this.zoom = options.zoom ?? this.zoom;
   }
 
 
