@@ -20,4 +20,11 @@ type CameraOptions = {
   zoom?: number;
 }
 
-type SceneOptions = {}
+type SceneOptions = {
+  environment?: SceneEnvironment
+}
+
+type SceneEnvironment = {
+  background: string;
+  gravity: Vector;
+}
