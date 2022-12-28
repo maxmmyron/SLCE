@@ -1,3 +1,4 @@
+import { vec } from "../math/vector";
 import Actor from "../objects/actor";
 import Engine from "./engine";
 
@@ -22,6 +23,11 @@ export class Scene {
 
   isUpdateEnabled: boolean = true;
 
+  environment: SceneEnvironment = {
+    background: "#000000",
+    gravity: vec(0, 0)
+  };
+
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w getters)
   // ****************************************************************
@@ -41,6 +47,8 @@ export class Scene {
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
+
+    this.environment = options.environment ?? this.environment;
 
     this.engine.scenes.set(this.internalID, this);
   }
@@ -65,6 +73,9 @@ export class Scene {
 
   render(interpolationFactor: number) {
     const ctx = this.engine.ctx;
+
+    ctx.fillStyle = this.environment.background;
+    ctx.fillRect(0, 0, this.engine.canvasSize.x, this.engine.canvasSize.y);
   }
 
   // ****************************************************************
