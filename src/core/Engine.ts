@@ -135,7 +135,7 @@ export default class Engine extends EventSubscriber {
 
   update: ((targetFrameTimestep: number) => void) | null = null;
 
-  draw: ((interpolationFactor: number) => void) | null = null;
+  render: ((interpolationFactor: number) => void) | null = null;
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -163,7 +163,7 @@ export default class Engine extends EventSubscriber {
     // begin measuring performance and run engine.
     this._engineStartTime = performance.now();
     this.updateID = requestAnimationFrame(
-      this.performGameLoopUpdates
+      this.loop
     );
 
     this.isStarted = true;
@@ -177,18 +177,12 @@ export default class Engine extends EventSubscriber {
    * Pauses engine update loop. Game will continue requesting
    * animation frames, but will not continue to update or draw.
    */
-  pause = () => {
-    this._isPaused = true;
-    this.eventDispatcher.isEnginePaused = true;
-  };
+  pause = () => this.updatePauseState(true);
 
   /**
    * Resumes engine update loop.
    */
-  resume = () => {
-    this._isPaused = false;
-    this.eventDispatcher.isEnginePaused = false;
-  };
+  resume = () => this.updatePauseState(false);
 
 
   // ****************************************************************
@@ -200,8 +194,8 @@ export default class Engine extends EventSubscriber {
    *
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
-  private performGameLoopUpdates = (timestamp: DOMHighResTimeStamp) => {
-    this.updateID = requestAnimationFrame(this.performGameLoopUpdates);
+  private loop = (timestamp: DOMHighResTimeStamp) => {
+    this.updateID = requestAnimationFrame(this.loop);
 
     // *****************************
     // Calculate delta time and lag
@@ -219,7 +213,7 @@ export default class Engine extends EventSubscriber {
 
     let numUpdates = 0;
     while (this.lag >= this.targetFrameTimestep) {
-      this.performEngineUpdates();
+      this.updateEngineElements();
 
       this.lag -= this.targetFrameTimestep;
 
@@ -232,15 +226,9 @@ export default class Engine extends EventSubscriber {
       }
     }
 
-    // *****************************
-    // Calculate interpolation and perform draw calls
-
     const interpolationFactor = this.lag / this.targetFrameTimestep;
 
-    this.performDrawCalls(interpolationFactor);
-
-    // *****************************
-    // Post-update operations
+    this.renderEngineElements(interpolationFactor);
 
     // filter scene map by those that are NOT queued for disposal
     this.scenes = new Map(Array
@@ -248,7 +236,7 @@ export default class Engine extends EventSubscriber {
       .filter(([key, scene]) => !scene.isQueuedForDisposal));
   };
 
-  performEngineUpdates = () => {
+  private updateEngineElements = () => {
     if (this._isPaused) return;
 
     // *****************************
@@ -262,9 +250,9 @@ export default class Engine extends EventSubscriber {
     if (this.update) this.update(this.targetFrameTimestep);
 
     // get a list of current events in the queue
-    const queuedEventTypes = this.eventDispatcher.eventList.map(
-      (event) => event.type
-    );
+    // const queuedEventTypes = this.eventDispatcher.eventList.map(
+    //   (event) => event.type
+    // );
 
     // // get a list of all actors that currently have events that match queued events
     // const relevantActors = this._actors.filter((actor) => {
@@ -302,13 +290,14 @@ export default class Engine extends EventSubscriber {
     );
   };
 
+
   /**
    * draws all relevant actors onto canvas
    *
    * @private
    * @param {number} interpolationFactor - interpolation value
    */
-  performDrawCalls = (interpolationFactor: number) => {
+  private renderEngineElements = (interpolationFactor: number) => {
     // *****************************
     // pre-draw operations
     if (this._isPaused) return;
@@ -322,30 +311,13 @@ export default class Engine extends EventSubscriber {
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     // call user-defined draw callback (if provided)
-    if (this.draw) this.draw(interpolationFactor);
+    if (this.render) this.render(interpolationFactor);
 
     // *****************************
     // post-draw operations
 
     if (this.isDebugEnabled) {
-      this.performDebugDrawCalls(interpolationFactor);
-    }
-  };
-
-
-  // ****************************************************************
-  // ⚓ DEBUG METHODS
-  // ****************************************************************
-
-  private performDebugDrawCalls = (interpolationFactor: number) => {
-    this.ctx.fillStyle = "white";
-    if (!isNaN(this._FPS)) {
-      this.ctx.fillText("FPS: " + this._FPS, 5, 15);
-      this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
-      this.ctx.fillText("lag: " + this.lag, 5, 35);
-      this.ctx.fillText("interpolation: " + interpolationFactor, 5, 45);
-      this.ctx.fillText("total updates: " + this.updatesSinceEngineStart, 5, 55);
-      this.ctx.fillText("runtime: " + (performance.now() - this._engineStartTime) / 1000, 5, 65);
+      this.executeDebugRender(interpolationFactor);
     }
   };
 
@@ -374,6 +346,28 @@ export default class Engine extends EventSubscriber {
     this.canvasElement.setAttribute("height", String(computedHeight));
 
     return [computedWidth, computedHeight];
+  };
+
+  private updatePauseState = (newPauseState: boolean) => {
+    this._isPaused = newPauseState;
+    this.eventDispatcher.isEnginePaused = newPauseState;
+  }
+
+
+  // ****************************************************************
+  // ⚓ DEBUG METHODS
+  // ****************************************************************
+
+  private executeDebugRender = (interpolationFactor: number) => {
+    this.ctx.fillStyle = "white";
+    if (!isNaN(this._FPS)) {
+      this.ctx.fillText("FPS: " + this._FPS, 5, 15);
+      this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
+      this.ctx.fillText("lag: " + this.lag, 5, 35);
+      this.ctx.fillText("interpolation: " + interpolationFactor, 5, 45);
+      this.ctx.fillText("total updates: " + this.updatesSinceEngineStart, 5, 55);
+      this.ctx.fillText("runtime: " + (performance.now() - this._engineStartTime) / 1000, 5, 65);
+    }
   };
 
   // ****************************************************************
