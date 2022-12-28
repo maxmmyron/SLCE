@@ -346,7 +346,7 @@ export default class Actor extends EventSubscriber {
     // ****************************************************************
     // primary update operations
 
-    this.vel = add(this.vel, div(this.scene.engine.gravity, timestep));
+    this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
 
     this.updateAnimation(timestep);
     if (this.update) this.update(timestep);
