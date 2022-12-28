@@ -17,6 +17,7 @@ const camera = new Camera("camera", engine);
 
 const scene = new Scene("Scene", engine);
 
+console.log(engine.camera)
 console.log(Array.from(engine.scenes.values()));
 
 const actorA = new Actor("actorA", scene);
