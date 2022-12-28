@@ -1,6 +1,7 @@
 import { vec } from "../math/vector";
 import Actor from "../objects/actor";
 import { assert } from "../util/asserts";
+import { Camera } from "./Camera";
 import EventDispatcher from "./events/event_dispatcher";
 import EventSubscriber from "./events/event_subscriber";
 import { Scene } from "./Scene";
@@ -21,11 +22,9 @@ export default class Engine extends EventSubscriber {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
 
-  backgroundColor: string = "#121212";
-
-  gravity: Vector = vec(0, 0);
-
   scenes: Map<string, Scene> = new Map();
+
+  camera: Camera | null = null;
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/ getters)
@@ -134,9 +133,9 @@ export default class Engine extends EventSubscriber {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  update: Function | null = null;
+  update: ((targetFrameTimestep: number) => void) | null = null;
 
-  draw: Function | null = null;
+  draw: ((interpolationFactor: number) => void) | null = null;
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -312,15 +311,10 @@ export default class Engine extends EventSubscriber {
   performDrawCalls = (interpolationFactor: number) => {
     // *****************************
     // pre-draw operations
-
     if (this._isPaused) return;
 
     // clear canvas
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
-
-    // reset context fill color
-    this.ctx.fillStyle = this.backgroundColor;
-    this.ctx.fillRect(0, 0, this._canvasSize.x, this._canvasSize.y);
 
     // *****************************
     // primary draw operations
@@ -328,7 +322,7 @@ export default class Engine extends EventSubscriber {
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     // call user-defined draw callback (if provided)
-    if (this.draw) this.draw(interpolationFactor, this.ctx);
+    if (this.draw) this.draw(interpolationFactor);
 
     // *****************************
     // post-draw operations
