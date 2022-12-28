@@ -1,5 +1,4 @@
 import { vec } from "../math/vector";
-import Actor from "../objects/actor";
 import { assert } from "../util/asserts";
 import { Camera } from "./Camera";
 import EventDispatcher from "./events/event_dispatcher";
@@ -7,7 +6,7 @@ import EventSubscriber from "./events/event_subscriber";
 import { Scene } from "./Scene";
 
 const TARGET_FPS: number = 60;
-const MAX_UPDATES_PER_CYCLE: number = 240;
+const MAX_UPDATES_PER_FRAME: number = 240;
 
 /**
  * Engine class. Handles actor management, update game loop, and rendering.
@@ -62,9 +61,9 @@ export default class Engine extends EventSubscriber {
   /**
    * Maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
    *
-   * @default MAX_UPDATES_PER_CYCLE
+   * @default MAX_UPDATES_PER_FRAME
    */
-  private readonly maxFrameUpdates: number = MAX_UPDATES_PER_CYCLE;
+  private readonly maxUpdatesPerFrame: number = MAX_UPDATES_PER_FRAME;
 
   private previousTimestamp: number = 0;
 
@@ -132,6 +131,8 @@ export default class Engine extends EventSubscriber {
   // ****************************************************************
   // ⚓ PUBLIC METHODS
   // ****************************************************************
+
+  getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
 
   update: ((targetFrameTimestep: number) => void) | null = null;
 
@@ -208,10 +209,8 @@ export default class Engine extends EventSubscriber {
 
     this._FPS = 1000 / dt;
 
-    // *****************************
     // Perform engine updates based on current lag
-
-    let numUpdates = 0;
+    let cycleUpdateCount = 0;
     while (this.lag >= this.targetFrameTimestep) {
       this.updateEngineElements();
 
@@ -220,7 +219,7 @@ export default class Engine extends EventSubscriber {
       this.updatesSinceEngineStart++;
 
       // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
-      if (++numUpdates >= this.maxFrameUpdates) {
+      if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
         this.lag = 0;
         break;
       }
