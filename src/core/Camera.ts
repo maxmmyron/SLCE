@@ -30,6 +30,8 @@ export class Camera {
 
     this.engine = engine;
 
+    this.engine.camera = this;
+
     this.position = options.position ?? this.position;
     this.rotation = options.rotation ?? this.rotation;
     this.zoom = options.zoom ?? this.zoom;
