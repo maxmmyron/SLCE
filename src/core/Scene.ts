@@ -57,21 +57,21 @@ export class Scene {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  dispose() {
+  dispose = () => {
     this.isQueuedForDisposal = true;
   }
 
-  preload() {
+  preload = () => {
     return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));
   };
 
-  update(targetFrameTimestep: number) {
+  update = (targetFrameTimestep: number) => {
     if (this.isQueuedForDisposal) {
       return;
     }
   }
 
-  render(interpolationFactor: number) {
+  render = (interpolationFactor: number) => {
     const ctx = this.engine.ctx;
 
     ctx.fillStyle = this.environment.background;

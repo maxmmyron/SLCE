@@ -1,6 +1,6 @@
 import { vec } from "../math/vector";
 import Engine from "./engine";
-import { Scene } from "./Scene";
+import { Scene } from "./scene";
 
 /**
  * @class Camera
