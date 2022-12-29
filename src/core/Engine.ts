@@ -1,9 +1,9 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
-import { Camera } from "./Camera";
+import { Camera } from "./camera";
 import EventDispatcher from "./events/event_dispatcher";
 import EventSubscriber from "./events/event_subscriber";
-import { Scene } from "./Scene";
+import { Scene } from "./scene";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -211,8 +211,11 @@ export default class Engine extends EventSubscriber {
 
     // Perform engine updates based on current lag
     let cycleUpdateCount = 0;
-    while (this.lag >= this.targetFrameTimestep) {
-      this.updateEngineElements();
+    while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
+      Array.from(this.scenes.values()).filter(scene => scene.isUpdateEnabled).forEach(scene => scene.update(this.targetFrameTimestep));
+
+      // perform user-defined update callback (if provided)
+      if (this.update) this.update(this.targetFrameTimestep);
 
       this.lag -= this.targetFrameTimestep;
 
@@ -236,17 +239,9 @@ export default class Engine extends EventSubscriber {
   };
 
   private updateEngineElements = () => {
-    if (this._isPaused) return;
 
     // *****************************
     // update operations
-
-    Array.from(this.scenes.values()).filter(scene => scene.isUpdateEnabled).forEach((scene) => {
-      scene.update(this.targetFrameTimestep);
-    });
-
-    // perform user-defined update callback (if provided)
-    if (this.update) this.update(this.targetFrameTimestep);
 
     // get a list of current events in the queue
     // const queuedEventTypes = this.eventDispatcher.eventList.map(
