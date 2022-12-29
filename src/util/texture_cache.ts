@@ -32,7 +32,7 @@ export const TextureCache = (() => {
      * @param resolve Promise resolve passthrough callback
      * @param reject Promise reject passthrough callback
      */
-    const createImageFromPath = (path: string) => {
+    const resolveBitmapFromPath = (path: string, resolve: ((value: ImageBitmap | PromiseLike<ImageBitmap>) => void), reject: ((reason: any) => void)): void => {
       const image = new Image();
 
       image.src = path;
@@ -42,12 +42,12 @@ export const TextureCache = (() => {
         createImageBitmap(image)
           .then((imageBitmap: ImageBitmap) => {
             addToCache(path, imageBitmap);
-            return imageBitmap
+            resolve(imageBitmap);
           })
-          .catch((error: Error) => { throw new Error(`Error creating image bitmap from image: ${error.message}`); });
+          .catch((error: Error) => { reject(`Error creating image bitmap from image: ${error.message}`); });
       };
 
-      image.onerror = () => { throw new Error(`Error loading image from path: ${path}`); }
+      image.onerror = () => { reject(`Error loading image from path: ${path}`); }
     };
 
     return {
@@ -63,8 +63,7 @@ export const TextureCache = (() => {
         const cachedTexture: ImageBitmap | undefined = searchCache(path) as ImageBitmap;
 
         return new Promise((resolve, reject) => {
-          // TODO: test works
-          resolve(cachedTexture || createImageFromPath(path));
+          cachedTexture ? resolve(cachedTexture) : resolveBitmapFromPath(path, resolve, reject);
         });
       }
     };
