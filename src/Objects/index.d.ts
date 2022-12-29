@@ -1,17 +1,10 @@
-interface AnimationState {
-  textureID: string;
-  frames: Array<AnimationKeyframe>;
-}
-
-interface AnimationKeyframe {
-  index: number;
-  duration: number;
-}
 
 interface Texture {
-  imageBitmap: ImageBitmap;
+  bitmap: ImageBitmap;
   size: Vector;
-  frameCount: number;
+  frameSize: Vector
+  frameDuration: number;
+  frameCount: Vector;
 }
 
 type ActorProperties = {
