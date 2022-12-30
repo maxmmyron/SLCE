@@ -1,6 +1,5 @@
 import { vec, add, sub, div, mult } from "../math/vector";
 
-import EventSubscriber from "../core/events/event_subscriber"
 import { Scene } from "../core/scene";
 
 /**
@@ -9,7 +8,7 @@ import { Scene } from "../core/scene";
  * @type {Actor}
  * @class
  */
-export default class Actor extends EventSubscriber {
+export default class Actor {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
@@ -112,8 +111,6 @@ export default class Actor extends EventSubscriber {
    * @param properties.isDebugEnabled whether or not the actor will draw debug information
    */
   constructor(ID: string, scene: Scene, properties?: ActorProperties) {
-    super();
-
     this.ID = ID;
 
     this.size = vec(0, 0); // TODO
