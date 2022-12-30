@@ -119,9 +119,9 @@ export default class Engine {
 
     this._canvasSize = vec(envWidth, envHeight);
 
-    this.fixDPI();
-
     this.eventHandler = EventHandler.getInstance();
+
+    this.fixDPI();
   }
 
 
@@ -145,6 +145,8 @@ export default class Engine {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
+    this.eventHandler
+
     // this.subscribe("oncanvasresize", () => {
     //   const dimensions = this.fixDPI();
     //   // set canvas width and height to scaled width and height
@@ -164,7 +166,7 @@ export default class Engine {
     this._isPaused = false;
 
     // initialize events
-    this.attachEvents();
+    this.eventHandler.attachEventListeners(this.canvasElement);
   };
 
   /**
@@ -211,12 +213,21 @@ export default class Engine {
         .filter(scene => scene.isUpdateEnabled)
         .forEach(scene => scene.tick(this.targetFrameTimestep));
 
-      this.eventHandler.addToQueue("ontick", this.targetFrameTimestep);
+      this.eventHandler.queueEvent("ontick", { frameTimestep: this.targetFrameTimestep });
       this.eventHandler.dispatchQueue();
 
       this.lag -= this.targetFrameTimestep;
 
       this.updatesSinceEngineStart++;
+
+      const queuedEventsToRemove = this.eventHandler.getQueuedEvents().filter((event) => {
+        if (!event.isPersistent) return true;
+        if (!event.persistUntil) return false;
+
+        return this.eventHandler.getQueuedEvents().some((event) => event.type === event.persistUntil);
+      });
+
+      queuedEventsToRemove.forEach(queuedEvent => this.eventHandler.dequeueEvent(queuedEvent.type));
 
       // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
       if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
@@ -233,58 +244,6 @@ export default class Engine {
     this.scenes = new Map(Array
       .from(this.scenes.entries())
       .filter(([key, scene]) => !scene.isQueuedForDisposal));
-  };
-
-  private updateEngineElements = () => {
-
-    // *****************************
-    // update operations
-
-    // get a list of current events in the queue
-    // const queuedEventTypes = this.eventDispatcher.eventList.map(
-    //   (event) => event.type
-    // );
-
-    // // get a list of all actors that currently have events that match queued events
-    // const relevantActors = this._actors.filter((actor) => {
-    //   if (!actor.subscribedEvents.size) return false;
-
-    //   for (const eventType of queuedEventTypes) {
-    //     if (actor.subscribedEvents.has(eventType)) return true;
-    //   }
-    // });
-
-    // this.eventDispatcher.eventList.forEach((event) => {
-    //   const eventType = event.type;
-    //   const eventPayload = event.payload;
-
-    //   // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
-    //   relevantActors.forEach((actor) => {
-    //     actor.subscribedEvents.forEach((subscribedEvent, actorEventType) => {
-    //       if (actorEventType === eventType) {
-    //         subscribedEvent.forEach((callback) => callback(eventPayload));
-    //       }
-    //     });
-    //   });
-
-    //   // perform event callbacks for events engine has subscribed to
-    //   this.subscribedEvents.forEach((subscribedEvent, EngineEvents) => {
-    //     if (EngineEvents === eventType) {
-    //       subscribedEvent.forEach((callback) => callback(eventPayload));
-    //     }
-    //   });
-    // });
-
-    // remove events from queue that have isPersistent set to false,
-    // or that contain a persistUntil value that exists in the queue.
-    const queuedEventsToRemove = this.eventHandler.getQueuedEvents().filter((event) => {
-      if (!event.isPersistent) return true;
-      if (!event.persistUntil) return false;
-
-      return this.eventHandler.getQueuedEvents().some((event) => event.name === event.persistUntil);
-    });
-
-    queuedEventsToRemove.forEach(queuedEvent => this.eventHandler.removeFromQueue(queuedEvent.name));
   };
 
 

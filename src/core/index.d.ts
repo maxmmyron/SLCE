@@ -1,3 +1,13 @@
+type ValidEventPayload =
+  | { x: number, y: number }
+  | { x: number, y: number }
+  | { x: number, y: number }
+  | { key: string, code: string }
+  | { key: string, code: string }
+  | { width: number, height: number }
+  | { frameTimestep: number }
+  | { interpolationFactor: number }
+
 /**
  * @typedef EventHandler A singleton that handles event subscription,
  * unsubscription, and dispatching.
@@ -9,13 +19,15 @@
  * @property {function} dispatchQueue Dispatches all events in the queue.
  */
 type EventHandler = {
-  addListener: (name: ValidEventName, callback: ((ev: any) => void)) => void,
-  removeListener: (name: ValidEventName, callback: ((ev: any) => void)) => void,
-  addToQueue: (name: ValidEventName, event: any, isPersistent?: boolean, persistUntil?: string) => void,
-  removeFromQueue: (name: ValidEventName) => void,
+  addListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
+  removeListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
+  queueEvent: (type: ValidEventType, payload: ValidEventPayload, isPersistent?: boolean, persistUntil?: string) => void,
+  dequeueEvent: (type: ValidEventType) => void,
   dispatchQueue: () => void,
   getQueuedEvents: () => Array<QueuedEvent>,
-  setIsEnginePaused: (isPaused: boolean) => void
+  setIsEnginePaused: (isPaused: boolean) => void,
+  attachEventListeners: (canvas: HTMLCanvasElement) => void,
+  detachEventListeners: () => void
 }
 
 /**
@@ -23,7 +35,7 @@ type EventHandler = {
  * event will dispatch on the next tick cycle, and will be removed from the
  * queue (if isPersistent is false) after its execution.
  *
- * @property {ValidEventName} name The name of the event to dispatch.
+ * @property {ValidEventType} type The name of the event to dispatch.
  * @property {Event} event The event to dispatch.
  * @property {boolean} isPersistent Whether or not the event should persist
  * until the event name described in persistUntil is called, or until the event
@@ -33,25 +45,24 @@ type EventHandler = {
  * persist until explicitly removed from the queue.
  */
 type QueuedEvent = {
-  name: ValidEventName,
-  event: Event,
+  type: ValidEventType,
+  payload: ValidEventPayload,
   isPersistent: boolean,
   persistUntil: string
 }
 
 /**
- * @typedef ValidEventName The names of all valid events.
+ * @typedef ValidEventType The names of all valid events.
  */
-type ValidEventName =
-  "onmousedown" |
-  "whilemousedown" |
-  "onmouseup" |
-  "onkeydown" |
-  "whilekeydown" |
-  "onkeyup" |
-  "oncanvasresize" |
-  "ontick" |
-  "onrender";
+type ValidEventType =
+  | "onmousedown"
+  | "onmouseup"
+  | "onmousemove"
+  | "onkeydown"
+  | "onkeyup"
+  | "oncanvasresize"
+  | "ontick"
+  | "onrender";
 
 type CameraOptions = {
   position?: Vector;
