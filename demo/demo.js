@@ -37,3 +37,12 @@ TextureCache.getInstance().load(animationSpritemap).then(bitmap => {
 console.log(Array.from(scene.actors.values()));
 
 console.log("Scenes: ", engine.getScenesByName("Scene"));
+
+const handler = (delta) => { };
+
+engine.addListener("update", handler);
+
+engine.removeListener("update", handler);
+
+// update: ((targetFrameTimestep: number) => void) | null = null;
+// render: ((interpolationFactor: number) => void) | null = null;
