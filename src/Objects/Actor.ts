@@ -132,21 +132,6 @@ export default class Actor extends EventSubscriber {
   // ****************************************************************
 
   /**
-   * Overridable user-defined function to run on each draw cycle.
-   *
-   * @param ctx the canvas context to draw to
-   * @param interp the interpolation factor for the current draw cycle
-   */
-  render: (ctx: CanvasRenderingContext2D, interp: number) => void = () => { };
-
-  /**
-   * Overridable user-defined function to run on each update cycle.
-   *
-   * @param dt the delta time since last update
-   */
-  update: (dt: number) => void = () => { };
-
-  /**
    * Preload function called once before the first frame cycle.
    * Accepts a function that will run before the update cycle begins.
    * Primarily used to load assets and initialize textures or animations.
@@ -189,7 +174,7 @@ export default class Actor extends EventSubscriber {
    *
    * @param timestep - update timestep
    */
-  setupUpdate = (timestep: number) => {
+  tick = (timestep: number) => {
     if (!this.doUpdate) return;
 
     // ****************************************************************
@@ -210,7 +195,7 @@ export default class Actor extends EventSubscriber {
     this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
 
     if (this.textureID) this.updateTexture(timestep);
-    if (this.update) this.update(timestep);
+    // if (this.update) this.update(timestep); TODO: replace with event emitter
   };
 
   /**
@@ -219,7 +204,7 @@ export default class Actor extends EventSubscriber {
    * @param ctx - canvas context to draw to
    * @param interp - interpolated time between current delta and target timestep
    */
-  setupRender = (ctx: CanvasRenderingContext2D, interp: number) => {
+  render = (ctx: CanvasRenderingContext2D, interp: number) => {
     if (!this.doDraw) return;
 
     // ****************************************************************
@@ -236,7 +221,7 @@ export default class Actor extends EventSubscriber {
     if (this.textureID) this.renderTexture(ctx);
 
     // call user-defined update callback function
-    if (this.render) this.render(ctx, interp);
+    // if (this.render) this.render(ctx, interp); TODO: replace with event emitter
 
     // ****************************************************************
     // restore & debug operations
@@ -244,7 +229,7 @@ export default class Actor extends EventSubscriber {
     // restore canvas context to previous state so we don't clip debug content
     ctx.restore();
 
-    if (this.isDebugEnabled) this.drawDebug(ctx);
+    if (this.isDebugEnabled) this.renderDebug(ctx);
   };
 
   // ****************************************************************
@@ -299,7 +284,7 @@ export default class Actor extends EventSubscriber {
    *
    * @param ctx canvas context to render debug information to
    */
-  private drawDebug = (ctx: CanvasRenderingContext2D) => {
+  private renderDebug = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
 
     // draw bounds border

@@ -1,8 +1,7 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 import { Camera } from "./camera";
-import EventDispatcher from "./events/event_dispatcher";
-import EventSubscriber from "./events/event_subscriber";
+import { EventHandler } from "./event_handler";
 import { Scene } from "./scene";
 
 const TARGET_FPS: number = 60;
@@ -13,7 +12,7 @@ const MAX_UPDATES_PER_FRAME: number = 240;
  *
  * @class
  */
-export default class Engine extends EventSubscriber {
+export default class Engine {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
@@ -49,7 +48,7 @@ export default class Engine extends EventSubscriber {
   // ⚓ PRIVATE DECLARATIONS (w/o getters)
   // ****************************************************************
 
-  private readonly eventDispatcher: EventDispatcher;
+  private readonly eventHandler: EventHandler;
 
   private isStarted: boolean = false;
 
@@ -111,8 +110,6 @@ export default class Engine extends EventSubscriber {
    * @param properties optional property arguments for engine
    */
   constructor(canvasElement: HTMLCanvasElement, properties: any = {}) {
-    super();
-
     this.canvasElement = canvasElement;
 
     this.ctx = canvasElement.getContext("2d") as CanvasRenderingContext2D;
@@ -124,7 +121,7 @@ export default class Engine extends EventSubscriber {
 
     this.fixDPI();
 
-    this.eventDispatcher = new EventDispatcher(canvasElement, this.isPaused);
+    this.eventHandler = EventHandler.getInstance();
   }
 
 
@@ -133,10 +130,6 @@ export default class Engine extends EventSubscriber {
   // ****************************************************************
 
   getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
-
-  update: ((targetFrameTimestep: number) => void) | null = null;
-
-  render: ((interpolationFactor: number) => void) | null = null;
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -152,11 +145,11 @@ export default class Engine extends EventSubscriber {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.subscribe("oncanvasresize", () => {
-      const dimensions = this.fixDPI();
-      // set canvas width and height to scaled width and height
-      this._canvasSize = vec(dimensions[0], dimensions[1]);
-    });
+    // this.subscribe("oncanvasresize", () => {
+    //   const dimensions = this.fixDPI();
+    //   // set canvas width and height to scaled width and height
+    //   this._canvasSize = vec(dimensions[0], dimensions[1]);
+    // });
 
     // wait for each scene to load up assets and connect textures/animations
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
@@ -164,14 +157,14 @@ export default class Engine extends EventSubscriber {
     // begin measuring performance and run engine.
     this._engineStartTime = performance.now();
     this.updateID = requestAnimationFrame(
-      this.loop
+      this.update
     );
 
     this.isStarted = true;
     this._isPaused = false;
 
     // initialize events
-    this.eventDispatcher.attachAllEvents();
+    this.attachEvents();
   };
 
   /**
@@ -190,13 +183,15 @@ export default class Engine extends EventSubscriber {
   // ⚓ PRIVATE METHODS
   // ****************************************************************
 
+  private attachEvents = () => { };
+
   /**
    * keeps track of FPS and updates all relevant actors
    *
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
-  private loop = (timestamp: DOMHighResTimeStamp) => {
-    this.updateID = requestAnimationFrame(this.loop);
+  private update = (timestamp: DOMHighResTimeStamp) => {
+    this.updateID = requestAnimationFrame(this.update);
 
     // *****************************
     // Calculate delta time and lag
@@ -212,10 +207,12 @@ export default class Engine extends EventSubscriber {
     // Perform engine updates based on current lag
     let cycleUpdateCount = 0;
     while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
-      Array.from(this.scenes.values()).filter(scene => scene.isUpdateEnabled).forEach(scene => scene.update(this.targetFrameTimestep));
+      Array.from(this.scenes.values())
+        .filter(scene => scene.isUpdateEnabled)
+        .forEach(scene => scene.tick(this.targetFrameTimestep));
 
-      // perform user-defined update callback (if provided)
-      if (this.update) this.update(this.targetFrameTimestep);
+      this.eventHandler.addToQueue("ontick", this.targetFrameTimestep);
+      this.eventHandler.dispatchQueue();
 
       this.lag -= this.targetFrameTimestep;
 
@@ -278,10 +275,16 @@ export default class Engine extends EventSubscriber {
     //   });
     // });
 
-    // remove events labeled as non persistent from queue.
-    this.eventDispatcher.eventList = this.eventDispatcher.eventList.filter(
-      (event) => event.isPersistent
-    );
+    // remove events from queue that have isPersistent set to false,
+    // or that contain a persistUntil value that exists in the queue.
+    const queuedEventsToRemove = this.eventHandler.getQueuedEvents().filter((event) => {
+      if (!event.isPersistent) return true;
+      if (!event.persistUntil) return false;
+
+      return this.eventHandler.getQueuedEvents().some((event) => event.name === event.persistUntil);
+    });
+
+    queuedEventsToRemove.forEach(queuedEvent => this.eventHandler.removeFromQueue(queuedEvent.name));
   };
 
 
@@ -305,7 +308,7 @@ export default class Engine extends EventSubscriber {
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     // call user-defined draw callback (if provided)
-    if (this.render) this.render(interpolationFactor);
+    // if (this.render) this.render(interpolationFactor);
 
     // *****************************
     // post-draw operations
@@ -342,9 +345,9 @@ export default class Engine extends EventSubscriber {
     return [computedWidth, computedHeight];
   };
 
-  private updatePauseState = (newPauseState: boolean) => {
-    this._isPaused = newPauseState;
-    this.eventDispatcher.isEnginePaused = newPauseState;
+  private updatePauseState = (isPaused: boolean) => {
+    this._isPaused = isPaused;
+    this.eventHandler.setIsEnginePaused(isPaused);
   }
 
 

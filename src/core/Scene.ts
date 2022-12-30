@@ -65,7 +65,7 @@ export class Scene {
     return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));
   };
 
-  update = (targetFrameTimestep: number) => {
+  tick = (targetFrameTimestep: number) => {
     if (this.isQueuedForDisposal) {
       return;
     }
