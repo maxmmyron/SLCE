@@ -19,7 +19,12 @@ export const EventHandler = (() => {
      */
     let isEnginePaused: boolean = true;
 
-    let resizeObserver: ResizeObserver;
+    let resizeObserver: ResizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]): void => {
+      entries.forEach(entry => {
+        const { width, height } = entry.contentRect;
+        addToQueue("onresize", { width, height });
+      });
+    });
 
     let canvasElement: HTMLCanvasElement;
 
@@ -27,9 +32,7 @@ export const EventHandler = (() => {
       // because stuff like addEventListener is called regardless of engine
       // state, we want to filter out any events queued while the engine is
       // paused.
-      if (isEnginePaused) return;
-
-      if (queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1) return
+      if (isEnginePaused || queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1) return;
 
       queue.push({ type, payload, isPersistent, persistUntil });
     };
@@ -54,17 +57,14 @@ export const EventHandler = (() => {
       addToQueue("onkeyup", { key: e.key, code: e.code });
     };
 
-    const onCanvasResize = (e: any): void => {
-      addToQueue("oncanvasresize", { width: e.contentRect.width, height: e.contentRect.height });
-    };
-
-    const eventHandlerMap: Map<string, (e: any) => void> = new Map([
+    const eventHandlerMap: Map<string, ((e: any) => void) | null> = new Map([
       ["mousedown", onMouseDown],
       ["mouseup", onMouseUp],
       ["mousemove", onMouseMove],
       ["keydown", onKeyDown],
       ["keyup", onKeyUp],
-      ["resize", onCanvasResize],
+      // handled with ResizeObserver so we don't need a handler function
+      ["resize", null],
     ]);
 
     /**
@@ -104,6 +104,7 @@ export const EventHandler = (() => {
       },
 
       dispatchQueue: (): void => {
+        console.log("dispatching queue", queue)
         queue.forEach(queuedEvent => {
           const eventIndex = getEventIndex(queuedEvent.type);
           if (eventIndex === -1) return;
@@ -119,11 +120,10 @@ export const EventHandler = (() => {
         eventHandlerMap.forEach((callback, eventName) => {
           switch (eventName) {
             case "resize":
-              resizeObserver = new ResizeObserver(callback);
               resizeObserver.observe(canvas);
               break;
             default:
-              canvas.addEventListener(eventName, callback);
+              canvas.addEventListener(eventName, callback as (e: any) => void);
               break;
           }
         });
@@ -136,7 +136,7 @@ export const EventHandler = (() => {
               resizeObserver.unobserve(canvasElement);
               break;
             default:
-              canvasElement.removeEventListener(eventName, callback);
+              canvasElement.removeEventListener(eventName, callback as (e: any) => void);
               break;
           }
         });
