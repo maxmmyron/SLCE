@@ -211,11 +211,12 @@ export default class Engine {
     // Perform engine updates based on current lag
     let cycleUpdateCount = 0;
     while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
+      this.eventHandler.queueEvent("ontick", { frameTimestep: this.targetFrameTimestep });
+
       Array.from(this.scenes.values())
         .filter(scene => scene.isUpdateEnabled)
         .forEach(scene => scene.tick(this.targetFrameTimestep));
 
-      this.eventHandler.queueEvent("ontick", { frameTimestep: this.targetFrameTimestep });
       this.eventHandler.dispatchQueue();
 
       this.lag -= this.targetFrameTimestep;
@@ -242,10 +243,10 @@ export default class Engine {
 
     this.render(interpolationFactor);
 
-    // filter scene map by those that are NOT queued for disposal
+    // filter out scenes that are queued for disposal while disposing of them
     this.scenes = new Map(Array
       .from(this.scenes.entries())
-      .filter(([key, scene]) => !scene.isQueuedForDisposal));
+      .filter(([key, scene]) => !(scene.isQueuedForDisposal && this.removeScene(scene))));
   };
 
 
@@ -314,6 +315,10 @@ export default class Engine {
   private updatePauseState = (isPaused: boolean) => {
     this._isPaused = isPaused;
     this.eventHandler.setIsEnginePaused(isPaused);
+  }
+
+  private removeScene = (scene: Scene) => {
+    this.scenes.delete(scene.ID);
   }
 
   // ****************************************************************
