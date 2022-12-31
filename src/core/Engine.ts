@@ -214,7 +214,7 @@ export default class Engine {
       this.eventHandler.queueEvent("ontick", { frameTimestep: this.targetFrameTimestep });
 
       Array.from(this.scenes.values())
-        .filter(scene => scene.isUpdateEnabled)
+        .filter(scene => scene.isTickEnabled)
         .forEach(scene => scene.tick(this.targetFrameTimestep));
 
       this.eventHandler.dispatchQueue();
@@ -275,14 +275,24 @@ export default class Engine {
     // debug render
     if (!this.isDebugEnabled || isNaN(this._FPS)) return;
 
-    this.ctx.fillStyle = "white";
-    this.ctx.fillText("FPS: " + this._FPS, 5, 15);
-    this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
-    this.ctx.fillText("lag: " + this.lag, 5, 35);
-    this.ctx.fillText("interpolation: " + interpolationFactor, 5, 45);
-    this.ctx.fillText("total updates: " + this.updatesSinceEngineStart, 5, 55);
-    this.ctx.fillText("runtime: " + (performance.now() - this._engineStartTime) / 1000, 5, 65);
+    const debugLines = [
+      `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
+      `FPS:                   ${this._FPS}`,
+      `------------------------`,
+      `total ticks:           ${this.updatesSinceEngineStart}`,
+      `current tick lag:      ${this.lag}`,
+      `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
+      `------------------------`,
+      `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
+      `frame duration:        ${1000 / this._FPS}`,
+      `render interpolation:  ${interpolationFactor}`,
+    ];
 
+    debugLines.forEach((line, index) => {
+      this.ctx.font = "11px monospace";
+      this.ctx.fillStyle = "white";
+      this.ctx.fillText(line, 5, 15 + (index * 12));
+    });
   };
 
   /**
