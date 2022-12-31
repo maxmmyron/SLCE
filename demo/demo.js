@@ -38,6 +38,4 @@ console.log(Array.from(scene.actors.values()));
 
 console.log("Scenes: ", engine.getScenesByName("Scene"));
 
-engine.addListener("ontick", (delta) => console.log({ delta }));
-
 engine.start();
