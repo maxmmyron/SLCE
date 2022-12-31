@@ -41,6 +41,3 @@ console.log("Scenes: ", engine.getScenesByName("Scene"));
 engine.addListener("ontick", (delta) => console.log({ delta }));
 
 engine.start();
-
-// update: ((targetFrameTimestep: number) => void) | null = null;
-// render: ((interpolationFactor: number) => void) | null = null;

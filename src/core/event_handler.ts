@@ -104,7 +104,6 @@ export const EventHandler = (() => {
       },
 
       dispatchQueue: (): void => {
-        console.log("dispatching queue", queue)
         queue.forEach(queuedEvent => {
           const eventIndex = getEventIndex(queuedEvent.type);
           if (eventIndex === -1) return;
