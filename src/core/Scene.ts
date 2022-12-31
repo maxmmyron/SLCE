@@ -30,7 +30,7 @@ export class Scene {
   isTickEnabled: boolean = true;
 
   environment: SceneEnvironment = {
-    background: "#000000",
+    background: "transparent",
     gravity: vec(0, 0)
   };
 
@@ -74,11 +74,14 @@ export class Scene {
 
   tick = (targetFrameTimestep: number) => {
     if (!this.isTickEnabled || this.isQueuedForDisposal) return;
+
+    Array.from(this.actors.values()).forEach(actor => actor.tick(targetFrameTimestep));
   }
 
   render = (interpolationFactor: number) => {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
-    const ctx = this.engine.ctx;
+
+    const ctx: CanvasRenderingContext2D = this.engine.ctx;
 
     ctx.fillStyle = this.environment.background;
     ctx.fillRect(0, 0, this.engine.canvasSize.x, this.engine.canvasSize.y);

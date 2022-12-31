@@ -24,7 +24,7 @@ export default class Actor {
 
   isCollisionEnabled: boolean = true;
 
-  isTextureEnabled: boolean = false;
+  isTextureEnabled: boolean = true;
 
   /**
    * Whether or not the actor is queued to be removed from the engine at the
@@ -205,7 +205,7 @@ export default class Actor {
   render = (interp: number) => {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
 
-    const ctx = this.scene.engine.ctx;
+    const ctx: CanvasRenderingContext2D = this.scene.engine.ctx;
 
     // ****************************************************************
     // pre-draw operations
@@ -242,10 +242,10 @@ export default class Actor {
    *
    * @param delta the current delta time for the update loop
    */
-  private updateTexture = (delta: number) => {
+  private updateTexture = (timestep: number) => {
     let texture: Texture = this._textures[this.textureID];
 
-    if ((this.textureDeltaSum += delta) >= texture.frameDuration) {
+    if ((this.textureDeltaSum += timestep) >= texture.frameDuration) {
       this.textureDeltaSum -= texture.frameDuration;
 
       this._textureFrame =
@@ -253,8 +253,8 @@ export default class Actor {
     } else return;
 
     this.textureSourcePosition = vec(
-      this._textureFrame % texture.frameCount.x * texture.size.x,
-      (this._textureFrame - this._textureFrame % texture.frameCount.x) / texture.frameCount.y * texture.size.y
+      this._textureFrame % texture.frameCount.x * texture.frameSize.x,
+      (this._textureFrame - this._textureFrame % texture.frameCount.x) / texture.frameCount.y * texture.frameSize.y
     );
   };
 
@@ -307,6 +307,9 @@ export default class Actor {
     ctx.strokeRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
     ctx.fillStyle = "white";
+    ctx.font = "11px monospace";
+    ctx.shadowColor = "black";
+    ctx.shadowBlur = 4;
 
     const texts: string[] = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
