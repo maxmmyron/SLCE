@@ -25,24 +25,22 @@ console.log(Array.from(engine.scenes.values()));
 const actorA = new Actor("actorA", scene);
 const actorB = new Actor("actorB", scene);
 
-TextureCache.getInstance().load(animationSpritemap).then(bitmap => {
+actorA.preload = async () => {
+  const bitmap = await TextureCache.getInstance().load(animationSpritemap);
+
   console.log("Loaded bitmap: ", bitmap);
+
   actorA.addTexture("texmap", bitmap, vec(64, 64), 200);
   actorA.textureID = "texmap";
-
-  console.log(actorA.textures);
-})
-
+};
 
 console.log(Array.from(scene.actors.values()));
 
 console.log("Scenes: ", engine.getScenesByName("Scene"));
 
-const handler = (delta) => { };
+engine.addListener("ontick", (delta) => console.log({ delta }));
 
-engine.addListener("update", handler);
-
-engine.removeListener("update", handler);
+engine.start();
 
 // update: ((targetFrameTimestep: number) => void) | null = null;
 // render: ((interpolationFactor: number) => void) | null = null;
