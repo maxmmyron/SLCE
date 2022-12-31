@@ -60,7 +60,7 @@ type ValidEventType =
   | "onmousemove"
   | "onkeydown"
   | "onkeyup"
-  | "oncanvasresize"
+  | "onresize"
   | "ontick"
   | "onrender";
 
