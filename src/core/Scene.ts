@@ -57,7 +57,11 @@ export class Scene {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  dispose = () => {
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.engine.eventHandler.addListener(eventName, callback);
+
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.engine.eventHandler.removeListener(eventName, callback);
+
+  queueDisposal = () => {
     this.isQueuedForDisposal = true;
   }
 
@@ -66,6 +70,9 @@ export class Scene {
   };
 
   tick = (targetFrameTimestep: number) => {
+
+
+
     if (this.isQueuedForDisposal) {
       return;
     }
