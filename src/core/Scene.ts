@@ -17,11 +17,17 @@ export class Scene {
 
   actors: Map<string, Actor> = new Map();
 
+  /**
+   * Whether or not the scene is queued to be removed from the engine at the
+   * next tick.
+   *
+   * @default false
+   */
   isQueuedForDisposal: boolean = false;
 
   isRenderEnabled: boolean = true;
 
-  isUpdateEnabled: boolean = true;
+  isTickEnabled: boolean = true;
 
   environment: SceneEnvironment = {
     background: "#000000",
@@ -35,12 +41,9 @@ export class Scene {
   private readonly internalID: string;
 
   // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/o getters)
-  // ****************************************************************
-
-  // ****************************************************************
   // ⚓ CONSTRUCTOR
   // ****************************************************************
+
   constructor(name: string, engine: Engine, options: SceneOptions = {}) {
     this.name = name;
 
@@ -70,19 +73,17 @@ export class Scene {
   };
 
   tick = (targetFrameTimestep: number) => {
-
-
-
-    if (this.isQueuedForDisposal) {
-      return;
-    }
+    if (!this.isTickEnabled || this.isQueuedForDisposal) return;
   }
 
   render = (interpolationFactor: number) => {
+    if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
     const ctx = this.engine.ctx;
 
     ctx.fillStyle = this.environment.background;
     ctx.fillRect(0, 0, this.engine.canvasSize.x, this.engine.canvasSize.y);
+
+    Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
   }
 
   // ****************************************************************
