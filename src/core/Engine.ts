@@ -48,7 +48,7 @@ export default class Engine {
   // ⚓ PRIVATE DECLARATIONS (w/o getters)
   // ****************************************************************
 
-  private readonly eventHandler: EventHandler;
+  readonly eventHandler: EventHandler;
 
   private isStarted: boolean = false;
 
@@ -147,11 +147,11 @@ export default class Engine {
 
     this.eventHandler
 
-    // this.subscribe("oncanvasresize", () => {
-    //   const dimensions = this.fixDPI();
-    //   // set canvas width and height to scaled width and height
-    //   this._canvasSize = vec(dimensions[0], dimensions[1]);
-    // });
+    this.eventHandler.addListener("onresize", () => {
+      const dimensions = this.fixDPI();
+      // set canvas width and height to scaled width and height
+      this._canvasSize = vec(dimensions[0], dimensions[1]);
+    });
 
     // wait for each scene to load up assets and connect textures/animations
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
@@ -163,7 +163,7 @@ export default class Engine {
     );
 
     this.isStarted = true;
-    this._isPaused = false;
+    this.updatePauseState(false);
 
     // initialize events
     this.eventHandler.attachEventListeners(this.canvasElement);
@@ -180,12 +180,14 @@ export default class Engine {
    */
   resume = () => this.updatePauseState(false);
 
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.addListener(eventName, callback);
+
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.removeListener(eventName, callback);
+
 
   // ****************************************************************
   // ⚓ PRIVATE METHODS
   // ****************************************************************
-
-  private attachEvents = () => { };
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -238,7 +240,7 @@ export default class Engine {
 
     const interpolationFactor = this.lag / this.targetFrameTimestep;
 
-    this.renderEngineElements(interpolationFactor);
+    this.render(interpolationFactor);
 
     // filter scene map by those that are NOT queued for disposal
     this.scenes = new Map(Array
@@ -253,7 +255,7 @@ export default class Engine {
    * @private
    * @param {number} interpolationFactor - interpolation value
    */
-  private renderEngineElements = (interpolationFactor: number) => {
+  private render = (interpolationFactor: number) => {
     // *****************************
     // pre-draw operations
     if (this._isPaused) return;
@@ -266,15 +268,20 @@ export default class Engine {
 
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
-    // call user-defined draw callback (if provided)
-    // if (this.render) this.render(interpolationFactor);
+    this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
     // *****************************
-    // post-draw operations
+    // debug render
+    if (!this.isDebugEnabled || isNaN(this._FPS)) return;
 
-    if (this.isDebugEnabled) {
-      this.executeDebugRender(interpolationFactor);
-    }
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText("FPS: " + this._FPS, 5, 15);
+    this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
+    this.ctx.fillText("lag: " + this.lag, 5, 35);
+    this.ctx.fillText("interpolation: " + interpolationFactor, 5, 45);
+    this.ctx.fillText("total updates: " + this.updatesSinceEngineStart, 5, 55);
+    this.ctx.fillText("runtime: " + (performance.now() - this._engineStartTime) / 1000, 5, 65);
+
   };
 
   /**
@@ -308,23 +315,6 @@ export default class Engine {
     this._isPaused = isPaused;
     this.eventHandler.setIsEnginePaused(isPaused);
   }
-
-
-  // ****************************************************************
-  // ⚓ DEBUG METHODS
-  // ****************************************************************
-
-  private executeDebugRender = (interpolationFactor: number) => {
-    this.ctx.fillStyle = "white";
-    if (!isNaN(this._FPS)) {
-      this.ctx.fillText("FPS: " + this._FPS, 5, 15);
-      this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
-      this.ctx.fillText("lag: " + this.lag, 5, 35);
-      this.ctx.fillText("interpolation: " + interpolationFactor, 5, 45);
-      this.ctx.fillText("total updates: " + this.updatesSinceEngineStart, 5, 55);
-      this.ctx.fillText("runtime: " + (performance.now() - this._engineStartTime) / 1000, 5, 65);
-    }
-  };
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATION GETTERS
