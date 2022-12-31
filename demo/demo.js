@@ -15,14 +15,14 @@ const engine = new Engine(canvas);
 
 const camera = new Camera("camera", engine);
 
-const scene = new Scene("Scene", engine);
-const scene2 = new Scene("Scene", engine);
-const scene3 = new Scene("Scene", engine);
+const scene = new Scene("SceneA", engine);
+const scene2 = new Scene("SceneB", engine);
+const scene3 = new Scene("SceneC", engine);
 
 console.log(engine.camera)
 console.log(Array.from(engine.scenes.values()));
 
-const actorA = new Actor("actorA", scene);
+const actorA = new Actor("actorA", scene, { pos: vec(100, 100), size: vec(64, 64) });
 const actorB = new Actor("actorB", scene);
 
 actorA.preload = async () => {
