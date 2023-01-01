@@ -190,9 +190,12 @@ export default class Actor {
     // ****************************************************************
     // primary update operations
 
-    if (this.isGravityEnabled) {
-      this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
-    }
+    // if (this.isGravityEnabled) {
+    //   this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
+    // }
+
+    // console.log(mult(this.vel, timestep));
+    this.pos = add(this.pos, mult(this.vel, timestep));
 
     if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
   };
@@ -231,6 +234,10 @@ export default class Actor {
 
     if (this.isDebugEnabled) this.renderDebug(ctx);
   };
+
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.addListener(eventName, callback);
+
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.removeListener(eventName, callback);
 
   // ****************************************************************
   // ⚓ PRIVATE METHODS

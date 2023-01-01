@@ -32,7 +32,8 @@ export const EventHandler = (() => {
       // because stuff like addEventListener is called regardless of engine
       // state, we want to filter out any events queued while the engine is
       // paused.
-      if (isEnginePaused || queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1) return;
+      //queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1
+      if (isEnginePaused) return;
 
       queue.push({ type, payload, isPersistent, persistUntil });
     };
@@ -46,11 +47,11 @@ export const EventHandler = (() => {
     };
 
     const onMouseMove = (e: any): void => {
-      addToQueue("onmousemove", { x: e.x, y: e.y });
+      addToQueue("whilemousemove", { x: e.x, y: e.y });
     };
 
     const onKeyDown = (e: any): void => {
-      addToQueue("onkeydown", { key: e.key, code: e.code });
+      addToQueue("whilekeydown", { key: e.key, code: e.code }, true, "onkeyup");
     };
 
     const onKeyUp = (e: any): void => {
@@ -111,6 +112,16 @@ export const EventHandler = (() => {
           const callbacks = events[eventIndex].callbacks;
           callbacks.forEach(callback => callback(queuedEvent.payload));
         });
+
+        // remove events that have been persisted until another event
+        queue = queue.filter(queuedEvent => {
+          if (queuedEvent.persistUntil === "") return true;
+
+          return queue.findIndex(_ => _.type === queuedEvent.persistUntil) === -1;
+        });
+
+        // remove non-persistent events
+        queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
       },
 
       attachEventListeners: (canvas: HTMLCanvasElement): void => {

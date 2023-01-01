@@ -223,15 +223,6 @@ export default class Engine {
 
       this.updatesSinceEngineStart++;
 
-      const queuedEventsToRemove = this.eventHandler.getQueuedEvents().filter((event) => {
-        if (!event.isPersistent) return true;
-        if (!event.persistUntil) return false;
-
-        return this.eventHandler.getQueuedEvents().some((event) => event.type === event.persistUntil);
-      });
-
-      queuedEventsToRemove.forEach(queuedEvent => this.eventHandler.dequeueEvent(queuedEvent.type));
-
       // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
       if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
         this.lag = 0;

@@ -57,8 +57,8 @@ type QueuedEvent = {
 type ValidEventType =
   | "onmousedown"
   | "onmouseup"
-  | "onmousemove"
-  | "onkeydown"
+  | "whilemousemove"
+  | "whilekeydown"
   | "onkeyup"
   | "onresize"
   | "ontick"

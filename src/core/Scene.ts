@@ -1,5 +1,6 @@
 import { vec } from "../math/vector";
 import Actor from "../objects/actor";
+import { Camera } from "./camera";
 import Engine from "./engine";
 
 /**
@@ -14,6 +15,8 @@ export class Scene {
   readonly engine: Engine;
 
   readonly name: string;
+
+  camera: Camera;
 
   actors: Map<string, Actor> = new Map();
 
@@ -44,12 +47,13 @@ export class Scene {
   // ⚓ CONSTRUCTOR
   // ****************************************************************
 
-  constructor(name: string, engine: Engine, options: SceneOptions = {}) {
+  constructor(name: string, engine: Engine, camera: Camera, options: SceneOptions = {}) {
     this.name = name;
-
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
+
+    this.camera = camera;
 
     this.environment = options.environment ?? this.environment;
 

@@ -15,15 +15,13 @@ const engine = new Engine(canvas);
 
 const camera = new Camera("camera", engine);
 
-const scene = new Scene("SceneA", engine);
-const scene2 = new Scene("SceneB", engine);
-const scene3 = new Scene("SceneC", engine);
+const scene = new Scene("SceneA", engine, camera);
 
-console.log(engine.camera)
-console.log(Array.from(engine.scenes.values()));
+const actorA = new Actor("actorA", scene, { pos: vec(250, engine.canvasSize.y / 2 - 32), size: vec(64, 64) });
+const actorB = new Actor("actorB", scene, { pos: vec(250, engine.canvasSize.y / 2 + 150), size: vec(64, 64), vel: vec(1, 0) });
 
-const actorA = new Actor("actorA", scene, { pos: vec(100, 100), size: vec(64, 64) });
-const actorB = new Actor("actorB", scene);
+actorA.isDebugEnabled = true;
+actorB.isDebugEnabled = true;
 
 actorA.preload = async () => {
   const bitmap = await TextureCache.getInstance().load(animationSpritemap);
@@ -31,11 +29,36 @@ actorA.preload = async () => {
   console.log("Loaded bitmap: ", bitmap);
 
   actorA.addTexture("texmap", bitmap, vec(64, 64), 200);
+  actorB.addTexture("texmap", bitmap, vec(64, 64), 200);
+
   actorA.textureID = "texmap";
+  actorB.textureID = "texmap";
 };
 
-console.log(Array.from(scene.actors.values()));
+actorA.addListener("whilekeydown", (e) => {
+  if (e.key === "ArrowRight") {
+    actorA.vel.x = 1;
+  }
+  if (e.key === "ArrowLeft") {
+    actorA.vel.x = -1;
+  }
+  if (e.key === "ArrowUp") {
+    actorA.vel.y = -1;
+  }
+  if (e.key === "ArrowDown") {
+    actorA.vel.y = 1;
+  }
+});
 
-console.log("Scenes: ", engine.getScenesByName("Scene"));
+actorA.addListener("ontick", (e) => {
+  actorA.vel.x *= 0.9;
+  actorA.vel.y *= 0.9;
+});
+
+actorB.addListener("ontick", (e) => {
+  if (actorB.pos.x > engine.canvasSize.x + 64) {
+    actorB.pos.x = 0;
+  }
+});
 
 engine.start();
