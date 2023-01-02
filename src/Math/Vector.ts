@@ -22,7 +22,7 @@ import { assert } from "../util/asserts";
  * v.x // 1
  * v.y // 0
  */
-export const vec = (x: number = 0, y: number = 0) => {
+export const vec = (x: number = 0, y: number = 0): Vector => {
   return { x, y };
 };
 

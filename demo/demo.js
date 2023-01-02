@@ -1,9 +1,11 @@
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
+import Camera from "../src/core/camera";
 import Engine from "../src/core/engine";
+import Scene from "../src/core/scene";
 import { vec } from "../src/math/vector";
 import Actor from "../src/objects/actor";
-import { TextureLoader } from "../src/util/texture_loader";
+import { TextureCache } from "../src/util/texture_cache";
 
 import animationSpritemap from "./animationSpritemap.png";
 import characterSpritemap from "./characterSpritemap.png";
@@ -11,56 +13,56 @@ import characterSpritemap from "./characterSpritemap.png";
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas);
 
-const actorMargin = 32;
+const camera = new Camera("camera", engine);
 
-let actorSize = vec(64, 82);
+const scene = new Scene("SceneA", engine, camera);
 
-let actorA = new Actor(engine, "ActorA", actorSize, {
-  pos: vec(engine.canvasSize.x / 2 - (actorSize.x + actorMargin), (engine.canvasSize.y - actorSize.y) / 2),
-  isDebugEnabled: true,
-});
+const actorA = new Actor("actorA", scene, { pos: vec(250, engine.canvasSize.y / 2 - 32), size: vec(64, 64) });
+const actorB = new Actor("actorB", scene, { pos: vec(250, engine.canvasSize.y / 2 + 150), size: vec(64, 64), vel: vec(1, 0) });
+
+actorA.isDebugEnabled = true;
+actorB.isDebugEnabled = true;
 
 actorA.preload = async () => {
-  let texture = await TextureLoader.getInstance().load(characterSpritemap);
-  actorA.addTexture("walkSpritemap", texture, {
-    frameCount: 4,
-    textureSize: vec(32, 41),
-  });
+  const bitmap = await TextureCache.getInstance().load(animationSpritemap);
 
-  actorA.addAnimationState("walk", "walkSpritemap", {
-    frameCount: 4,
-    startIndex: 0,
-    frameDuration: 200,
-  });
+  console.log("Loaded bitmap: ", bitmap);
 
-  actorA.setAnimationState("walk");
+  actorA.addTexture("texmap", bitmap, vec(64, 64), 200);
+  actorB.addTexture("texmap", bitmap, vec(64, 64), 200);
+
+  actorA.textureID = "texmap";
+  actorB.textureID = "texmap";
 };
 
-engine.addActor(actorA);
-
-actorSize = vec(64, 64);
-
-const actorB = new Actor(engine, "ActorB", actorSize, {
-  pos: vec(engine.canvasSize.x / 2 + (actorSize.x + actorMargin), (engine.canvasSize.y - actorSize.y) / 2),
-  isDebugEnabled: true,
+actorA.addListener("onkeydown", (e) => {
+  if (e.key === "r") {
+    actorA.vel = vec();
+    actorA.setPosition(vec(250, engine.canvasSize.y / 2 - 32));
+  }
 });
 
-actorB.preload = async () => {
-  let texture = await TextureLoader.getInstance().load(animationSpritemap);
-  actorB.addTexture("spritemap", texture, {
-    frameCount: 64,
-    textureSize: vec(64, 64),
-  });
+actorA.addListener("whilekeydown", (e) => {
+  if (e.key === "ArrowRight") actorA.vel.x += 0.01;
+  if (e.key === "ArrowLeft") actorA.vel.x += -0.01;
+  if (e.key === "ArrowUp") actorA.vel.y += -0.01;
+  if (e.key === "ArrowDown") actorA.vel.y += 0.01;
 
-  actorB.addAnimationState("testAnimation", "spritemap", {
-    frameCount: 64,
-    startIndex: 0,
-    frameDuration: 200,
-  });
+  actorA.vel.x = Math.min(Math.max(actorA.vel.x, -0.5), 0.5);
+  actorA.vel.y = Math.min(Math.max(actorA.vel.y, -0.5), 0.5);
+});
 
-  actorB.setAnimationState("testAnimation");
-};
+actorA.addListener("ontick", (e) => {
+  actorA.pos.x += actorA.vel.x * e.deltaTime;
+  actorA.pos.y += actorA.vel.y * e.deltaTime;
+});
 
-engine.addActor(actorB);
+actorB.addListener("ontick", (e) => {
+  actorB.pos.x += actorB.vel.x * e.deltaTime;
+
+  if (actorB.pos.x > engine.canvasSize.x + 64) {
+    actorB.pos.x = 0;
+  }
+});
 
 engine.start();

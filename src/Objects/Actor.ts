@@ -1,8 +1,5 @@
 import { vec, add, sub, div, mult } from "../math/vector";
-
-import { assert } from "../util/asserts";
-import EventSubscriber from "../core/event_subscriber"
-import Engine from "../core/engine";
+import Scene from "../core/scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -10,16 +7,39 @@ import Engine from "../core/engine";
  * @type {Actor}
  * @class
  */
-export default class Actor extends EventSubscriber {
+export default class Actor {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
 
-  doUpdate: boolean = true;
+  readonly scene: Scene;
 
-  doDraw: boolean = true;
+  readonly name: string;
 
-  readonly ID: string;
+  isTickEnabled: boolean = true;
+
+  isRenderEnabled: boolean = true;
+
+  isGravityEnabled: boolean = true;
+
+  isCollisionEnabled: boolean = true;
+
+  isTextureEnabled: boolean = true;
+
+  /**
+   * Whether or not the actor is queued to be removed from the engine at the
+   * next tick.
+   *
+   * @default false
+   */
+  isQueuedForDisposal: boolean = false;
+
+  /**
+   * Whether or not the actor will draw debug information.
+   *
+   * @default false
+   */
+  isDebugEnabled: boolean = false;
 
   /**
    * Current position of actor; calculated from top left corner of actor.
@@ -31,35 +51,25 @@ export default class Actor extends EventSubscriber {
    */
   size: Vector;
 
-  vel: Vector;
-
-  /**
-   * Notifies engine that an actor should be disposed of at next update cycle.
-   */
-  isQueuedForDisposal: boolean = false;
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/ getters)
-  // ****************************************************************
-
-  private _animations: { [key: string]: AnimationState } = {};
-
-  // TODO: switch from current animation ID to current animation state
-  private _currentAnimationID: string = "";
-
-  private _currentAnimationFrame: number = 0;
-
-  private readonly _engine: Engine;
-
-  private _textures: { [key: string]: Texture } = {};
-
   /**
    * The current texture ID to draw for the actor.
    * Overridden by AnimationID if animation is active.
    *
    * @default ""
    */
-  private _currentTextureID: string = "";
+  textureID: string = "";
+
+  vel: Vector;
+
+  // ****************************************************************
+  // ⚓ PRIVATE DECLARATIONS (w/ getters)
+  // ****************************************************************
+
+  private readonly internalID: string;
+
+  private _textureFrame: number = 0;
+
+  private _textures: { [key: string]: Texture } = {};
 
 
   // ****************************************************************
@@ -71,35 +81,24 @@ export default class Actor extends EventSubscriber {
    * When this exceeds the duration for the current animation frame,
    * the animation frame is incremented.
    */
-  private animationDeltaSum: number = 0;
+  private textureDeltaSum: number = 0;
 
   /**
-   * A struct containing last calculated position and velocity of actor. Used when interpolating between draw cycles.
-   *
-   * @property {Vector} pos - last calculated position of actor
-   * @property {Vector} vel - last calculated velocity of actor
+   * A struct containing previous state of the actor.
    */
-  private lastState = {
-    pos: vec(),
-    vel: vec(),
-  };
+  private previousState: ActorState;
 
   /**
    * The offset to start drawing the texture from the top left corner of the actor.
    */
   private textureSourcePosition: Vector = vec(0, 0);
 
-
-  // ****************************************************************
-  // ⚓ DEBUG DECLARATIONS
-  // ****************************************************************
-
   /**
-   * Whether or not the actor will draw debug information.
-   *
-   * @default false
+   * Whether or not interpolation should be factored in when calculating the
+   * position of the actor. This is disabled for one frame when the actor is
+   * moved using SetPosition()
    */
-  isDebugEnabled: boolean = false;
+  private isInterpolationEnabled: boolean = true;
 
 
   // ****************************************************************
@@ -117,16 +116,20 @@ export default class Actor extends EventSubscriber {
    * @param properties.size size of the actor
    * @param properties.isDebugEnabled whether or not the actor will draw debug information
    */
-  constructor(engine: Engine, ID: string, size: Vector, properties?: ActorProperties) {
-    super();
+  constructor(name: string, scene: Scene, properties?: ActorProperties) {
+    this.name = name;
 
-    this._engine = engine;
-    this.ID = ID;
+    this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
-    this.size = size;
+    this.scene = scene;
 
-    this.lastState.pos = this.pos = properties?.pos || vec();
-    this.lastState.vel = this.vel = properties?.vel || vec();
+    this.scene.actors.set(this.internalID, this);
+
+    this.pos = properties?.pos || vec(0, 0);
+    this.vel = properties?.vel || vec(0, 0);
+    this.size = properties?.size || vec(0, 0);
+
+    this.previousState = this.getState();
     this.isDebugEnabled = properties?.isDebugEnabled || false;
   }
 
@@ -135,174 +138,27 @@ export default class Actor extends EventSubscriber {
   // ****************************************************************
 
   /**
-   * Overridable user-defined function to run on each draw cycle.
-   *
-   * @param ctx the canvas context to draw to
-   * @param interp the interpolation factor for the current draw cycle
-   */
-  draw: (ctx: CanvasRenderingContext2D, interp: number) => void = () => { };
-
-  /**
-   * Overridable user-defined function to run on each update cycle.
-   *
-   * @param dt the delta time since last update
-   */
-  update: (dt: number) => void = () => { };
-
-  /**
    * Preload function called once before the first frame cycle.
    * Accepts a function that will run before the update cycle begins.
    * Primarily used to load assets and initialize textures or animations.
    */
   preload: () => Promise<void> = async () => Promise.resolve();
 
-  /**
-   * Adds a new AnimationState object to the list of animation states for the actor.
-   *
-   * @param animationID unique identifier to assign to the animation state
-   * @param textureID unique identifier of the texture to use for the animation state
-   * @param options optional arguments for animation state upon initialization
-   * @param options.frameCount (optional) number of frames in animation. Defaults to the number of frames in the texture starting from startIndex (if provided)
-   * @param options.startIndex (optional) index of first frame in animation. Defaults to 0 if not provided
-   * @param options.frameDuration (optional) duration of each frame in animation, in milliseconds. Defaults to 200 if not provided
-   * @param options.frames (optional) a more verbose way to directly specify duration.
-   *
-   * @returns {boolean} true if animation state was added successfully
-   *
-   * @throws {Error} animationID must be unique
-   * @throws {Error} textureID must exist in actor's textures
-   * @throws {Error} frameCount must be positive and less than provided texture's frame count.
-   * @throws {Error} startIndex must be positive and less than provided texture's frame count.
-   * @throws {Error} frameDuration must be positive and less than provided texture's frame count.
-   */
-  addAnimationState = (animationID: string, textureID: string, options: { frameCount: number, startIndex: number, frameDuration: number, frames: Array<AnimationKeyframe> | null } = { frameCount: -1, frameDuration: 200, frames: null, startIndex: 0 }): boolean => {
-    assert(!this._animations[animationID], `animationID must be unique`);
+  addTexture = (textureID: string, texture: ImageBitmap, frameSize: Vector = vec(), frameDuration: number = 200) => {
+    const textureSize = vec(texture.width, texture.height);
 
-    const texture: Texture = this._textures[textureID];
-
-    // extract options and set defaults if not provided
-    const {
-      startIndex,
-      frameDuration,
-      frames,
-    } = options;
-
-    let { frameCount } = options;
-
-    if (frameCount === -1 && frames === null) {
-      frameCount = texture.frameCount - startIndex;
+    if (frameSize.x === 0 || frameSize.y === 0) {
+      frameSize = textureSize;
     }
-
-    // assert various conditions
-    assert(frameCount > 0, `frameCount must be positive`);
-    assert(frameCount <= texture.frameCount, `frameCount must be less than provided texture's frame count.`);
-
-    assert(startIndex >= 0, `startIndex must be 0 or greater`);
-    assert(startIndex < texture.frameCount, `startIndex must be less than provided texture's frame count.`);
-
-    assert(frameDuration > 0, `frameDuration must be positive`);
-
-    // create animation state and add it
-    if (frames) {
-      assert(frames.length > 0, `frames must have at least one frame`);
-
-      const animationState: AnimationState = {
-        textureID,
-        frames,
-      };
-
-      this._animations[animationID] = animationState;
-
-      return true;
-    }
-    else {
-      // create a new frames array based on frameCount and frameDuration
-      const frames: Array<AnimationKeyframe> = Array.from({ length: frameCount }, (_, i) => ({
-        index: startIndex + i,
-        duration: frameDuration,
-      }));
-
-      const animationState: AnimationState = {
-        textureID,
-        frames
-      };
-
-      this._animations[animationID] = animationState;
-
-      return true;
-    }
-  };
-
-  /**
-   * Removes an AnimationState from the list of animation states for the actor.
-   * If the animation state is active, then the animation state is set to null
-   * and reset additional animation properties.
-   *
-   * @param animationID identifier of AnimationState to remove
-   * @returns true if successful
-   *
-   * @throws {Error} animationID must exist
-   */
-  removeAnimationState = (animationID: string): boolean => {
-    assert(this._animations[animationID], `animationID must exist`);
-
-    this._currentAnimationID = "";
-    this._currentAnimationFrame = 0;
-
-    delete this._animations[animationID];
-
-    return true;
-  };
-
-  /**
-   * Sets a new active AnimationState for the actor. If a previous animation state was active, then reset the current frame to 0.
-   *
-   * @param animationID identifier to set as current AnimationState
-   * @returns true if successful
-   *
-   * @throws {Error} animationID must exist
-   */
-  setAnimationState = (animationID: string): boolean => {
-    assert(this._animations[animationID], `animationID must be valid`);
-
-    if (this._currentAnimationID) this._currentAnimationFrame = 0;
-
-    this._currentAnimationID = animationID;
-
-    return true;
-  };
-
-  /**
-   * Creates a new Texture from an existing imageBitmap and assigns it to the actor.
-   *
-   * @param textureID identifier to assign to texture. Must be unique.
-   * @param imageBitmap ImageBitmap to assign to texture
-   * @param options (optional) options for texture
-   * @param options.frameCount (optional) number of sprite frames in texture
-   * @param options.spriteSize size of individual sprite frames. If frameCount is provided this property is required.
-   *
-   * @returns {boolean} true if texture was successfully added to actor. False if textureID already exists.
-   *
-   * @throws Error if spriteSize provided is not a positive Vector
-   */
-  addTexture = (textureID: string, imageBitmap: ImageBitmap, options: { frameCount: number, textureSize: Vector | null } = { frameCount: 1, textureSize: null }): boolean => {
-    if (this._textures[textureID]) return false;
-
-    if (!options.textureSize) return false;
-
-    const textureSize: Vector = options.textureSize as Vector;
-
-    // assert spriteSize is a positive Vector
-    assert(textureSize.x > 0 && textureSize.y > 0, `Error adding texture: spriteSize must be a positive Vector`);
 
     this._textures[textureID] = {
-      imageBitmap,
+      bitmap: texture,
       size: textureSize,
-      frameCount: options.frameCount
+      frameSize,
+      frameDuration,
+      frameCount: vec(Math.floor(textureSize.x / frameSize.x), Math.floor(textureSize.y / frameSize.y)),
     };
-
-    return true;
-  };
+  }
 
   /**
    * Removes a texture from the textures array.
@@ -324,8 +180,8 @@ export default class Actor extends EventSubscriber {
    *
    * @param timestep - update timestep
    */
-  performUpdates = (timestep: number) => {
-    if (!this.doUpdate) return;
+  tick = (timestep: number) => {
+    if (!this.isTickEnabled || this.isQueuedForDisposal) return;
 
     // ****************************************************************
     // pre-update operations
@@ -336,52 +192,57 @@ export default class Actor extends EventSubscriber {
     if (Math.abs(this.vel.x) < Number.EPSILON) this.vel.x = 0;
     if (Math.abs(this.vel.y) < Number.EPSILON) this.vel.y = 0;
 
-    this.lastState.pos = this.pos;
-    this.lastState.vel = this.vel;
+    this.previousState = this.getState();
 
     // ****************************************************************
     // primary update operations
 
-    this.vel = add(this.vel, div(this.engine.gravity, timestep));
+    if (this.isGravityEnabled) {
+      this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
+    }
 
-    this.updateAnimation(timestep);
-    if (this.update) this.update(timestep);
+
+    if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
   };
 
   /**
    * Calls draw callback function for actor.
    *
-   * @param ctx - canvas context to draw to
    * @param interp - interpolated time between current delta and target timestep
    */
-  performDrawCalls = (ctx: CanvasRenderingContext2D, interp: number) => {
-    if (!this.doDraw) return;
+  render = (interp: number) => {
+    if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
 
-    // ****************************************************************
-    // pre-draw operations
+    const ctx: CanvasRenderingContext2D = this.scene.engine.ctx;
 
-    // interpolate position of actor based on interpolation provided by engine loop
-    this.pos = add(this.lastState.pos, mult(sub(this.pos, this.lastState.pos), interp));
-
-    // ****************************************************************
-    // primary draw operations
+    // interpolate position based on previous frame
+    if (this.isInterpolationEnabled) {
+      this.pos = add(this.previousState.pos, mult(sub(this.pos, this.previousState.pos), interp));
+    }
+    this.isInterpolationEnabled = true;
 
     ctx.save();
 
-    if (this._currentTextureID) this.drawTexture(ctx);
-    if (this._currentAnimationID) this.drawTextureFromMap(ctx);
+    if (this.textureID) this.renderTexture(ctx);
 
-    // call user-defined update callback function
-    if (this.draw) this.draw(ctx, interp);
-
-    // ****************************************************************
-    // restore & debug operations
-
-    // restore canvas context to previous state so we don't clip debug content
     ctx.restore();
 
-    if (this.isDebugEnabled) this.drawDebug(ctx);
+    if (this.isDebugEnabled) this.renderDebug(ctx);
   };
+
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.addListener(eventName, callback);
+
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.removeListener(eventName, callback);
+
+  /**
+   * Immediately moves the actor to the specified position. Disables
+   * interpolation for the next frame.
+   * @param pos position to move actor to
+   */
+  setPosition = (pos: Vector): void => {
+    this.pos = pos;
+    this.isInterpolationEnabled = false;
+  }
 
   // ****************************************************************
   // ⚓ PRIVATE METHODS
@@ -393,83 +254,53 @@ export default class Actor extends EventSubscriber {
    *
    * @param delta the current delta time for the update loop
    */
-  private updateAnimation = (delta: number) => {
-    if (!this._currentAnimationID) return;
+  private updateTexture = (timestep: number) => {
+    let texture: Texture = this._textures[this.textureID];
 
-    const animationState: AnimationState = this._animations[this._currentAnimationID];
+    if ((this.textureDeltaSum += timestep) >= texture.frameDuration) {
+      this.textureDeltaSum -= texture.frameDuration;
 
-    let currentFrame: AnimationKeyframe = animationState.frames[this._currentAnimationFrame];
-
-    // if deltaSum exceeds
-    if ((this.animationDeltaSum += delta) >= currentFrame.duration) {
-      this.animationDeltaSum -= currentFrame.duration;
-
-      this._currentAnimationFrame =
-        (this._currentAnimationFrame + 1) % animationState.frames.length;
+      this._textureFrame =
+        (this._textureFrame + 1) % (texture.frameCount.x * texture.frameCount.y);
     } else return;
 
-    // update current frame
-    currentFrame = animationState.frames[this._currentAnimationFrame];
-
-    const texture: Texture = this._textures[animationState.textureID];
-
-    const imageBitmap: ImageBitmap = texture.imageBitmap;
-    const spriteSize: Vector = texture.size;
-
-    const spriteRowCount: number = Math.floor(imageBitmap.width / spriteSize.x);
-    const spriteColumnCount: number = Math.floor(imageBitmap.height / spriteSize.y);
-
     this.textureSourcePosition = vec(
-      this._currentAnimationFrame % spriteRowCount * spriteSize.x,
-      (this._currentAnimationFrame - this._currentAnimationFrame % spriteRowCount) / spriteColumnCount * spriteSize.y
+      this._textureFrame % texture.frameCount.x * texture.frameSize.x,
+      (this._textureFrame - this._textureFrame % texture.frameCount.x) / texture.frameCount.y * texture.frameSize.y
     );
   };
 
-  /**
-   * Draws the current static texture of the actor to the canvas context.
-   *
-   * @param ctx the canvas context to draw to
-   */
-  private drawTexture = (ctx: CanvasRenderingContext2D) => {
-    const texture: Texture = this._textures[this._currentTextureID];
+  private renderTexture = (ctx: CanvasRenderingContext2D) => {
+    const texture: Texture = this._textures[this.textureID];
 
-    const imageBitmap: ImageBitmap = texture.imageBitmap;
+    const renderSize = this.size || texture.frameSize;
 
     ctx.drawImage(
-      imageBitmap,  // image source
-      this.pos.x,   // actor x on canvas
-      this.pos.y,   // actor y on canvas
-      this.size.x,  // actor width
-      this.size.y   // actor height
+      // source bitmap
+      texture.bitmap,
+      // vector of sub-rectangle in source bitmap
+      this.textureSourcePosition.x,
+      this.textureSourcePosition.y,
+      // vector of sub-rectangle in source bitmap
+      texture.frameSize.x,
+      texture.frameSize.y,
+      // vector of destination on canvas (actor pos)
+      this.pos.x,
+      this.pos.y,
+      // vector representing width/height at which to render source bitmap to
+      // canvas (if actor size not specified, use texture frame size)
+      renderSize.x,
+      renderSize.y
     );
   };
 
-  /**
-   * Draws a texture based on the current animation frame of the
-   * actor to the canvas context.
-   *
-   * @param ctx the canvas context to draw to
-   */
-  private drawTextureFromMap = (ctx: CanvasRenderingContext2D) => {
-    const animationState: AnimationState = this._animations[this._currentAnimationID];
-
-    const texture: Texture = this._textures[animationState.textureID];
-
-    const imageBitmap: ImageBitmap = texture.imageBitmap;
-    const textureSize: Vector = texture.size;
-
-    ctx.drawImage(
-      imageBitmap,            // image source
-      this.textureSourcePosition.x,   // starting x from source
-      this.textureSourcePosition.y,   // starting y from source
-      textureSize.x,           // width of source to draw
-      textureSize.y,           // height of source to draw
-      this.pos.x,             // actor x on canvas
-      this.pos.y,             // actor y on canvas
-      this.size.x,            // actor width
-      this.size.y             // actor height
-    );
-  }
+  private getState = (): ActorState => {
+    return {
+      pos: this.pos,
+      vel: this.vel,
+      size: this.size,
+    };
+  };
 
   // ****************************************************************
   // ⚓ DEBUG METHODS
@@ -480,7 +311,7 @@ export default class Actor extends EventSubscriber {
    *
    * @param ctx canvas context to render debug information to
    */
-  private drawDebug = (ctx: CanvasRenderingContext2D) => {
+  private renderDebug = (ctx: CanvasRenderingContext2D) => {
     ctx.save();
 
     // draw bounds border
@@ -488,6 +319,9 @@ export default class Actor extends EventSubscriber {
     ctx.strokeRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
 
     ctx.fillStyle = "white";
+    ctx.font = "11px monospace";
+    ctx.shadowColor = "black";
+    ctx.shadowBlur = 4;
 
     const texts: string[] = [
       `pos: ${this.pos.x}, ${this.pos.y}`,
@@ -505,27 +339,15 @@ export default class Actor extends EventSubscriber {
   // ⚓ PRIVATE DECLARATION GETTERS
   // ****************************************************************
 
-  get animations(): { [key: string]: AnimationState } {
-    return this._animations;
-  }
-
-  get currentAnimationID(): string {
-    return this._currentAnimationID;
-  }
-
-  get currentAnimationFrame(): number {
-    return this._currentAnimationFrame;
-  }
-
-  get engine(): Engine {
-    return this._engine;
+  get ID(): string {
+    return this.internalID;
   }
 
   get textures(): { [key: string]: Texture } {
     return this._textures;
   }
 
-  get currentTextureID(): string {
-    return this._currentTextureID;
+  get textureFrame(): number {
+    return this._textureFrame;
   }
 }

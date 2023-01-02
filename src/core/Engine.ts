@@ -1,18 +1,18 @@
 import { vec } from "../math/vector";
-import Actor from "../objects/actor";
 import { assert } from "../util/asserts";
-import EventDispatcher from "./event_dispatcher";
-import EventSubscriber from "./event_subscriber";
+import Camera from "./camera";
+import { EventHandler } from "./event_handler";
+import Scene from "./scene";
 
 const TARGET_FPS: number = 60;
-const MAX_UPDATES_PER_CYCLE: number = 240;
+const MAX_UPDATES_PER_FRAME: number = 240;
 
 /**
  * Engine class. Handles actor management, update game loop, and rendering.
  *
  * @class
  */
-export default class Engine extends EventSubscriber {
+export default class Engine {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
@@ -20,15 +20,13 @@ export default class Engine extends EventSubscriber {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
 
-  backgroundColor: string = "#121212";
+  scenes: Map<string, Scene> = new Map();
 
-  gravity: Vector = vec(0, 0);
+  camera: Camera | null = null;
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/ getters)
   // ****************************************************************
-
-  private _actors: Array<Actor> = [];
 
   private _canvasSize: Vector;
 
@@ -50,7 +48,7 @@ export default class Engine extends EventSubscriber {
   // ⚓ PRIVATE DECLARATIONS (w/o getters)
   // ****************************************************************
 
-  private readonly eventDispatcher: EventDispatcher;
+  readonly eventHandler: EventHandler;
 
   private isStarted: boolean = false;
 
@@ -62,14 +60,14 @@ export default class Engine extends EventSubscriber {
   /**
    * Maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
    *
-   * @default MAX_UPDATES_PER_CYCLE
+   * @default MAX_UPDATES_PER_FRAME
    */
-  private readonly maxFrameUpdates: number = MAX_UPDATES_PER_CYCLE;
+  private readonly maxUpdatesPerFrame: number = MAX_UPDATES_PER_FRAME;
 
   private previousTimestamp: number = 0;
 
   /**
-   * timestep of individual an individual frame in ms. Used as constant timestep for update method
+   * timestep of an individual frame in ms. Used as constant timestep for update method
    *
    * @default 1000 / TARGET_FPS
    */
@@ -79,6 +77,7 @@ export default class Engine extends EventSubscriber {
    * ID of current animation frame
    *
    * @default -1
+   * @unused
    */
   private updateID: number = -1;
 
@@ -111,8 +110,6 @@ export default class Engine extends EventSubscriber {
    * @param properties optional property arguments for engine
    */
   constructor(canvasElement: HTMLCanvasElement, properties: any = {}) {
-    super();
-
     this.canvasElement = canvasElement;
 
     this.ctx = canvasElement.getContext("2d") as CanvasRenderingContext2D;
@@ -122,9 +119,9 @@ export default class Engine extends EventSubscriber {
 
     this._canvasSize = vec(envWidth, envHeight);
 
-    this.fixDPI();
+    this.eventHandler = EventHandler.getInstance();
 
-    this.eventDispatcher = new EventDispatcher(canvasElement, this.isPaused);
+    this.fixDPI();
   }
 
 
@@ -132,9 +129,7 @@ export default class Engine extends EventSubscriber {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  update: Function | null = null;
-
-  draw: Function | null = null;
+  getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
 
   /**
    * Starts engine update loop. Used only once at startup.
@@ -150,102 +145,44 @@ export default class Engine extends EventSubscriber {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.subscribe("oncanvasresize", () => {
+    this.eventHandler
+
+    this.eventHandler.addListener("onresize", () => {
       const dimensions = this.fixDPI();
       // set canvas width and height to scaled width and height
       this._canvasSize = vec(dimensions[0], dimensions[1]);
     });
 
-    // wait for each actor to load up assets and connect textures/animations
-    await Promise.all(this._actors.map((actor) => actor.preload()));
+    // wait for each scene to load up assets and connect textures/animations
+    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
 
-    // after all actors have been preloaded, begin measuring performance and run engine.
+    // begin measuring performance and run engine.
     this._engineStartTime = performance.now();
     this.updateID = requestAnimationFrame(
-      this.performGameLoopUpdates
+      this.update
     );
 
     this.isStarted = true;
-    this._isPaused = false;
+    this.updatePauseState(false);
 
     // initialize events
-    this.eventDispatcher.attachAllEvents();
+    this.eventHandler.attachEventListeners(this.canvasElement);
   };
 
   /**
    * Pauses engine update loop. Game will continue requesting
    * animation frames, but will not continue to update or draw.
    */
-  pause = () => {
-    this._isPaused = true;
-    this.eventDispatcher.isEnginePaused = true;
-  };
+  pause = () => this.updatePauseState(true);
 
   /**
    * Resumes engine update loop.
    */
-  resume = () => {
-    this._isPaused = false;
-    this.eventDispatcher.isEnginePaused = false;
-  };
+  resume = () => this.updatePauseState(false);
 
-  /**
-   * Attempts to add an actor to the engine.
-   *
-   * @param {Actor} actor
-   *
-   * @throws {Error} if actor is not an instance of Actor
-   * @throws {Error} if actor is already in the engine
-   */
-  addActor = (actor: Actor) => {
-    assert(!this.getActor(actor.ID), `Actor with ID of ${actor.ID} already exists.`);
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.addListener(eventName, callback);
 
-    this._actors.push(actor);
-  };
-
-  /**
-   * Queues an actor for disposal by setting actor's isQueuedForDisposal flag to true.
-   *
-   * @param {Actor} actor
-   * @return {boolean} true if actor was queued for disposal
-   *
-   * @throws {Error} if actor does not exist in engine
-   */
-  removeActor = (actor: Actor): boolean => {
-    // check if actor exists in engine actor array
-    assert(this._actors.findIndex((a) => a.ID === actor.ID) !== -1, `Actor does not exist in engine array.`);
-
-    // queue actor for disposal instead of removing immediately
-    // this prevents actors from being removed from the array while iterating over it
-    actor.isQueuedForDisposal = true;
-    return true;
-  };
-
-  /**
-   * Removes an actor from the engine by its ID.
-   *
-   * @param ID unique ID of actor to remove
-   * @returns true if actor was removed; false if actor was not found
-   */
-  removeActorByID = (ID: string): boolean => {
-    const actor = this.getActor(ID);
-    return actor ? this.removeActor(actor) : false;
-  };
-
-  /**
-   * Searches for a specific actor by its unique ID.
-   *
-   * @param ID ID of actor to search for
-   * @returns {Actor | null} actor with matching ID; null if no actor is found
-   */
-  getActor = (ID: string): Actor | null => {
-    for (let i = 0; i < this._actors.length; i++) {
-      if (this._actors[i].ID === ID) {
-        return this._actors[i];
-      }
-    }
-    return null;
-  };
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.removeListener(eventName, callback);
 
 
   // ****************************************************************
@@ -257,10 +194,8 @@ export default class Engine extends EventSubscriber {
    *
    * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
    */
-  private performGameLoopUpdates = (timestamp: DOMHighResTimeStamp) => {
-    this.updateID = requestAnimationFrame(
-      this.performGameLoopUpdates
-    );
+  private update = (timestamp: DOMHighResTimeStamp) => {
+    this.updateID = requestAnimationFrame(this.update);
 
     // *****************************
     // Calculate delta time and lag
@@ -273,167 +208,82 @@ export default class Engine extends EventSubscriber {
 
     this._FPS = 1000 / dt;
 
-    // *****************************
     // Perform engine updates based on current lag
+    let cycleUpdateCount = 0;
+    while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
+      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetFrameTimestep });
 
-    let numUpdates = 0;
-    while (
-      this.lag >=
-      this.targetFrameTimestep
-    ) {
-      this.performEngineUpdates();
+      Array.from(this.scenes.values())
+        .filter(scene => scene.isTickEnabled)
+        .forEach(scene => scene.tick(this.targetFrameTimestep));
 
-      this.lag -=
-        this.targetFrameTimestep;
+      this.eventHandler.dispatchQueue();
+
+      this.lag -= this.targetFrameTimestep;
 
       this.updatesSinceEngineStart++;
 
       // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
-      if (++numUpdates >= this.maxFrameUpdates) {
+      if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
         this.lag = 0;
         break;
       }
     }
 
-    // *****************************
-    // Calculate interpolation and perform draw calls
+    const interpolationFactor = this.lag / this.targetFrameTimestep;
 
-    const interp =
-      this.lag /
-      this.targetFrameTimestep;
+    this.render(interpolationFactor);
 
-    this.performDrawCalls(interp);
-
-    // *****************************
-    // Post-update operations
-
-    // filter actors array by those that are NOT queued for disposal
-    this._actors.filter((actor) => !actor.isQueuedForDisposal);
+    // filter out scenes that are queued for disposal while disposing of them
+    this.scenes = new Map(Array
+      .from(this.scenes.entries())
+      .filter(([key, scene]) => !(scene.isQueuedForDisposal && this.removeScene(scene))));
   };
 
-  performEngineUpdates = () => {
-    if (this._isPaused) return;
-
-    // *****************************
-    // actor update operations
-
-    this._actors.forEach((actor) => {
-      actor.performUpdates(this.targetFrameTimestep);
-    });
-
-    // perform user-defined update callback (if provided)
-    if (this.update) this.update(this.targetFrameTimestep);
-
-    // get a list of current events in the queue
-    const queuedEventTypes = this.eventDispatcher.eventList.map(
-      (event) => event.type
-    );
-
-    // get a list of all actors that currently have events that match queued events
-    const relevantActors = this._actors.filter((actor) => {
-      if (!actor.subscribedEvents.size) return false;
-
-      for (const eventType of queuedEventTypes) {
-        if (actor.subscribedEvents.has(eventType)) return true;
-      }
-    });
-
-    this.eventDispatcher.eventList.forEach((event) => {
-      const eventType = event.type;
-      const eventPayload = event.payload;
-
-      // loop through relevant actors, and perform event callbacks for each actor that has subscribed to the current event
-      relevantActors.forEach((actor) => {
-        actor.subscribedEvents.forEach((subscribedEvent, actorEventType) => {
-          if (actorEventType === eventType) {
-            subscribedEvent.forEach((callback) => callback(eventPayload));
-          }
-        });
-      });
-
-      // perform event callbacks for events engine has subscribed to
-      this.subscribedEvents.forEach((subscribedEvent, EngineEvents) => {
-        if (EngineEvents === eventType) {
-          subscribedEvent.forEach((callback) => callback(eventPayload));
-        }
-      });
-    });
-
-    // remove events labeled as non persistent from queue.
-    this.eventDispatcher.eventList = this.eventDispatcher.eventList.filter(
-      (event) => event.isPersistent
-    );
-  };
 
   /**
    * draws all relevant actors onto canvas
    *
    * @private
-   * @param {number} interp - interpolation value
+   * @param {number} interpolationFactor - interpolation value
    */
-  performDrawCalls = (interp: number) => {
+  private render = (interpolationFactor: number) => {
     // *****************************
     // pre-draw operations
-
     if (this._isPaused) return;
 
     // clear canvas
-    this.ctx.clearRect(
-      0,
-      0,
-      this._canvasSize.x,
-      this._canvasSize.y
-    );
-
-    // reset context fill color
-    this.ctx.fillStyle = this.backgroundColor;
-    this.ctx.fillRect(
-      0,
-      0,
-      this._canvasSize.x,
-      this._canvasSize.y
-    );
+    this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
 
     // *****************************
     // primary draw operations
 
-    this._actors.forEach((actor) => actor.performDrawCalls(this.ctx, interp));
+    Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
-    // call user-defined draw callback (if provided)
-    if (this.draw) this.draw(interp, this.ctx);
+    this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
     // *****************************
-    // post-draw operations
+    // debug render
+    if (!this.isDebugEnabled || isNaN(this._FPS)) return;
 
-    if (this.isDebugEnabled) {
-      this.performDebugDrawCalls(interp);
-    }
-  };
+    const debugLines = [
+      `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
+      `FPS:                   ${this._FPS}`,
+      `------------------------`,
+      `total ticks:           ${this.updatesSinceEngineStart}`,
+      `current tick lag:      ${this.lag}`,
+      `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
+      `------------------------`,
+      `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
+      `frame duration:        ${1000 / this._FPS}`,
+      `render interpolation:  ${interpolationFactor}`,
+    ];
 
-
-  // ****************************************************************
-  // ⚓ DEBUG METHODS
-  // ****************************************************************
-
-  private performDebugDrawCalls = (interp: number) => {
-    this.ctx.fillStyle = "white";
-    if (!isNaN(this._FPS)) {
-      this.ctx.fillText("FPS: " + this._FPS, 5, 15);
-      this.ctx.fillText("dt: " + 1000 / this._FPS, 5, 25);
-      this.ctx.fillText("lag: " + this.lag, 5, 35);
-      this.ctx.fillText("interp: " + interp, 5, 45);
-      this.ctx.fillText(
-        "total updates: " + this.updatesSinceEngineStart,
-        5,
-        55
-      );
-      this.ctx.fillText(
-        "runtime: " +
-        (performance.now() - this._engineStartTime) / 1000,
-        5,
-        65
-      );
-    }
+    debugLines.forEach((line, index) => {
+      this.ctx.font = "11px monospace";
+      this.ctx.fillStyle = "white";
+      this.ctx.fillText(line, 5, 15 + (index * 12));
+    });
   };
 
   /**
@@ -463,16 +313,18 @@ export default class Engine extends EventSubscriber {
     return [computedWidth, computedHeight];
   };
 
+  private updatePauseState = (isPaused: boolean) => {
+    this._isPaused = isPaused;
+    this.eventHandler.setIsEnginePaused(isPaused);
+  }
+
+  private removeScene = (scene: Scene) => {
+    this.scenes.delete(scene.ID);
+  }
+
   // ****************************************************************
   // ⚓ PRIVATE DECLARATION GETTERS
   // ****************************************************************
-
-  /**
-   * Returns the current list of actors.
-   */
-  get actors(): Array<Actor> {
-    return this._actors;
-  }
 
   get canvasSize(): Vector {
     return this._canvasSize;
@@ -493,6 +345,4 @@ export default class Engine extends EventSubscriber {
   get isPaused(): boolean {
     return this._isPaused;
   }
-
-
 }
