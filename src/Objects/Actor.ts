@@ -1,5 +1,5 @@
 import { vec, add, sub, div, mult } from "../math/vector";
-import { Scene } from "../core/scene";
+import Scene from "../core/scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
@@ -92,6 +92,13 @@ export default class Actor {
    * The offset to start drawing the texture from the top left corner of the actor.
    */
   private textureSourcePosition: Vector = vec(0, 0);
+
+  /**
+   * Whether or not interpolation should be factored in when calculating the
+   * position of the actor. This is disabled for one frame when the actor is
+   * moved using SetPosition()
+   */
+  private isInterpolationEnabled: boolean = true;
 
 
   // ****************************************************************
@@ -190,12 +197,10 @@ export default class Actor {
     // ****************************************************************
     // primary update operations
 
-    // if (this.isGravityEnabled) {
-    //   this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
-    // }
+    if (this.isGravityEnabled) {
+      this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
+    }
 
-    // console.log(mult(this.vel, timestep));
-    this.pos = add(this.pos, mult(this.vel, timestep));
 
     if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
   };
@@ -210,26 +215,16 @@ export default class Actor {
 
     const ctx: CanvasRenderingContext2D = this.scene.engine.ctx;
 
-    // ****************************************************************
-    // pre-draw operations
-
-    // interpolate position of actor based on interpolation provided by engine loop
-    this.pos = add(this.previousState.pos, mult(sub(this.pos, this.previousState.pos), interp));
-
-    // ****************************************************************
-    // primary draw operations
+    // interpolate position based on previous frame
+    if (this.isInterpolationEnabled) {
+      this.pos = add(this.previousState.pos, mult(sub(this.pos, this.previousState.pos), interp));
+    }
+    this.isInterpolationEnabled = true;
 
     ctx.save();
 
     if (this.textureID) this.renderTexture(ctx);
 
-    // call user-defined update callback function
-    // if (this.render) this.render(ctx, interp); TODO: replace with event emitter
-
-    // ****************************************************************
-    // restore & debug operations
-
-    // restore canvas context to previous state so we don't clip debug content
     ctx.restore();
 
     if (this.isDebugEnabled) this.renderDebug(ctx);
@@ -238,6 +233,16 @@ export default class Actor {
   addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.addListener(eventName, callback);
 
   removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.removeListener(eventName, callback);
+
+  /**
+   * Immediately moves the actor to the specified position. Disables
+   * interpolation for the next frame.
+   * @param pos position to move actor to
+   */
+  setPosition = (pos: Vector): void => {
+    this.pos = pos;
+    this.isInterpolationEnabled = false;
+  }
 
   // ****************************************************************
   // ⚓ PRIVATE METHODS

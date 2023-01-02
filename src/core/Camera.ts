@@ -1,6 +1,5 @@
 import { vec } from "../math/vector";
 import Engine from "./engine";
-import { Scene } from "./scene";
 
 /**
  * @class Camera
@@ -8,7 +7,7 @@ import { Scene } from "./scene";
  *
  * @unused
  */
-export class Camera {
+export default class Camera {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************

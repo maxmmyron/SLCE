@@ -1,8 +1,8 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
-import { Camera } from "./camera";
+import Camera from "./camera";
 import { EventHandler } from "./event_handler";
-import { Scene } from "./scene";
+import Scene from "./scene";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -211,7 +211,7 @@ export default class Engine {
     // Perform engine updates based on current lag
     let cycleUpdateCount = 0;
     while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
-      this.eventHandler.queueEvent("ontick", { frameTimestep: this.targetFrameTimestep });
+      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetFrameTimestep });
 
       Array.from(this.scenes.values())
         .filter(scene => scene.isTickEnabled)

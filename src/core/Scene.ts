@@ -1,13 +1,13 @@
 import { vec } from "../math/vector";
 import Actor from "../objects/actor";
-import { Camera } from "./camera";
+import Camera from "./camera";
 import Engine from "./engine";
 
 /**
  * @class Scene
  * A collection of actors and cameras.
  */
-export class Scene {
+export default class Scene {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
