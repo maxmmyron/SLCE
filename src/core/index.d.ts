@@ -1,12 +1,9 @@
 type ValidEventPayload =
-  | { x: number, y: number }
-  | { x: number, y: number }
-  | { x: number, y: number }
-  | { key: string, code: string }
-  | { key: string, code: string }
-  | { width: number, height: number }
-  | { frameTimestep: number }
-  | { interpolationFactor: number }
+  | { x: number, y: number }          // mouse events
+  | { key: string }     // key events
+  | { width: number, height: number } // resize event
+  | { deltaTime: number }             // tick event
+  | { interpolationFactor: number }   // render event
 
 /**
  * @typedef EventHandler A singleton that handles event subscription,
@@ -21,7 +18,7 @@ type ValidEventPayload =
 type EventHandler = {
   addListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
   removeListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
-  queueEvent: (type: ValidEventType, payload: ValidEventPayload, isPersistent?: boolean, persistUntil?: string) => void,
+  queueEvent: (type: ValidEventType, payload: ValidEventPayload, isPersistent?: boolean, persistUntil?: string, isStrict?: boolean) => void,
   dequeueEvent: (type: ValidEventType) => void,
   dispatchQueue: () => void,
   getQueuedEvents: () => Array<QueuedEvent>,
@@ -43,12 +40,15 @@ type EventHandler = {
  * @property {string} persistUntil The name of the event to persist until.
  * If isPersistent is true and persistUntil is an empty string, the event will
  * persist until explicitly removed from the queue.
+ * @property {boolean} isStrict Whether or not the event should be checked
+ * against the persistUntil event's payload when filtering.
  */
 type QueuedEvent = {
   type: ValidEventType,
   payload: ValidEventPayload,
   isPersistent: boolean,
-  persistUntil: string
+  persistUntil: string,
+  isStrict: boolean,
 }
 
 /**
@@ -56,8 +56,10 @@ type QueuedEvent = {
  */
 type ValidEventType =
   | "onmousedown"
+  | "whilemousedown"
   | "onmouseup"
-  | "whilemousemove"
+  | "onmousemove"
+  | "onkeydown"
   | "whilekeydown"
   | "onkeyup"
   | "onresize"

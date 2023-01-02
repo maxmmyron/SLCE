@@ -28,42 +28,70 @@ export const EventHandler = (() => {
 
     let canvasElement: HTMLCanvasElement;
 
-    const addToQueue = (type: ValidEventType, payload: ValidEventPayload, isPersistent: boolean = false, persistUntil: string = ""): void => {
+    const addToQueue = (type: ValidEventType, payload: ValidEventPayload, isPersistent: boolean = false, persistUntil: string = "", isStrict: boolean = false): void => {
       // because stuff like addEventListener is called regardless of engine
       // state, we want to filter out any events queued while the engine is
       // paused.
       //queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1
       if (isEnginePaused) return;
 
-      queue.push({ type, payload, isPersistent, persistUntil });
+      queue.push({ type, payload, isPersistent, persistUntil, isStrict });
     };
 
-    const onMouseDown = (e: any): void => {
+    const filterQueue = (): void => {
+      // filter persistent events
+      queue = queue.filter(queuedEvent => {
+        // if event has no persistUntil value, don't filter
+        if (queuedEvent.persistUntil === "") return true;
+
+        // filter out persistent events by type and payload (if strict).
+        // if found, return false to filter out
+        return queue.findIndex(e => {
+          if (e.type !== queuedEvent.persistUntil) return false;
+
+          if (!queuedEvent.isStrict) return true;
+
+          // JSON.stringify is a dirty way to compare two objects because it
+          // doesn't account for the possibility of object keys being in
+          // different orders. TODO: use a more robust method to compare two
+          // objects.
+
+          return JSON.stringify(e.payload) === JSON.stringify(queuedEvent.payload);
+        }) === -1;
+      });
+
+      // remove non-persistent events
+      queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
+    };
+
+    const queueMouseDownEvents = (e: any): void => {
       addToQueue("onmousedown", { x: e.x, y: e.y });
+      addToQueue("whilemousedown", { x: e.x, y: e.y }, true, "onmouseup");
     };
 
-    const onMouseUp = (e: any): void => {
+    const queueMouseUpEvents = (e: any): void => {
       addToQueue("onmouseup", { x: e.x, y: e.y });
     };
 
-    const onMouseMove = (e: any): void => {
-      addToQueue("whilemousemove", { x: e.x, y: e.y });
+    const queueMouseMoveEvents = (e: any): void => {
+      addToQueue("onmousemove", { x: e.x, y: e.y });
+    }
+
+    const queueKeyDownEvents = (e: any): void => {
+      addToQueue("onkeydown", { key: e.key });
+      addToQueue("whilekeydown", { key: e.key }, true, "onkeyup", true);
     };
 
-    const onKeyDown = (e: any): void => {
-      addToQueue("whilekeydown", { key: e.key, code: e.code }, true, "onkeyup");
-    };
-
-    const onKeyUp = (e: any): void => {
-      addToQueue("onkeyup", { key: e.key, code: e.code });
+    const queueKeyUpEvents = (e: any): void => {
+      addToQueue("onkeyup", { key: e.key });
     };
 
     const eventHandlerMap: Map<string, ((e: any) => void) | null> = new Map([
-      ["mousedown", onMouseDown],
-      ["mouseup", onMouseUp],
-      ["mousemove", onMouseMove],
-      ["keydown", onKeyDown],
-      ["keyup", onKeyUp],
+      ["mousedown", queueMouseDownEvents],
+      ["mouseup", queueMouseUpEvents],
+      ["mousemove", queueMouseMoveEvents],
+      ["keydown", queueKeyDownEvents],
+      ["keyup", queueKeyUpEvents],
       // handled with ResizeObserver so we don't need a handler function
       ["resize", null],
     ]);
@@ -96,8 +124,8 @@ export const EventHandler = (() => {
         callbacks.splice(callbacks.indexOf(callback), 1);
       },
 
-      queueEvent: (name: ValidEventType, event: any, isPersistent: boolean = false, persistUntil: string = ""): void => {
-        addToQueue(name, event, isPersistent, persistUntil);
+      queueEvent: (name: ValidEventType, event: any, isPersistent: boolean = false, persistUntil: string = "", isStrict: boolean = false): void => {
+        addToQueue(name, event, isPersistent, persistUntil, isStrict);
       },
 
       dequeueEvent: (name: ValidEventType): void => {
@@ -113,15 +141,7 @@ export const EventHandler = (() => {
           callbacks.forEach(callback => callback(queuedEvent.payload));
         });
 
-        // remove events that have been persisted until another event
-        queue = queue.filter(queuedEvent => {
-          if (queuedEvent.persistUntil === "") return true;
-
-          return queue.findIndex(_ => _.type === queuedEvent.persistUntil) === -1;
-        });
-
-        // remove non-persistent events
-        queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
+        filterQueue();
       },
 
       attachEventListeners: (canvas: HTMLCanvasElement): void => {
