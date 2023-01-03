@@ -1,7 +1,7 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 import Camera from "./camera";
-import { EventHandler } from "./event_handler";
+import { EventHandler } from "../util/event_handler";
 import Scene from "./scene";
 
 const TARGET_FPS: number = 60;

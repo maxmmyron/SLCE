@@ -3,7 +3,7 @@
 import Camera from "../src/core/camera";
 import Engine from "../src/core/engine";
 import Scene from "../src/core/scene";
-import { vec } from "../src/math/vector";
+import { vec, mult } from "../src/math/vector";
 import Actor from "../src/objects/actor";
 import { TextureCache } from "../src/util/texture_cache";
 
@@ -53,6 +53,8 @@ actorA.addListener("whilekeydown", (e) => {
 });
 
 actorA.addListener("ontick", (e) => {
+  actorA.vel = mult(actorA.vel, 0.99)
+
   actorA.pos.x += actorA.vel.x * e.deltaTime;
   actorA.pos.y += actorA.vel.y * e.deltaTime;
 });
