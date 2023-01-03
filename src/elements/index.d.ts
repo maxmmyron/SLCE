@@ -19,3 +19,12 @@ type ActorState = {
   vel: Vector;
   size: Vector;
 };
+
+type SceneOptions = {
+  environment?: SceneEnvironment
+}
+
+type SceneEnvironment = {
+  background: string;
+  gravity: Vector;
+}

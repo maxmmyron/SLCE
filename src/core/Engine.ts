@@ -2,7 +2,7 @@ import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 import Camera from "./camera";
 import { EventHandler } from "../util/event_handler";
-import Scene from "./scene";
+import Scene from "../elements/scene";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;

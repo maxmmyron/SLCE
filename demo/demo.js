@@ -2,9 +2,9 @@
 
 import Camera from "../src/core/camera";
 import Engine from "../src/core/engine";
-import Scene from "../src/core/scene";
+import Scene from "../src/elements/scene";
 import { vec, mult } from "../src/math/vector";
-import Actor from "../src/objects/actor";
+import Actor from "../src/elements/actor";
 import { TextureCache } from "../src/util/texture_cache";
 
 import animationSpritemap from "./animationSpritemap.png";

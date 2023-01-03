@@ -1,7 +1,7 @@
 import { vec } from "../math/vector";
-import Actor from "../objects/actor";
-import Camera from "./camera";
-import Engine from "./engine";
+import Actor from "./actor";
+import Camera from "../core/camera";
+import Engine from "../core/engine";
 
 /**
  * @class Scene

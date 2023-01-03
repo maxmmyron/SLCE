@@ -8,10 +8,6 @@
 - mutable variables are always named in `camelCase`.
 - immutable variables are always named in all-caps `SNAKE_CASE`.
 
-## files
-
-Files are named in `snake_case`. Files are named like the class they contain. If a file contains multiple related classes, then the file takes a more general, yet descriptive name.
-
 ## classes
 
 Classes are noun-like and are named in `PascalCase`. One class should inhabit one file unless their functions are very closely related to one another.

@@ -1,5 +1,5 @@
 import { vec, add, sub, div, mult } from "../math/vector";
-import Scene from "../core/scene";
+import Scene from "./scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
