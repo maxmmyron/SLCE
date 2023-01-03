@@ -16,15 +16,47 @@ Files are named in `snake_case`. Files are named like the class they contain. If
 
 Classes are noun-like and are named in `PascalCase`. One class should inhabit one file unless their functions are very closely related to one another.
 
+```ts
+// Bad class design 👎
+
+// stuff.ts
+export class actor {/* ... */}
+export class scene {/* ... */}
+
+// Good class design! 👍
+
+// actor.ts
+export default class Actor {/* ... */}
+
+// scene.ts
+export default class Scene {/* ... */}
+```
+
 ## variables
 
-Variables are named in `camelCase`. They are named in a way that succinctly (but fully) describes what the variable is.
+Variables are named in `camelCase`. They are named in a way that describes what the variable is. Variables always contain a type annotation.
+Variables are declared as `const` or `readonly` unless they are mutable.
+Variable properties in a class are always `private` unless their value needs to be accessible outside of the class.
+
+```ts
+// Bad variable design 👎
+let thingamajig;
+
+// Good variable design! 👍
+const maxUsers: number = 150;
+
+class Database {
+  private readonly _maxUsers: number = 150;
+
+  public get maxUsers(): number {
+    return this._maxUsers;
+  }
+}
+```
 
 ## methods
 
-Methods are verb-like named in `camelCase`. They are named in an action-oriented way that succinctly (but fully) describes what the method does.
-
-Methods are written as arrow functions when possible.
+Methods are verb-like named in `camelCase`. They are named in an imperative way that describes the action the method performs. Methods are written as arrow functions.
 
 ```ts
 // Bad function design👎
@@ -76,6 +108,8 @@ There is always a full empty line between the following:
  * @param {number} age age of the user
  *
  * @returns {Array<User>} an array of users
+ *
+ * @throws {Error} if the user is not found
  */
 const getUsersByNameAndAge = (name: string, age: number): Array<User> => {
   // ...
