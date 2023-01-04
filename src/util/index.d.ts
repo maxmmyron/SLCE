@@ -1,6 +1,5 @@
-// TODO: add mouse button to event payload
 type ValidEventPayload =
-  | { x: number, y: number }          // mouse events
+  | { button: number, x: number, y: number }          // mouse events
   | { key: string }     // key events
   | { width: number, height: number } // resize event
   | { deltaTime: number }             // tick event
@@ -19,7 +18,7 @@ type ValidEventPayload =
 type EventHandler = {
   addListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
   removeListener: (type: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => void,
-  queueEvent: (type: ValidEventType, payload: ValidEventPayload, isPersistent?: boolean, persistUntil?: string, isStrict?: boolean) => void,
+  queueEvent: (type: ValidEventType, payload: ValidEventPayload, isPersistent?: boolean, comparisonType?: string) => void,
   dequeueEvent: (type: ValidEventType) => void,
   dispatchQueue: () => void,
   getQueuedEvents: () => Array<QueuedEvent>,
@@ -38,18 +37,14 @@ type EventHandler = {
  * @property {boolean} isPersistent Whether or not the event should persist
  * until the event name described in persistUntil is called, or until the event
  * is explicitly removed from the queue.
- * @property {string} persistUntil The name of the event to persist until.
- * If isPersistent is true and persistUntil is an empty string, the event will
- * persist until explicitly removed from the queue.
- * @property {boolean} isStrict Whether or not the event should be checked
- * against the persistUntil event's payload when filtering.
+ * @property {string} comparisonType The name of the event to compare against
+ * checking if the event should still persist.
  */
 type QueuedEvent = {
   type: ValidEventType,
   payload: ValidEventPayload,
   isPersistent: boolean,
-  persistUntil: string,
-  isStrict: boolean,
+  comparisonType: string
 }
 
 /**
