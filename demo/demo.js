@@ -15,10 +15,10 @@ const engine = new Engine(canvas);
 
 const camera = new Camera("camera", engine);
 
-const scene = new Scene("SceneA", engine, camera);
+const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500) }, { background: "#110022" });
 
-const actorA = new Actor("actorA", scene, { position: vec(250, engine.canvasSize.y / 2 - 32), size: vec(64, 64) });
-const actorB = new Actor("actorB", scene, { position: vec(250, engine.canvasSize.y / 2 + 150), size: vec(64, 64), velocity: vec(1, 0) });
+const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64) });
+const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(64, 64), velocity: vec(0.1, 0) });
 
 actorA.isDebugEnabled = true;
 actorB.isDebugEnabled = true;
@@ -62,9 +62,15 @@ actorA.addListener("ontick", (e) => {
 actorB.addListener("ontick", (e) => {
   actorB.position.x += actorB.velocity.x * e.deltaTime;
 
-  if (actorB.position.x > engine.canvasSize.x + 64) {
-    actorB.position.x = 0;
+  if (actorB.position.x > scene.size.x) {
+    actorB.position.x = -250;
   }
+});
+
+scene.addListener("ontick", (e) => {
+  scene.position.x += 0.1 * e.deltaTime;
+
+  if (scene.position.x > 500) scene.position.x = 10;
 });
 
 engine.start();
