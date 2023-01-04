@@ -1,9 +1,15 @@
+type MouseEventPayload = { button: number, x: number, y: number };
+type KeyEventPayload = { key: string };
+type ResizeEventPayload = { width: number, height: number };
+type TickEventPayload = { deltaTime: number };
+type RenderEventPayload = { interpolationFactor: number };
+
 type ValidEventPayload =
-  | { button: number, x: number, y: number }          // mouse events
-  | { key: string }     // key events
-  | { width: number, height: number } // resize event
-  | { deltaTime: number }             // tick event
-  | { interpolationFactor: number }   // render event
+  | MouseEventPayload
+  | KeyEventPayload
+  | ResizeEventPayload
+  | TickEventPayload
+  | RenderEventPayload
 
 /**
  * @typedef EventHandler A singleton that handles event subscription,
