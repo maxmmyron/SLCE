@@ -1,4 +1,5 @@
 import { vec, add, sub, div, mult } from "../math/vector";
+import Element from "./element";
 import Scene from "./scene";
 
 /**
@@ -7,49 +8,18 @@ import Scene from "./scene";
  * @type {Actor}
  * @class
  */
-export default class Actor {
+export default class Actor extends Element {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
 
   readonly scene: Scene;
 
-  readonly name: string;
-
-  isTickEnabled: boolean = true;
-
-  isRenderEnabled: boolean = true;
-
   isGravityEnabled: boolean = true;
 
   isCollisionEnabled: boolean = true;
 
   isTextureEnabled: boolean = true;
-
-  /**
-   * Whether or not the actor is queued to be removed from the engine at the
-   * next tick.
-   *
-   * @default false
-   */
-  isQueuedForDisposal: boolean = false;
-
-  /**
-   * Whether or not the actor will draw debug information.
-   *
-   * @default false
-   */
-  isDebugEnabled: boolean = false;
-
-  /**
-   * Current position of actor; calculated from top left corner of actor.
-   */
-  pos: Vector;
-
-  /**
-   * Current bounds of actor.
-   */
-  size: Vector;
 
   /**
    * The current texture ID to draw for the actor.
@@ -59,13 +29,9 @@ export default class Actor {
    */
   textureID: string = "";
 
-  vel: Vector;
-
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/ getters)
   // ****************************************************************
-
-  private readonly internalID: string;
 
   private _textureFrame: number = 0;
 
@@ -84,21 +50,11 @@ export default class Actor {
   private textureDeltaSum: number = 0;
 
   /**
-   * A struct containing previous state of the actor.
-   */
-  private previousState: ActorState;
-
-  /**
    * The offset to start drawing the texture from the top left corner of the actor.
    */
   private textureSourcePosition: Vector = vec(0, 0);
 
-  /**
-   * Whether or not interpolation should be factored in when calculating the
-   * position of the actor. This is disabled for one frame when the actor is
-   * moved using SetPosition()
-   */
-  private isInterpolationEnabled: boolean = true;
+
 
 
   // ****************************************************************
@@ -108,28 +64,22 @@ export default class Actor {
   /**
    * Creates a new Actor instance.
    *
-   * @constructor
-   *
-   * @param properties optional arguments for actor upon initialization
-   * @param properties.pos position of the actor with respect to canvas origin
-   * @param properties.vel velocity of the actor
-   * @param properties.size size of the actor
-   * @param properties.isDebugEnabled whether or not the actor will draw debug information
+   * @param name name of actor
+   * @param scene scene reference to add actor to
+   * @param properties Element properties to apply to actor
    */
-  constructor(name: string, scene: Scene, properties?: ActorProperties) {
-    this.name = name;
-
-    this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+  constructor(name: string, scene: Scene, properties?: ElementProperties) {
+    super(name, scene.engine, properties);
 
     this.scene = scene;
 
-    this.scene.actors.set(this.internalID, this);
+    this.scene.actors.set(this.ID, this);
 
-    this.pos = properties?.pos || vec(0, 0);
-    this.vel = properties?.vel || vec(0, 0);
+    this.position = properties?.position || vec(0, 0);
+    this.velocity = properties?.velocity || vec(0, 0);
     this.size = properties?.size || vec(0, 0);
 
-    this.previousState = this.getState();
+    this.previousState = this.createLastState();
     this.isDebugEnabled = properties?.isDebugEnabled || false;
   }
 
@@ -137,14 +87,32 @@ export default class Actor {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  /**
-   * Preload function called once before the first frame cycle.
-   * Accepts a function that will run before the update cycle begins.
-   * Primarily used to load assets and initialize textures or animations.
-   */
-  preload: () => Promise<void> = async () => Promise.resolve();
+  override internalTick = (timestep: number): void => {
+    if (this.isGravityEnabled) {
+      this.velocity = add(this.velocity, div(this.scene.environment.gravity, timestep));
+    }
 
-  addTexture = (textureID: string, texture: ImageBitmap, frameSize: Vector = vec(), frameDuration: number = 200) => {
+    if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
+  };
+
+  override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
+    ctx.save();
+    if (this.textureID) this.renderTexture(ctx);
+
+    // restore the context to its previous state so we don't clip the debug content
+    ctx.restore();
+    if (this.isDebugEnabled) this.renderDebug(ctx);
+  };
+
+  /**
+   * Adds a new texture to the internal texture array.
+   *
+   * @param textureID name of texture to add
+   * @param texture resolved texture bitmap
+   * @param frameSize the size of a single frame in the texture (defaults to the size of the texture)
+   * @param frameDuration the duration of a single frame in the texture (defaults to 200ms)
+   */
+  addTexture = (textureID: string, texture: ImageBitmap, frameSize: Vector = vec(), frameDuration: number = 200): void => {
     const textureSize = vec(texture.width, texture.height);
 
     if (frameSize.x === 0 || frameSize.y === 0) {
@@ -175,75 +143,6 @@ export default class Actor {
     return true;
   };
 
-  /**
-   * Calls update callback function for actor
-   *
-   * @param timestep - update timestep
-   */
-  tick = (timestep: number) => {
-    if (!this.isTickEnabled || this.isQueuedForDisposal) return;
-
-    // ****************************************************************
-    // pre-update operations
-
-    // round down position and velocity if less than EPSILON
-    if (Math.abs(this.pos.x) < Number.EPSILON) this.pos.x = 0;
-    if (Math.abs(this.pos.y) < Number.EPSILON) this.pos.y = 0;
-    if (Math.abs(this.vel.x) < Number.EPSILON) this.vel.x = 0;
-    if (Math.abs(this.vel.y) < Number.EPSILON) this.vel.y = 0;
-
-    this.previousState = this.getState();
-
-    // ****************************************************************
-    // primary update operations
-
-    if (this.isGravityEnabled) {
-      this.vel = add(this.vel, div(this.scene.environment.gravity, timestep));
-    }
-
-
-    if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
-  };
-
-  /**
-   * Calls draw callback function for actor.
-   *
-   * @param interp - interpolated time between current delta and target timestep
-   */
-  render = (interp: number) => {
-    if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
-
-    const ctx: CanvasRenderingContext2D = this.scene.engine.ctx;
-
-    // interpolate position based on previous frame
-    if (this.isInterpolationEnabled) {
-      this.pos = add(this.previousState.pos, mult(sub(this.pos, this.previousState.pos), interp));
-    }
-    this.isInterpolationEnabled = true;
-
-    ctx.save();
-
-    if (this.textureID) this.renderTexture(ctx);
-
-    ctx.restore();
-
-    if (this.isDebugEnabled) this.renderDebug(ctx);
-  };
-
-  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.addListener(eventName, callback);
-
-  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.scene.engine.eventHandler.removeListener(eventName, callback);
-
-  /**
-   * Immediately moves the actor to the specified position. Disables
-   * interpolation for the next frame.
-   * @param pos position to move actor to
-   */
-  setPosition = (pos: Vector): void => {
-    this.pos = pos;
-    this.isInterpolationEnabled = false;
-  }
-
   // ****************************************************************
   // ⚓ PRIVATE METHODS
   // ****************************************************************
@@ -254,7 +153,7 @@ export default class Actor {
    *
    * @param delta the current delta time for the update loop
    */
-  private updateTexture = (timestep: number) => {
+  private updateTexture = (timestep: number): void => {
     let texture: Texture = this._textures[this.textureID];
 
     if ((this.textureDeltaSum += timestep) >= texture.frameDuration) {
@@ -270,7 +169,12 @@ export default class Actor {
     );
   };
 
-  private renderTexture = (ctx: CanvasRenderingContext2D) => {
+  /**
+   * Renders the current texture to the canvas.
+   *
+   * @param ctx the canvas context to render to
+   */
+  private renderTexture = (ctx: CanvasRenderingContext2D): void => {
     const texture: Texture = this._textures[this.textureID];
 
     const renderSize = this.size || texture.frameSize;
@@ -285,21 +189,13 @@ export default class Actor {
       texture.frameSize.x,
       texture.frameSize.y,
       // vector of destination on canvas (actor pos)
-      this.pos.x,
-      this.pos.y,
+      this.position.x,
+      this.position.y,
       // vector representing width/height at which to render source bitmap to
       // canvas (if actor size not specified, use texture frame size)
       renderSize.x,
       renderSize.y
     );
-  };
-
-  private getState = (): ActorState => {
-    return {
-      pos: this.pos,
-      vel: this.vel,
-      size: this.size,
-    };
   };
 
   // ****************************************************************
@@ -311,12 +207,12 @@ export default class Actor {
    *
    * @param ctx canvas context to render debug information to
    */
-  private renderDebug = (ctx: CanvasRenderingContext2D) => {
+  private renderDebug = (ctx: CanvasRenderingContext2D): void => {
     ctx.save();
 
     // draw bounds border
     ctx.strokeStyle = "red";
-    ctx.strokeRect(this.pos.x, this.pos.y, this.size.x, this.size.y);
+    ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
 
     ctx.fillStyle = "white";
     ctx.font = "11px monospace";
@@ -324,12 +220,12 @@ export default class Actor {
     ctx.shadowBlur = 4;
 
     const texts: string[] = [
-      `pos: ${this.pos.x}, ${this.pos.y}`,
-      `vel: ${this.vel.x}, ${this.vel.y}`,
+      `pos: ${this.position.x}, ${this.position.y}`,
+      `vel: ${this.velocity.x}, ${this.velocity.y}`,
     ];
 
     texts.forEach((text, i) => {
-      ctx.fillText(text, this.pos.x, this.pos.y - 12 * (i + 0.5));
+      ctx.fillText(text, this.position.x, this.position.y - 12 * (i + 0.5));
     });
 
     ctx.restore();
@@ -338,10 +234,6 @@ export default class Actor {
   // ****************************************************************
   // ⚓ PRIVATE DECLARATION GETTERS
   // ****************************************************************
-
-  get ID(): string {
-    return this.internalID;
-  }
 
   get textures(): { [key: string]: Texture } {
     return this._textures;

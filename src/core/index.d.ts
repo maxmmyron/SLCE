@@ -1,5 +1,3 @@
-
-
 type CameraOptions = {
   position?: Vector;
   rotation?: Vector;

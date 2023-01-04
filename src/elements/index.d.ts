@@ -1,4 +1,3 @@
-
 interface Texture {
   bitmap: ImageBitmap;
   size: Vector;
@@ -7,22 +6,19 @@ interface Texture {
   frameCount: Vector;
 }
 
-type ActorProperties = {
-  pos?: Vector;
-  vel?: Vector;
+type ElementProperties = {
+  position?: Vector;
+  velocity?: Vector;
+  rotation?: Vector;
   size?: Vector;
   isDebugEnabled?: boolean;
 }
 
-type ActorState = {
-  pos: Vector;
-  vel: Vector;
+type ElementState = {
+  position: Vector;
+  velocity: Vector;
   size: Vector;
 };
-
-type SceneOptions = {
-  environment?: SceneEnvironment
-}
 
 type SceneEnvironment = {
   background: string;
