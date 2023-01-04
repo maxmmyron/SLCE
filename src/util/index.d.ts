@@ -1,3 +1,4 @@
+// TODO: add mouse button to event payload
 type ValidEventPayload =
   | { x: number, y: number }          // mouse events
   | { key: string }     // key events

@@ -53,9 +53,9 @@ export const EventHandler = (() => {
 
           // JSON.stringify is a dirty way to compare two objects because it
           // doesn't account for the possibility of object keys being in
-          // different orders. TODO: use a more robust method to compare two
-          // objects.
+          // different orders.
 
+          // TODO: use a more robust method to compare two objects.
           return JSON.stringify(e.payload) === JSON.stringify(queuedEvent.payload);
         }) === -1;
       });
@@ -64,6 +64,8 @@ export const EventHandler = (() => {
       queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
     };
 
+    // FIXME: don't dispatch onmousedown if mouse is already down; wait for
+    // onmouseup before dispatching again
     const queueMouseDownEvents = (e: any): void => {
       addToQueue("onmousedown", { x: e.x, y: e.y });
       addToQueue("whilemousedown", { x: e.x, y: e.y }, true, "onmouseup");
