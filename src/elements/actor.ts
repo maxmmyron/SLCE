@@ -55,8 +55,6 @@ export default class Actor extends Element {
   private textureSourcePosition: Vector = vec(0, 0);
 
 
-
-
   // ****************************************************************
   // ⚓ CONSTRUCTOR
   // ****************************************************************
@@ -189,8 +187,8 @@ export default class Actor extends Element {
       texture.frameSize.x,
       texture.frameSize.y,
       // vector of destination on canvas (actor pos)
-      this.position.x,
-      this.position.y,
+      this.position.x + this.scene.position.x,
+      this.position.y + this.scene.position.y,
       // vector representing width/height at which to render source bitmap to
       // canvas (if actor size not specified, use texture frame size)
       renderSize.x,
@@ -208,11 +206,13 @@ export default class Actor extends Element {
    * @param ctx canvas context to render debug information to
    */
   private renderDebug = (ctx: CanvasRenderingContext2D): void => {
+    const offsetPosition: Vector = add(this.position, this.scene.position);
+
     ctx.save();
 
     // draw bounds border
     ctx.strokeStyle = "red";
-    ctx.strokeRect(this.position.x, this.position.y, this.size.x, this.size.y);
+    ctx.strokeRect(offsetPosition.x, offsetPosition.y, this.size.x, this.size.y);
 
     ctx.fillStyle = "white";
     ctx.font = "11px monospace";
@@ -225,7 +225,7 @@ export default class Actor extends Element {
     ];
 
     texts.forEach((text, i) => {
-      ctx.fillText(text, this.position.x, this.position.y - 12 * (i + 0.5));
+      ctx.fillText(text, offsetPosition.x, offsetPosition.y - 12 * (i + 0.5));
     });
 
     ctx.restore();
