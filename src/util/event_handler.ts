@@ -28,35 +28,28 @@ export const EventHandler = (() => {
 
     let canvasElement: HTMLCanvasElement;
 
-    const addToQueue = (type: ValidEventType, payload: ValidEventPayload, isPersistent: boolean = false, persistUntil: string = "", isStrict: boolean = false): void => {
-      // because stuff like addEventListener is called regardless of engine
-      // state, we want to filter out any events queued while the engine is
-      // paused.
-      //queue.findIndex(queuedEvent => queuedEvent.type === type) !== -1
-      if (isEnginePaused) return;
-
-      queue.push({ type, payload, isPersistent, persistUntil, isStrict });
+    const addToQueue = (type: ValidEventType, payload: ValidEventPayload, isPersistent: boolean = false, comparisonType: string = ""): void => {
+      // filter events when engine is paused
+      if (!isEnginePaused) queue.push({ type, payload, isPersistent, comparisonType });
     };
 
     const filterQueue = (): void => {
       // filter persistent events
       queue = queue.filter(queuedEvent => {
-        // if event has no persistUntil value, don't filter
-        if (queuedEvent.persistUntil === "") return true;
+        // if event has no comparisonType, don't filter
+        if (queuedEvent.comparisonType === "") return true;
 
         // filter out persistent events by type and payload (if strict).
         // if found, return false to filter out
         return queue.findIndex(e => {
-          if (e.type !== queuedEvent.persistUntil) return false;
+          if (e.type !== queuedEvent.comparisonType) return false;
 
-          if (!queuedEvent.isStrict) return true;
-
-          // JSON.stringify is a dirty way to compare two objects because it
-          // doesn't account for the possibility of object keys being in
-          // different orders. TODO: use a more robust method to compare two
-          // objects.
-
-          return JSON.stringify(e.payload) === JSON.stringify(queuedEvent.payload);
+          switch (queuedEvent.type) {
+            case "whilekeydown":
+              return comparePayloads<KeyEventPayload>(<KeyEventPayload>e.payload, <KeyEventPayload>queuedEvent.payload);
+            case "whilemousedown":
+              return comparePayloads<MouseEventPayload>(<MouseEventPayload>e.payload, <MouseEventPayload>queuedEvent.payload);
+          }
         }) === -1;
       });
 
@@ -64,27 +57,39 @@ export const EventHandler = (() => {
       queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
     };
 
+    const comparePayloads = <T extends ValidEventPayload>(a: T, b: T): boolean => {
+      for (const key in a) {
+        if (a[key] !== b[key]) return false;
+      }
+
+      return true;
+    };
+
+
     const queueMouseDownEvents = (e: any): void => {
-      addToQueue("onmousedown", { x: e.x, y: e.y });
-      addToQueue("whilemousedown", { x: e.x, y: e.y }, true, "onmouseup");
+      addToQueue("onmousedown", { button: e.button, x: e.x, y: e.y });
+      addToQueue("whilemousedown", { button: e.button, x: e.x, y: e.y }, true, "onmouseup");
     };
 
     const queueMouseUpEvents = (e: any): void => {
-      addToQueue("onmouseup", { x: e.x, y: e.y });
+      addToQueue("onmouseup", { button: e.button, x: e.x, y: e.y });
     };
 
     const queueMouseMoveEvents = (e: any): void => {
-      addToQueue("onmousemove", { x: e.x, y: e.y });
+      addToQueue("onmousemove", { button: e.button, x: e.x, y: e.y });
     }
 
+
     const queueKeyDownEvents = (e: any): void => {
+      if (e.repeat) return;
+
       addToQueue("onkeydown", { key: e.key });
-      addToQueue("whilekeydown", { key: e.key }, true, "onkeyup", true);
+      addToQueue("whilekeydown", { key: e.key }, true, "onkeyup");
     };
 
     const queueKeyUpEvents = (e: any): void => {
       addToQueue("onkeyup", { key: e.key });
-    };
+    }
 
     const eventHandlerMap: Map<string, ((e: any) => void) | null> = new Map([
       ["mousedown", queueMouseDownEvents],
@@ -124,8 +129,8 @@ export const EventHandler = (() => {
         callbacks.splice(callbacks.indexOf(callback), 1);
       },
 
-      queueEvent: (name: ValidEventType, event: any, isPersistent: boolean = false, persistUntil: string = "", isStrict: boolean = false): void => {
-        addToQueue(name, event, isPersistent, persistUntil, isStrict);
+      queueEvent: (name: ValidEventType, event: any, isPersistent: boolean = false, comparisonType: string = ""): void => {
+        addToQueue(name, event, isPersistent, comparisonType);
       },
 
       dequeueEvent: (name: ValidEventType): void => {
@@ -153,7 +158,7 @@ export const EventHandler = (() => {
               resizeObserver.observe(canvas);
               break;
             default:
-              canvas.addEventListener(eventName, callback as (e: any) => void);
+              canvas.addEventListener(eventName, <(e: any) => void>callback);
               break;
           }
         });
@@ -166,7 +171,7 @@ export const EventHandler = (() => {
               resizeObserver.unobserve(canvasElement);
               break;
             default:
-              canvasElement.removeEventListener(eventName, callback as (e: any) => void);
+              canvasElement.removeEventListener(eventName, <(e: any) => void>callback);
               break;
           }
         });

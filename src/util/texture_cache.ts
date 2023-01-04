@@ -60,7 +60,7 @@ export const TextureCache = (() => {
        * @returns {Texture} the texture loaded from the path or cache
        */
       load: async (path: string): Promise<ImageBitmap> => {
-        const cachedTexture: ImageBitmap | undefined = searchCache(path) as ImageBitmap;
+        const cachedTexture: ImageBitmap | undefined = searchCache(path);
 
         return new Promise((resolve, reject) => {
           cachedTexture ? resolve(cachedTexture) : resolveBitmapFromPath(path, resolve, reject);

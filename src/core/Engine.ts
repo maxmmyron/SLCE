@@ -112,7 +112,7 @@ export default class Engine {
   constructor(canvasElement: HTMLCanvasElement, properties: any = {}) {
     this.canvasElement = canvasElement;
 
-    this.ctx = canvasElement.getContext("2d") as CanvasRenderingContext2D;
+    this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
     let envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
     let envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
