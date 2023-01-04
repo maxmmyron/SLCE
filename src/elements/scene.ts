@@ -2,35 +2,20 @@ import { vec } from "../math/vector";
 import Actor from "./actor";
 import Camera from "../core/camera";
 import Engine from "../core/engine";
+import Element from "./element";
 
 /**
  * @class Scene
  * A collection of actors and cameras.
  */
-export default class Scene {
+export default class Scene extends Element {
   // ****************************************************************
   // ⚓ PUBLIC DECLARATIONS
   // ****************************************************************
 
-  readonly engine: Engine;
-
-  readonly name: string;
-
   camera: Camera;
 
   actors: Map<string, Actor> = new Map();
-
-  /**
-   * Whether or not the scene is queued to be removed from the engine at the
-   * next tick.
-   *
-   * @default false
-   */
-  isQueuedForDisposal: boolean = false;
-
-  isRenderEnabled: boolean = true;
-
-  isTickEnabled: boolean = true;
 
   environment: SceneEnvironment = {
     background: "transparent",
@@ -38,66 +23,56 @@ export default class Scene {
   };
 
   // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w getters)
-  // ****************************************************************
-
-  private readonly internalID: string;
-
-  // ****************************************************************
   // ⚓ CONSTRUCTOR
   // ****************************************************************
 
-  constructor(name: string, engine: Engine, camera: Camera, options: SceneOptions = {}) {
-    this.name = name;
-    this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
-
-    this.engine = engine;
+  /**
+   * Creates a new Scene instance.
+   *
+   * @param name name of scene
+   * @param engine engine reference to attach scene to
+   * @param camera camera to attach to scene
+   * @param properties scene properties
+   * @param environment scene environment
+   */
+  constructor(name: string, engine: Engine, camera: Camera, properties?: ElementProperties, environment?: SceneEnvironment) {
+    super(name, engine, properties);
 
     this.camera = camera;
 
-    this.environment = options.environment ?? this.environment;
+    this.environment.background = environment?.background ?? this.environment.background;
+    this.environment.gravity = environment?.gravity ?? this.environment.gravity;
 
-    this.engine.scenes.set(this.internalID, this);
+    this.engine.scenes.set(this.ID, this);
   }
 
   // ****************************************************************
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.engine.eventHandler.addListener(eventName, callback);
-
-  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.engine.eventHandler.removeListener(eventName, callback);
-
-  queueDisposal = () => {
-    this.isQueuedForDisposal = true;
-  }
-
-  preload = () => {
+  override preload = () => {
     return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));
   };
 
-  tick = (targetFrameTimestep: number) => {
-    if (!this.isTickEnabled || this.isQueuedForDisposal) return;
 
+  override internalTick = (targetFrameTimestep: number) => {
     Array.from(this.actors.values()).forEach(actor => actor.tick(targetFrameTimestep));
   }
 
-  render = (interpolationFactor: number) => {
-    if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
 
-    const ctx: CanvasRenderingContext2D = this.engine.ctx;
-
+  override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
     ctx.fillStyle = this.environment.background;
-    ctx.fillRect(0, 0, this.engine.canvasSize.x, this.engine.canvasSize.y);
+    ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+
+    ctx.save();
+
+    // clip the context to the scene size
+    ctx.beginPath();
+    ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
+    ctx.clip();
 
     Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
-  }
 
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATION GETTERS & SETTERS
-  // ****************************************************************
-
-  get ID(): string {
-    return this.internalID;
+    ctx.restore();
   }
 }

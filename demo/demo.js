@@ -15,10 +15,10 @@ const engine = new Engine(canvas);
 
 const camera = new Camera("camera", engine);
 
-const scene = new Scene("SceneA", engine, camera);
+const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500) }, { background: "#110022" });
 
-const actorA = new Actor("actorA", scene, { pos: vec(250, engine.canvasSize.y / 2 - 32), size: vec(64, 64) });
-const actorB = new Actor("actorB", scene, { pos: vec(250, engine.canvasSize.y / 2 + 150), size: vec(64, 64), vel: vec(1, 0) });
+const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64) });
+const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(64, 64), velocity: vec(0.1, 0) });
 
 actorA.isDebugEnabled = true;
 actorB.isDebugEnabled = true;
@@ -37,34 +37,40 @@ actorA.preload = async () => {
 
 actorA.addListener("onkeydown", (e) => {
   if (e.key === "r") {
-    actorA.vel = vec();
+    actorA.velocity = vec();
     actorA.setPosition(vec(250, engine.canvasSize.y / 2 - 32));
   }
 });
 
 actorA.addListener("whilekeydown", (e) => {
-  if (e.key === "ArrowRight") actorA.vel.x += 0.01;
-  if (e.key === "ArrowLeft") actorA.vel.x += -0.01;
-  if (e.key === "ArrowUp") actorA.vel.y += -0.01;
-  if (e.key === "ArrowDown") actorA.vel.y += 0.01;
+  if (e.key === "ArrowRight") actorA.velocity.x += 0.01;
+  if (e.key === "ArrowLeft") actorA.velocity.x += -0.01;
+  if (e.key === "ArrowUp") actorA.velocity.y += -0.01;
+  if (e.key === "ArrowDown") actorA.velocity.y += 0.01;
 
-  actorA.vel.x = Math.min(Math.max(actorA.vel.x, -0.5), 0.5);
-  actorA.vel.y = Math.min(Math.max(actorA.vel.y, -0.5), 0.5);
+  actorA.velocity.x = Math.min(Math.max(actorA.velocity.x, -0.5), 0.5);
+  actorA.velocity.y = Math.min(Math.max(actorA.velocity.y, -0.5), 0.5);
 });
 
 actorA.addListener("ontick", (e) => {
-  actorA.vel = mult(actorA.vel, 0.99)
+  actorA.velocity = mult(actorA.velocity, 0.99)
 
-  actorA.pos.x += actorA.vel.x * e.deltaTime;
-  actorA.pos.y += actorA.vel.y * e.deltaTime;
+  actorA.position.x += actorA.velocity.x * e.deltaTime;
+  actorA.position.y += actorA.velocity.y * e.deltaTime;
 });
 
 actorB.addListener("ontick", (e) => {
-  actorB.pos.x += actorB.vel.x * e.deltaTime;
+  actorB.position.x += actorB.velocity.x * e.deltaTime;
 
-  if (actorB.pos.x > engine.canvasSize.x + 64) {
-    actorB.pos.x = 0;
+  if (actorB.position.x > scene.size.x) {
+    actorB.position.x = -250;
   }
+});
+
+scene.addListener("ontick", (e) => {
+  scene.position.x += 0.1 * e.deltaTime;
+
+  if (scene.position.x > 500) scene.position.x = 10;
 });
 
 engine.start();
