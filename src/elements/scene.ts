@@ -59,7 +59,6 @@ export default class Scene extends Element {
     Array.from(this.actors.values()).forEach(actor => actor.tick(targetFrameTimestep));
   }
 
-
   override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
     ctx.fillStyle = this.environment.background;
     ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);

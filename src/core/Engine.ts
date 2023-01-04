@@ -93,11 +93,6 @@ export default class Engine {
    */
   private isDebugEnabled: boolean = true;
 
-  /**
-   * Whether the engine will log performance metrics to the console.
-   */
-  private isLoggingEnabled: boolean = false;
-
 
   // ****************************************************************
   // ⚓ CONSTRUCTOR
@@ -145,8 +140,6 @@ export default class Engine {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.eventHandler
-
     this.eventHandler.addListener("onresize", () => {
       const dimensions = this.fixDPI();
       // set canvas width and height to scaled width and height
@@ -170,15 +163,15 @@ export default class Engine {
   };
 
   /**
-   * Pauses engine update loop. Game will continue requesting
-   * animation frames, but will not continue to update or draw.
+   * Pauses engine tick and render functions. The Engine will continue calling
+   * the outer loop, but will not perform any logic.
    */
-  pause = () => this.updatePauseState(true);
+  pause = (): void => this.updatePauseState(true);
 
   /**
    * Resumes engine update loop.
    */
-  resume = () => this.updatePauseState(false);
+  resume = (): void => this.updatePauseState(false);
 
   addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.addListener(eventName, callback);
 
