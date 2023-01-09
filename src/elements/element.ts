@@ -1,4 +1,3 @@
-import { createTextChangeRange } from "typescript";
 import Engine from "../core/engine";
 import { add, mult, sub, vec } from "../math/vector";
 
@@ -34,6 +33,8 @@ export default class Element {
    * @default false
    */
   isDebugEnabled: boolean = false;
+
+  protected isPreloaded: boolean = false;
 
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS
@@ -91,13 +92,25 @@ export default class Element {
     this.engine.eventHandler.removeListener(name, callback);
   }
 
+  start = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      this.preload()
+        .then(() => {
+          this.isPreloaded = true;
+          this.engine.preloadedActorCount++;
+          resolve(true);
+        })
+        .catch((err) => reject(err));
+    });
+  };
+
   /**
    * Called once before the first frame cycle. Accepts a generic promise to
    * allow for asynchronous loading of textures.
    *
    * @returns {Promise<any>}
    */
-  preload: () => Promise<any> = async () => Promise.resolve();
+  preload: () => Promise<any> = async () => { };
 
   /**
    * Performs common tick logic for all elements
