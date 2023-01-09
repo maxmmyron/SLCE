@@ -51,10 +51,14 @@ export default class Scene extends Element {
   // ****************************************************************
 
   override start = (): Promise<any> => {
-    return this.preload().then(() => {
-      this.isPreloaded = true;
-      return Promise.all(Array.from(this.actors.values()).map(actor => actor.start()));
-    }).catch(err => console.error(err));
+    return new Promise(async (resolve, reject) => {
+      this.preload()
+        .then(() => {
+          this.isPreloaded = true;
+          resolve(Promise.all(Array.from(this.actors.values()).map(actor => actor.start())));
+        })
+        .catch(err => reject(err));
+    });
   };
 
   override internalTick = (targetFrameTimestep: number) => {
