@@ -23,17 +23,15 @@ const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(
 actorA.isDebugEnabled = true;
 actorB.isDebugEnabled = true;
 
-actorA.preload = async () => {
-  const bitmap = await TextureCache.getInstance().load(animationSpritemap);
-
-  console.log("Loaded bitmap: ", bitmap);
-
-  actorA.addTexture("texmap", bitmap, vec(64, 64), 200);
-  actorB.addTexture("texmap", bitmap, vec(64, 64), 200);
-
+actorA.preload = () => new Promise(async (resolve, reject) => {
+  const bitmap = await TextureCache.getInstance().load(characterSpritemap);
+  actorA.addTexture("texmap", bitmap, vec(32, 32), 200);
+  actorB.addTexture("texmap", bitmap, vec(32, 32), 200);
   actorA.textureID = "texmap";
   actorB.textureID = "texmap";
-};
+
+  setTimeout(() => resolve(), 3000);
+});
 
 actorA.addListener("onkeydown", (e) => {
   if (e.key === "r") {

@@ -52,6 +52,8 @@ export default class Engine {
 
   private isStarted: boolean = false;
 
+  private isPreloaded: boolean = false;
+
   /**
    * Accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
    */
@@ -147,19 +149,24 @@ export default class Engine {
     });
 
     // wait for each scene to load up assets and connect textures/animations
-    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
+    this.isPreloaded = false;
 
-    // begin measuring performance and run engine.
-    this._engineStartTime = performance.now();
     this.updateID = requestAnimationFrame(
       this.update
     );
 
-    this.isStarted = true;
-    this.updatePauseState(false);
+    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
 
     // initialize events
     this.eventHandler.attachEventListeners(this.canvasElement);
+
+    this.isPreloaded = true;
+
+    // begin measuring performance and run engine.
+    this._engineStartTime = performance.now();
+
+    this.isStarted = true;
+    this.updatePauseState(false);
   };
 
   /**
@@ -189,6 +196,11 @@ export default class Engine {
    */
   private update = (timestamp: DOMHighResTimeStamp) => {
     this.updateID = requestAnimationFrame(this.update);
+
+    if (!this.isPreloaded) {
+      this.render(0);
+      return;
+    }
 
     // *****************************
     // Calculate delta time and lag
@@ -248,6 +260,11 @@ export default class Engine {
     // clear canvas
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
 
+    if (!this.isPreloaded) {
+      this.renderPreloadScreen();
+      return;
+    }
+
     // *****************************
     // primary draw operations
 
@@ -278,6 +295,15 @@ export default class Engine {
       this.ctx.fillText(line, 5, 15 + (index * 12));
     });
   };
+
+  private renderPreloadScreen(): void {
+    this.ctx.fillStyle = "black";
+    this.ctx.fillRect(0, 0, this._canvasSize.x, this._canvasSize.y);
+
+    this.ctx.font = "30px monospace";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText("LOADING...", this.canvasSize.x / 2, this.canvasSize.y / 2);
+  }
 
   /**
    * fixes DPI of canvas

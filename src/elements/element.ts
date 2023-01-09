@@ -35,6 +35,8 @@ export default class Element {
    */
   isDebugEnabled: boolean = false;
 
+  protected isPreloaded: boolean = false;
+
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS
   // ****************************************************************
