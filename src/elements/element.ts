@@ -1,4 +1,3 @@
-import { createTextChangeRange } from "typescript";
 import Engine from "../core/engine";
 import { add, mult, sub, vec } from "../math/vector";
 
@@ -94,10 +93,15 @@ export default class Element {
   }
 
   start = (): Promise<any> => {
-    return this.preload().then(() => {
-      this.isPreloaded = true;
-      this.engine.preloadedActorCount++
-    }).catch((err) => console.error(err));
+    return new Promise((resolve, reject) => {
+      this.preload()
+        .then(() => {
+          this.isPreloaded = true;
+          this.engine.preloadedActorCount++;
+          resolve(true);
+        })
+        .catch((err) => reject(err));
+    });
   };
 
   /**
@@ -106,7 +110,7 @@ export default class Element {
    *
    * @returns {Promise<any>}
    */
-  preload: () => Promise<any> = async () => Promise.resolve();
+  preload: () => Promise<any> = async () => { };
 
   /**
    * Performs common tick logic for all elements
