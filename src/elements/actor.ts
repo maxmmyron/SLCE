@@ -85,10 +85,6 @@ export default class Actor extends Element {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  override start = (): Promise<any> => {
-    return this.preload().then(() => this.engine.preloadedActorCount++);
-  }
-
   override internalTick = (timestep: number): void => {
     if (this.isGravityEnabled) {
       this.velocity = add(this.velocity, div(this.scene.environment.gravity, timestep));

@@ -29,7 +29,7 @@ actorA.preload = () => new Promise(async (resolve, reject) => {
   actorA.textureID = "texmap";
   actorB.textureID = "texmap";
 
-  resolve();
+  setTimeout(resolve(), 1500);
 });
 
 actorA.addListener("onkeydown", (e) => {

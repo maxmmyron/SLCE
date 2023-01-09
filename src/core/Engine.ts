@@ -159,7 +159,6 @@ export default class Engine {
 
     // wait for each scene to load up assets and connect textures / animations
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.start()));
-    // await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
 
     // initialize events
     this.eventHandler.attachEventListeners(this.canvasElement);

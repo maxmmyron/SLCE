@@ -93,7 +93,12 @@ export default class Element {
     this.engine.eventHandler.removeListener(name, callback);
   }
 
-  start = (): void => { };
+  start = (): Promise<any> => {
+    return this.preload().then(() => {
+      this.isPreloaded = true;
+      this.engine.preloadedActorCount++
+    }).catch((err) => console.error(err));
+  };
 
   /**
    * Called once before the first frame cycle. Accepts a generic promise to
