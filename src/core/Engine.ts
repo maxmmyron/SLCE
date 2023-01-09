@@ -24,6 +24,8 @@ export default class Engine {
 
   camera: Camera | null = null;
 
+  preloadedActorCount: number = 0;
+
   // ****************************************************************
   // ⚓ PRIVATE DECLARATIONS (w/ getters)
   // ****************************************************************
@@ -53,6 +55,8 @@ export default class Engine {
   private isStarted: boolean = false;
 
   private isPreloaded: boolean = false;
+
+  private totalActorCount: number = 0;
 
   /**
    * Accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
@@ -143,29 +147,28 @@ export default class Engine {
     this.canvasElement.focus();
 
     this.eventHandler.addListener("onresize", () => {
-      const dimensions = this.fixDPI();
-      // set canvas width and height to scaled width and height
-      this._canvasSize = vec(dimensions[0], dimensions[1]);
+      const [w, h] = this.fixDPI();
+      this._canvasSize = vec(w, h);
     });
-
-    // wait for each scene to load up assets and connect textures/animations
-    this.isPreloaded = false;
 
     this.updateID = requestAnimationFrame(
       this.update
     );
 
-    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
+    this.totalActorCount = Array.from(this.scenes.values()).reduce((acc, scene) => acc + scene.actors.size, 0);
+
+    // wait for each scene to load up assets and connect textures / animations
+    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.start()));
+    // await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
 
     // initialize events
     this.eventHandler.attachEventListeners(this.canvasElement);
 
     this.isPreloaded = true;
+    this.isStarted = true;
 
-    // begin measuring performance and run engine.
     this._engineStartTime = performance.now();
 
-    this.isStarted = true;
     this.updatePauseState(false);
   };
 
@@ -255,15 +258,14 @@ export default class Engine {
   private render = (interpolationFactor: number) => {
     // *****************************
     // pre-draw operations
-    if (this._isPaused) return;
+
+    if (!this.isPreloaded) this.renderPreloadScreen();
+
+    if (this._isPaused || !this.isPreloaded) return;
+
 
     // clear canvas
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
-
-    if (!this.isPreloaded) {
-      this.renderPreloadScreen();
-      return;
-    }
 
     // *****************************
     // primary draw operations
@@ -298,11 +300,16 @@ export default class Engine {
 
   private renderPreloadScreen(): void {
     this.ctx.fillStyle = "black";
-    this.ctx.fillRect(0, 0, this._canvasSize.x, this._canvasSize.y);
+    this.ctx.fillRect(0, 0, this.canvasSize.x, this.canvasSize.y);
 
     this.ctx.font = "30px monospace";
+    this.ctx.textAlign = "center";
     this.ctx.fillStyle = "white";
     this.ctx.fillText("LOADING...", this.canvasSize.x / 2, this.canvasSize.y / 2);
+
+    this.ctx.strokeStyle = "white";
+    this.ctx.strokeRect(this.canvasSize.x / 2 - 200, this.canvasSize.y / 2 + 32, 400, 16);
+    this.ctx.fillRect(this.canvasSize.x / 2 - 200, this.canvasSize.y / 2 + 32, 400 * this.preloadedActorCount / this.totalActorCount, 16);
   }
 
   /**

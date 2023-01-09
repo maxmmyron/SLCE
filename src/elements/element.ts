@@ -93,6 +93,8 @@ export default class Element {
     this.engine.eventHandler.removeListener(name, callback);
   }
 
+  start = (): void => { };
+
   /**
    * Called once before the first frame cycle. Accepts a generic promise to
    * allow for asynchronous loading of textures.

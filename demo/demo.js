@@ -17,20 +17,19 @@ const camera = new Camera("camera", engine);
 
 const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500) }, { background: "#110022" });
 
-const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64) });
-const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(64, 64), velocity: vec(0.1, 0) });
-
-actorA.isDebugEnabled = true;
-actorB.isDebugEnabled = true;
+const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64), isDebugEnabled: true });
+const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(64, 64), velocity: vec(0.1, 0), isDebugEnabled: true });
 
 actorA.preload = () => new Promise(async (resolve, reject) => {
   const bitmap = await TextureCache.getInstance().load(characterSpritemap);
+
   actorA.addTexture("texmap", bitmap, vec(32, 32), 200);
   actorB.addTexture("texmap", bitmap, vec(32, 32), 200);
+
   actorA.textureID = "texmap";
   actorB.textureID = "texmap";
 
-  setTimeout(() => resolve(), 3000);
+  resolve();
 });
 
 actorA.addListener("onkeydown", (e) => {

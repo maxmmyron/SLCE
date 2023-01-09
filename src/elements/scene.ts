@@ -50,10 +50,9 @@ export default class Scene extends Element {
   // ⚓ PUBLIC METHODS
   // ****************************************************************
 
-  override preload = () => {
-    return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));
+  override start = () => {
+    return Promise.all(Array.from(this.actors.values()).map(actor => actor.start()));
   };
-
 
   override internalTick = (targetFrameTimestep: number) => {
     Array.from(this.actors.values()).forEach(actor => actor.tick(targetFrameTimestep));
