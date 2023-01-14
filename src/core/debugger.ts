@@ -6,8 +6,11 @@ export const Debugger = (() => {
 
     let debugSections: Array<{ name: string, values: Array<{ name: string, value: any }> }> = [];
 
+    // TODO: improve error checking of system.
+    // possible idea: getIndexOrThrow(array, predicate, errorMessage)
     const doesIndexExist = <T>(array: Array<T>, predicate: (value: T) => boolean): boolean => array.findIndex(predicate) !== -1;
 
+    // TODO: implement draw method
     const drawDebug = (): void => {
 
     };
