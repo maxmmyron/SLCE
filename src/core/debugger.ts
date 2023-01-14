@@ -1,6 +1,6 @@
 import { assert } from "../util/asserts";
 
-class Section {
+export class Section {
   name: string;
   position: Vector;
   isCollapsed: boolean;
@@ -17,19 +17,23 @@ class Section {
 
   // TODO: implement draw method
   render(ctx: CanvasRenderingContext2D): void {
+    // draw section name
 
+    // render sections
+
+    // render items
+
+    this.items.forEach((item, i) => {
+      ctx.font = "11px monospace";
+      ctx.fillStyle = "white";
+      ctx.fillText(`${item.title}: ${item.value.toString()}`, this.position.x, this.position.y + (i * 12));
+    });
   }
 
   addSection(section: Section): Section {
     assert(this.sections.find((value) => value.name === section.name) === undefined, `Section with name ${section.name} already exists`);
     this.sections.push(section);
     return section;
-  }
-
-  addItem(item: DebuggerItem): boolean {
-    assert(this.items.find((value) => value.title === item.title) === undefined, `Item with title ${item.title} already exists`);
-    this.items.push(item);
-    return true;
   }
 
   removeSection(section: Section): boolean {
@@ -40,11 +44,27 @@ class Section {
     return true;
   }
 
-  removeItem(item: DebuggerItem): boolean {
-    const index = this.items.findIndex((value) => value === item);
+  addItem(title: string, value: Object): Section {
+    assert(this.items.find((value) => value.title === title) === undefined, `Item with title ${title} already exists`);
+
+    const item: DebuggerItem = { title, value };
+    this.items.push(item);
+    return this;
+  }
+
+  removeItem(title: string): boolean {
+    const index = this.items.findIndex((value) => value.title === title);
     if (index === -1) return false;
 
     this.items.splice(index, 1);
+    return true;
+  }
+
+  updateItem(title: string, value: Object): boolean {
+    const index = this.items.findIndex((value) => value.title === title);
+    if (index === -1) return false;
+
+    this.items[index].value = value;
     return true;
   }
 }
@@ -57,6 +77,7 @@ export const Debugger = (() => {
 
     let sections: Array<Section> = [];
 
+    // TODO: fix not updating
     const render = (): void => {
       sections.forEach((section) => {
         section.render(context);
@@ -73,6 +94,13 @@ export const Debugger = (() => {
         return section;
       },
 
+      getSection: (name: string): Section => {
+        const section: Section | undefined = sections.find((section) => section.name === name);
+        assert(section, `Debug section with name ${name} does not exist`);
+
+        return <Section>section;
+      },
+
       render: (): void => render(),
 
       removeSection: (name: string): boolean => {
@@ -83,7 +111,10 @@ export const Debugger = (() => {
         return true;
       },
 
-      setContext: (ctx: CanvasRenderingContext2D): void => { context = ctx; }
+      setContext: (ctx: CanvasRenderingContext2D): Debugger => {
+        context = ctx;
+        return instance;
+      }
     }
   };
 

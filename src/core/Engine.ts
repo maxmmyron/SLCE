@@ -3,6 +3,7 @@ import { assert } from "../util/asserts";
 import Camera from "./camera";
 import { EventHandler } from "../util/event_handler";
 import Scene from "../elements/scene";
+import { Debugger } from "./debugger";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -19,6 +20,8 @@ export default class Engine {
 
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
+
+  readonly debugger: Debugger;
 
   scenes: Map<string, Scene> = new Map();
 
@@ -124,7 +127,12 @@ export default class Engine {
 
     this.fixDPI();
 
-    // TODO: init debugger info
+    this.debugger = Debugger.getInstance().setContext(this.ctx);
+
+    this.debugger.addSection("Engine", vec(16, 16), false)
+      .addItem("FPS", this._FPS)
+      .addItem("runtime", ((performance.now() - this._engineStartTime) / 1000))
+      .addItem("tick lag", this.lag);
   }
 
 
@@ -275,30 +283,23 @@ export default class Engine {
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
-    // TODO: implement debugger system
-
     // *****************************
     // debug render
-    if (!this.isDebugEnabled || isNaN(this._FPS)) return;
 
-    const debugLines = [
-      `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
-      `FPS:                   ${this._FPS}`,
-      `------------------------`,
-      `total ticks:           ${this.updatesSinceEngineStart}`,
-      `current tick lag:      ${this.lag}`,
-      `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
-      `------------------------`,
-      `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
-      `frame duration:        ${1000 / this._FPS}`,
-      `render interpolation:  ${interpolationFactor}`,
-    ];
 
-    debugLines.forEach((line, index) => {
-      this.ctx.font = "11px monospace";
-      this.ctx.fillStyle = "white";
-      this.ctx.fillText(line, 5, 15 + (index * 12));
-    });
+    if (this.isDebugEnabled) this.debugger.render();
+
+
+    // `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
+    // `FPS:                   ${this._FPS}`,
+    // `------------------------`,
+    // `total ticks:           ${this.updatesSinceEngineStart}`,
+    // `current tick lag:      ${this.lag}`,
+    // `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
+    // `------------------------`,
+    // `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
+    // `frame duration:        ${1000 / this._FPS}`,
+    // `render interpolation:  ${interpolationFactor}`,
   };
 
   private renderPreloadScreen(): void {
