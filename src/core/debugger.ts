@@ -1,65 +1,93 @@
+import { assert } from "../util/asserts";
+
+class Section {
+  name: string;
+  position: Vector;
+  isCollapsed: boolean;
+  sections: Array<Section>;
+  items: Array<DebuggerItem>;
+
+  constructor(name: string, position: Vector, isCollapsed: boolean) {
+    this.name = name;
+    this.position = position;
+    this.isCollapsed = isCollapsed;
+    this.sections = [];
+    this.items = [];
+  }
+
+  // TODO: implement draw method
+  render(ctx: CanvasRenderingContext2D): void {
+
+  }
+
+  addSection(section: Section): Section {
+    assert(this.sections.find((value) => value.name === section.name) === undefined, `Section with name ${section.name} already exists`);
+    this.sections.push(section);
+    return section;
+  }
+
+  addItem(item: DebuggerItem): boolean {
+    assert(this.items.find((value) => value.title === item.title) === undefined, `Item with title ${item.title} already exists`);
+    this.items.push(item);
+    return true;
+  }
+
+  removeSection(section: Section): boolean {
+    const index = this.sections.findIndex((value) => value === section);
+    if (index === -1) return false;
+
+    this.items.splice(index, 1);
+    return true;
+  }
+
+  removeItem(item: DebuggerItem): boolean {
+    const index = this.items.findIndex((value) => value === item);
+    if (index === -1) return false;
+
+    this.items.splice(index, 1);
+    return true;
+  }
+}
+
 export const Debugger = (() => {
   let instance: Debugger;
 
   const Debugger = (): Debugger => {
     let context: CanvasRenderingContext2D;
 
-    let debugSections: Array<{ name: string, values: Array<{ name: string, value: any }> }> = [];
+    let sections: Array<Section> = [];
 
-    // TODO: improve error checking of system.
-    // possible idea: getIndexOrThrow(array, predicate, errorMessage)
-    const doesIndexExist = <T>(array: Array<T>, predicate: (value: T) => boolean): boolean => array.findIndex(predicate) !== -1;
-
-    // TODO: implement draw method
-    const drawDebug = (): void => {
-
+    const render = (): void => {
+      sections.forEach((section) => {
+        section.render(context);
+      });
     };
 
     return {
-      addDebugSection: (name: string): number => {
-        if (doesIndexExist(debugSections, (section) => section.name === name)) {
-          throw new Error(`Debug section with name ${name} already exists`);
-        }
+      addSection: (name: string, position: Vector, isCollapsed: boolean): Section => {
+        assert(!sections.find((section) => section.name === name), `Debug section with name ${name} already exists`);
 
-        return debugSections.push({ name, values: [] });
+        const section: Section = new Section(name, position, isCollapsed);
+
+        sections.push(section);
+        return section;
       },
 
-      addValue: (sectionName: string, value: any): number => {
-        if (!doesIndexExist(debugSections, (section) => section.name === sectionName))
-          throw new Error(`Debug section with name ${sectionName} does not exist`);
+      render: (): void => render(),
 
-        return debugSections.find((section) => section.name === sectionName)!.values.push(value);
+      removeSection: (name: string): boolean => {
+        if (!sections.find((section) => section.name === name)) return false;
+
+        sections.splice(sections.findIndex((section) => section.name === name), 1).length;
+
+        return true;
       },
 
-      drawDebug: (): void => drawDebug(),
-
-      removeDebugSection: (name: string): number => {
-        if (!doesIndexExist(debugSections, (section) => section.name === name))
-          throw new Error(`Debug section with name ${name} does not exist`);
-
-
-        return debugSections.splice(debugSections.findIndex((section) => section.name === name), 1).length;
-      },
-
-      removeValue: (sectionName: string, value: any): number => {
-        const sectionIndex = debugSections.findIndex((section) => section.name === sectionName);
-
-        if (sectionIndex === -1) throw new Error(`Debug section with name ${sectionName} does not exist`);
-
-        const valueIndex = debugSections[sectionIndex].values.findIndex((val) => val === value);
-
-        if (valueIndex === -1) throw new Error(`Value ${value} does not exist in debug section ${sectionName}`);
-
-        return debugSections[sectionIndex].values.splice(valueIndex, 1).length;
-      },
-
-      setContext: (ctx: CanvasRenderingContext2D): void => { context = ctx; },
-
+      setContext: (ctx: CanvasRenderingContext2D): void => { context = ctx; }
     }
   };
 
   return {
     getInstance: (): Debugger => instance || (instance = Debugger())
-  }
-
+  };
 })();

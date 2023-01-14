@@ -1,13 +1,14 @@
 type Debugger = {
-  addDebugSection(name: string): number;
-  addValue(section: string, value: any): number;
-  drawDebug(): void;
-  removeDebugSection(name: string): number;
-  removeValue(section: string, value: any): number;
+  addSection(name: string, position: Vector, isCollapsed: boolean): any;
+  render(): void;
+  removeSection(name: string): boolean;
   setContext: (context: CanvasRenderingContext2D) => void;
 }
 
-// TODO: add more robust section system (collapse support, type of object, etc.)
+type DebuggerItem = {
+  title: string;
+  value: string;
+}
 
 type CameraOptions = {
   position?: Vector;
