@@ -7,6 +7,8 @@ type Debugger = {
   setContext: (context: CanvasRenderingContext2D) => void;
 }
 
+// TODO: add more robust section system (collapse support, type of object, etc.)
+
 type CameraOptions = {
   position?: Vector;
   rotation?: Vector;

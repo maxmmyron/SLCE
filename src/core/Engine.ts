@@ -123,6 +123,8 @@ export default class Engine {
     this.eventHandler = EventHandler.getInstance();
 
     this.fixDPI();
+
+    // TODO: init debugger info
   }
 
 
@@ -272,6 +274,8 @@ export default class Engine {
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
+
+    // TODO: implement debugger system
 
     // *****************************
     // debug render
