@@ -18,8 +18,13 @@ export class Section {
   // TODO: implement draw method
   render(ctx: CanvasRenderingContext2D): void {
     // draw section name
+    // TODO: implement proper section dropdown render
+    // TODO: implement pointer on dropdown hover
 
     // render sections
+
+    // NOTE: sections and items should be
+    // indented by some amount to indicate hierarchy
 
     // render items
 
@@ -77,7 +82,7 @@ export const Debugger = (() => {
 
     let sections: Array<Section> = [];
 
-    // TODO: fix not updating
+    // FIXME: values don't update (pass as reference instead of val alone)
     const render = (): void => {
       sections.forEach((section) => {
         section.render(context);
