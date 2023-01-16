@@ -1,9 +1,10 @@
 type Debugger = {
-  addSection: (name: string, position: Vector, isCollapsed: boolean) => import("./debugger").Section;
-  getSection: (name: string) => import("./debugger").Section;
+  addSection: (name: string, isCollapsed: boolean) => import("./debugger").Section;
+  removeSection: (name: string) => Debugger;
   render(): void;
-  removeSection: (name: string) => boolean;
+  getSection: (name: string) => import("./debugger").Section;
   setContext: (context: CanvasRenderingContext2D) => Debugger;
+  setPosition: (position: Vector) => Debugger;
 }
 
 type DebuggerItem = {

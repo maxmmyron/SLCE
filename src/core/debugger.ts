@@ -1,52 +1,74 @@
+import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 
+//TODO: simplify: combine Section class and Debugger class into one
+
 export class Section {
-  name: string;
-  position: Vector;
+  title: string;
   isCollapsed: boolean;
   sections: Array<Section>;
   items: Array<DebuggerItem>;
 
-  constructor(name: string, position: Vector, isCollapsed: boolean) {
-    this.name = name;
-    this.position = position;
+  constructor(name: string, isCollapsed: boolean) {
+    this.title = name;
     this.isCollapsed = isCollapsed;
     this.sections = [];
     this.items = [];
   }
 
-  // TODO: implement draw method
-  render(ctx: CanvasRenderingContext2D): void {
-    // draw section name
-    // TODO: implement proper section dropdown render
-    // TODO: implement pointer on dropdown hover
+  render(ctx: CanvasRenderingContext2D, position: Vector): Vector {
+    ctx.font = "16px monospace";
+    ctx.fillStyle = this.isCollapsed ? "#222" : "#444";
 
-    // render sections
+    ctx.fillRect(position.x, position.y, 100, 24);
+    position.y += 24;
 
-    // NOTE: sections and items should be
-    // indented by some amount to indicate hierarchy
+    ctx.fillStyle = "white";
+    ctx.fillText(this.title, position.x + 4, position.y - 8);
 
-    // render items
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "black";
+    ctx.save();
 
-    this.items.forEach((item, i) => {
-      ctx.font = "11px monospace";
-      ctx.fillStyle = "white";
-      ctx.fillText(`${item.title}: ${item.value.toString()}`, this.position.x, this.position.y + (i * 12));
-    });
+    if (this.isCollapsed) return position;
+
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "white";
+
+
+
+    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.value)}`, position.x + 8, position.y += 16));
+
+    if (this.items.length) position.y += 8;
+
+    this.sections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y)).y);
+
+    return position;
   }
 
-  addSection(section: Section): Section {
-    assert(this.sections.find((value) => value.name === section.name) === undefined, `Section with name ${section.name} already exists`);
+  addSection(title: string, isCollapsed: boolean): Section {
+    assert(!this.sections.find((section) => section.title === title), `Debug section with name ${title} already exists`);
+
+    const section: Section = new Section(title, isCollapsed);
+
     this.sections.push(section);
     return section;
   }
 
-  removeSection(section: Section): boolean {
-    const index = this.sections.findIndex((value) => value === section);
-    if (index === -1) return false;
+  removeSection(title: string): Section {
+    const index = this.sections.findIndex((section) => section.title === title);
+    if (index === -1) return this;
 
     this.items.splice(index, 1);
-    return true;
+    return this;
+  }
+
+  getSection(title: string): Section {
+    const section: Section | undefined = this.sections.find((section) => section.title === title);
+
+    assert(section, `Debug section with name ${title} does not exist`);
+
+    return <Section>section;
   }
 
   addItem(title: string, value: Object): Section {
@@ -57,20 +79,20 @@ export class Section {
     return this;
   }
 
-  removeItem(title: string): boolean {
+  removeItem(title: string): Section {
     const index = this.items.findIndex((value) => value.title === title);
-    if (index === -1) return false;
+    if (index === -1) return this;
 
     this.items.splice(index, 1);
-    return true;
+    return this;
   }
 
-  updateItem(title: string, value: Object): boolean {
+  updateItem(title: string, value: Object): Section {
     const index = this.items.findIndex((value) => value.title === title);
-    if (index === -1) return false;
+    if (index === -1) return this;
 
     this.items[index].value = value;
-    return true;
+    return this;
   }
 }
 
@@ -79,47 +101,53 @@ export const Debugger = (() => {
 
   const Debugger = (): Debugger => {
     let context: CanvasRenderingContext2D;
+    let position: Vector = vec(16, 16);
 
     let sections: Array<Section> = [];
 
     // FIXME: values don't update (pass as reference instead of val alone)
     const render = (): void => {
       sections.forEach((section) => {
-        section.render(context);
+        section.render(context, vec(position.x, position.y));
       });
     };
 
     return {
-      addSection: (name: string, position: Vector, isCollapsed: boolean): Section => {
-        assert(!sections.find((section) => section.name === name), `Debug section with name ${name} already exists`);
+      addSection: (name: string, isCollapsed: boolean): Section => {
+        assert(!sections.find((section) => section.title === name), `Debug section with name ${name} already exists`);
 
-        const section: Section = new Section(name, position, isCollapsed);
+        const section: Section = new Section(name, isCollapsed);
 
         sections.push(section);
         return section;
       },
 
+      removeSection: (name: string): Debugger => {
+        if (!sections.find((section) => section.title === name)) return instance;
+
+        sections.splice(sections.findIndex((section) => section.title === name), 1).length;
+
+        return instance;
+      },
+
+      render: (): void => render(),
+
       getSection: (name: string): Section => {
-        const section: Section | undefined = sections.find((section) => section.name === name);
+        const section: Section | undefined = sections.find((section) => section.title === name);
         assert(section, `Debug section with name ${name} does not exist`);
 
         return <Section>section;
       },
 
-      render: (): void => render(),
-
-      removeSection: (name: string): boolean => {
-        if (!sections.find((section) => section.name === name)) return false;
-
-        sections.splice(sections.findIndex((section) => section.name === name), 1).length;
-
-        return true;
-      },
-
       setContext: (ctx: CanvasRenderingContext2D): Debugger => {
         context = ctx;
         return instance;
-      }
+      },
+
+      setPosition: (pos: Vector): Debugger => {
+        position = pos;
+        return instance;
+      },
     }
   };
 

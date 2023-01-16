@@ -129,7 +129,9 @@ export default class Engine {
 
     this.debugger = Debugger.getInstance().setContext(this.ctx);
 
-    this.debugger.addSection("Engine", vec(16, 16), false)
+    this.debugger.setPosition(vec(16, 16));
+
+    this.debugger.addSection("Engine", false)
       .addItem("FPS", this._FPS)
       .addItem("runtime", ((performance.now() - this._engineStartTime) / 1000))
       .addItem("tick lag", this.lag);
@@ -286,6 +288,10 @@ export default class Engine {
     // *****************************
     // debug render
 
+    this.debugger.getSection("Engine")
+      .updateItem("FPS", this._FPS)
+      .updateItem("runtime", ((performance.now() - this._engineStartTime) / 1000))
+      .updateItem("tick lag", this.lag);
 
     if (this.isDebugEnabled) this.debugger.render();
 
