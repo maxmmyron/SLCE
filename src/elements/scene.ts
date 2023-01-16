@@ -44,6 +44,11 @@ export default class Scene extends Element {
     this.environment.gravity = environment?.gravity ?? this.environment.gravity;
 
     this.engine.scenes.set(this.ID, this);
+
+    this.engine.debugger.baseSection.addSection(this.name, false)
+      .addItem("background", () => this.environment.background)
+      .addItem("Position", () => this.position)
+      .addItem("Velocity", () => this.velocity)
   }
 
   // ****************************************************************

@@ -1,15 +1,25 @@
+type Section = {
+  title: string;
+  isCollapsed: boolean;
+  sections: Array<Section>;
+  items: Array<DebuggerItem>;
+  addItem: (title: string, value: Object) => Section;
+  removeItem: (title: string) => Section;
+  updateItem: (title: string, value: Object) => Section;
+  addSection: (title: string, isCollapsed: boolean) => Section;
+  removeSection: (title: string) => Section;
+  render: (position?: Vector) => Vector;
+  getSection: (title: string) => Section;
+}
+
 type Debugger = {
-  addSection: (name: string, isCollapsed: boolean) => import("./debugger").Section;
-  removeSection: (name: string) => Debugger;
-  render(): void;
-  getSection: (name: string) => import("./debugger").Section;
-  setContext: (context: CanvasRenderingContext2D) => Debugger;
-  setPosition: (position: Vector) => Debugger;
+  setContext: (context: CanvasRenderingContext2D) => Section;
+  getInstance: () => Section;
 }
 
 type DebuggerItem = {
   title: string;
-  value: Object;
+  value: Function;
 }
 
 type CameraOptions = {

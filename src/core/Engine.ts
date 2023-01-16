@@ -127,14 +127,12 @@ export default class Engine {
 
     this.fixDPI();
 
-    this.debugger = Debugger.getInstance().setContext(this.ctx);
+    this.debugger = new Debugger(this.ctx);
 
-    this.debugger.setPosition(vec(16, 16));
-
-    this.debugger.addSection("Engine", false)
-      .addItem("FPS", this._FPS)
-      .addItem("runtime", ((performance.now() - this._engineStartTime) / 1000))
-      .addItem("tick lag", this.lag);
+    this.debugger.baseSection
+      .addItem("FPS", () => this._FPS)
+      .addItem("runtime", () => ((performance.now() - this._engineStartTime) / 1000))
+      .addItem("tick lag", () => this.lag);
   }
 
 
@@ -267,31 +265,14 @@ export default class Engine {
    * @param {number} interpolationFactor - interpolation value
    */
   private render = (interpolationFactor: number) => {
-    // *****************************
-    // pre-draw operations
-
     if (!this.isPreloaded) this.renderPreloadScreen();
-
     if (this._isPaused || !this.isPreloaded) return;
 
-
-    // clear canvas
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
-
-    // *****************************
-    // primary draw operations
 
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
-
-    // *****************************
-    // debug render
-
-    this.debugger.getSection("Engine")
-      .updateItem("FPS", this._FPS)
-      .updateItem("runtime", ((performance.now() - this._engineStartTime) / 1000))
-      .updateItem("tick lag", this.lag);
 
     if (this.isDebugEnabled) this.debugger.render();
 
@@ -338,7 +319,6 @@ export default class Engine {
       .getPropertyValue("height")
       .slice(0, -2));
 
-    // scale dimensions by DPI
     const computedWidth: number = currentWidth * dpi;
     const computedHeight: number = currentHeight * dpi;
 

@@ -79,9 +79,7 @@ export default class Element {
 
     this.previousState = this.createLastState();
 
-    this.engine.debugger.getSection("Engine").addSection(this.name, false)
-      .addItem("Position", () => this.position)
-      .addItem("Velocity", () => this.velocity)
+
   }
 
   // ****************************************************************
@@ -159,7 +157,7 @@ export default class Element {
 
     this.internalRender(ctx, interpolationFactor);
 
-    this.engine.debugger.getSection("Engine").getSection(this.name).updateItem("Position", this.position).updateItem("Velocity", this.velocity);
+    // this.engine.debugger.getInstance().getSection(this.name).updateItem("Position", this.position).updateItem("Velocity", this.velocity);
 
     // restore context
     ctx.restore();

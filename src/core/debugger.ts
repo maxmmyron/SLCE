@@ -1,8 +1,6 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 
-//TODO: simplify: combine Section class and Debugger class into one
-
 export class Section {
   title: string;
   isCollapsed: boolean;
@@ -37,7 +35,7 @@ export class Section {
 
 
 
-    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.value)}`, position.x + 8, position.y += 16));
+    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.value())}`, position.x + 8, position.y += 16));
 
     if (this.items.length) position.y += 8;
 
@@ -71,7 +69,7 @@ export class Section {
     return <Section>section;
   }
 
-  addItem(title: string, value: Object): Section {
+  addItem(title: string, value: Function): Section {
     assert(this.items.find((value) => value.title === title) === undefined, `Item with title ${title} already exists`);
 
     const item: DebuggerItem = { title, value };
@@ -86,72 +84,20 @@ export class Section {
     this.items.splice(index, 1);
     return this;
   }
-
-  updateItem(title: string, value: Object): Section {
-    const index = this.items.findIndex((value) => value.title === title);
-    if (index === -1) return this;
-
-    this.items[index].value = value;
-    return this;
-  }
 }
 
-export const Debugger = (() => {
-  let instance: Debugger;
+export class Debugger {
+  readonly position: Vector = vec(16, 16);
+  readonly baseSection: Section;
 
-  const Debugger = (): Debugger => {
-    let context: CanvasRenderingContext2D;
-    let position: Vector = vec(16, 16);
+  private readonly ctx: CanvasRenderingContext2D;
 
-    let sections: Array<Section> = [];
+  constructor(ctx: CanvasRenderingContext2D) {
+    this.ctx = ctx;
+    this.baseSection = new Section("Engine", false);
+  }
 
-    // FIXME: values don't update (pass as reference instead of val alone)
-    const render = (): void => {
-      sections.forEach((section) => {
-        section.render(context, vec(position.x, position.y));
-      });
-    };
-
-    return {
-      addSection: (name: string, isCollapsed: boolean): Section => {
-        assert(!sections.find((section) => section.title === name), `Debug section with name ${name} already exists`);
-
-        const section: Section = new Section(name, isCollapsed);
-
-        sections.push(section);
-        return section;
-      },
-
-      removeSection: (name: string): Debugger => {
-        if (!sections.find((section) => section.title === name)) return instance;
-
-        sections.splice(sections.findIndex((section) => section.title === name), 1).length;
-
-        return instance;
-      },
-
-      render: (): void => render(),
-
-      getSection: (name: string): Section => {
-        const section: Section | undefined = sections.find((section) => section.title === name);
-        assert(section, `Debug section with name ${name} does not exist`);
-
-        return <Section>section;
-      },
-
-      setContext: (ctx: CanvasRenderingContext2D): Debugger => {
-        context = ctx;
-        return instance;
-      },
-
-      setPosition: (pos: Vector): Debugger => {
-        position = pos;
-        return instance;
-      },
-    }
-  };
-
-  return {
-    getInstance: (): Debugger => instance || (instance = Debugger())
-  };
-})();
+  render(): void {
+    this.baseSection.render(this.ctx, vec(this.position.x, this.position.y));
+  }
+}
