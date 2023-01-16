@@ -145,22 +145,14 @@ export default class Engine {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.eventHandler
-
-    this.eventHandler.addListener("onresize", () => {
-      const dimensions = this.fixDPI();
-      // set canvas width and height to scaled width and height
-      this._canvasSize = vec(dimensions[0], dimensions[1]);
-    });
+    this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixDPI());
 
     // wait for each scene to load up assets and connect textures/animations
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.preload()));
 
     // begin measuring performance and run engine.
     this._engineStartTime = performance.now();
-    this.updateID = requestAnimationFrame(
-      this.update
-    );
+    this.updateID = requestAnimationFrame(this.update);
 
     this.isStarted = true;
     this.updatePauseState(false);
@@ -289,28 +281,27 @@ export default class Engine {
   /**
    * fixes DPI of canvas
    *
-   * @returns {[number, number]} - [scaledWidth, scaledHeight]
+   * @returns {Vector} new canvas size
    */
-  private fixDPI = (): [number, number] => {
-    const dpi: number = window.devicePixelRatio;
+  private fixDPI = (): Vector => {
 
     // get canvas computed dimensions
-    const currentWidth: number = Number(getComputedStyle(this.canvasElement)
+    let width: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("width")
       .slice(0, -2));
-    const currentHeight: number = Number(getComputedStyle(this.canvasElement)
+    let height: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("height")
       .slice(0, -2));
 
     // scale dimensions by DPI
-    const computedWidth: number = currentWidth * dpi;
-    const computedHeight: number = currentHeight * dpi;
+    width *= window.devicePixelRatio;
+    height *= window.devicePixelRatio;
 
     // set canvas element dimensions to scaled dimensions
-    this.canvasElement.setAttribute("width", String(computedWidth));
-    this.canvasElement.setAttribute("height", String(computedHeight));
+    this.canvasElement.setAttribute("width", String(width));
+    this.canvasElement.setAttribute("height", String(height));
 
-    return [computedWidth, computedHeight];
+    return vec(width, height);
   };
 
   private updatePauseState = (isPaused: boolean) => {
