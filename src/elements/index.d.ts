@@ -6,7 +6,7 @@ interface Texture {
   frameCount: Vector;
 }
 
-type ElementProperties = {
+type ElementDefaultProperties = {
   position: Vector;
   velocity: Vector;
   rotation: Vector;

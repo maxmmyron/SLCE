@@ -35,6 +35,8 @@ export default class Actor extends Element {
 
   private _textureFrame: number = 0;
 
+  private renderPosition: Vector = vec();
+
   private _textures: { [key: string]: Texture } = {};
 
 
@@ -64,21 +66,23 @@ export default class Actor extends Element {
    *
    * @param name name of actor
    * @param scene scene reference to add actor to
-   * @param properties Element properties to apply to actor
+    * @param defaultProperties default properties to apply at creation
    */
-  constructor(name: string, scene: Scene, properties: Partial<ElementProperties>) {
-    super(name, scene.engine, properties);
+  constructor(name: string, scene: Scene, defaultProperties: Partial<ElementDefaultProperties> = {}) {
+    super(name, scene.engine, defaultProperties);
 
     this.scene = scene;
 
     this.scene.actors.set(this.ID, this);
 
     this.previousState = this.createLastState();
-    this.isDebugEnabled = properties?.isDebugEnabled || false;
+    this.isDebugEnabled = defaultProperties?.isDebugEnabled || false;
 
     this.engine.debugger.baseSection.getSection(scene.name).addSection(this.name, false)
       .addItem("Position", () => this.position)
+      .addItem("Render Position", () => this.renderPosition)
       .addItem("Velocity", () => this.velocity)
+      .addItem("Texture ID", () => this.textureID)
   }
 
   // ****************************************************************
@@ -94,13 +98,11 @@ export default class Actor extends Element {
   };
 
   override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
+    this.renderPosition = add(this.position, sub(this.scene.position, this.scene.camera.position));
+
     ctx.save();
     if (this.textureID) this.renderTexture(ctx);
-
-    // restore the context to its previous state so we don't clip the debug content
     ctx.restore();
-
-
 
     if (this.isDebugEnabled) this.renderDebug(ctx);
   };
@@ -181,19 +183,17 @@ export default class Actor extends Element {
     const renderSize = this.size || texture.frameSize;
 
     ctx.drawImage(
-      // source bitmap
       texture.bitmap,
-      // vector of sub-rectangle in source bitmap
+
       this.textureSourcePosition.x,
       this.textureSourcePosition.y,
-      // vector of sub-rectangle in source bitmap
+
       texture.frameSize.x,
       texture.frameSize.y,
-      // vector of destination on canvas (actor pos)
-      this.position.x + this.scene.position.x,
-      this.position.y + this.scene.position.y,
-      // vector representing width/height at which to render source bitmap to
-      // canvas (if actor size not specified, use texture frame size)
+
+      this.renderPosition.x,
+      this.renderPosition.y,
+
       renderSize.x,
       renderSize.y
     );
@@ -209,27 +209,10 @@ export default class Actor extends Element {
    * @param ctx canvas context to render debug information to
    */
   private renderDebug = (ctx: CanvasRenderingContext2D): void => {
-    const offsetPosition: Vector = add(this.position, this.scene.position);
-
     ctx.save();
 
-    // draw bounds border
     ctx.strokeStyle = "red";
-    ctx.strokeRect(offsetPosition.x, offsetPosition.y, this.size.x, this.size.y);
-
-    ctx.fillStyle = "white";
-    ctx.font = "11px monospace";
-    ctx.shadowColor = "black";
-    ctx.shadowBlur = 4;
-
-    const texts: string[] = [
-      `pos: ${this.position.x}, ${this.position.y}`,
-      `vel: ${this.velocity.x}, ${this.velocity.y}`,
-    ];
-
-    texts.forEach((text, i) => {
-      ctx.fillText(text, offsetPosition.x, offsetPosition.y - 12 * (i + 0.5));
-    });
+    ctx.strokeRect(this.renderPosition.x, this.renderPosition.y, this.size.x, this.size.y);
 
     ctx.restore();
   };

@@ -11,26 +11,18 @@ import animationSpritemap from "./animationSpritemap.png";
 import characterSpritemap from "./characterSpritemap.png";
 
 const canvas = document.getElementById("c");
-const engine = new Engine(canvas);
+const engine = new Engine(canvas, { isDebugEnabled: true });
 
-const camera = new Camera("camera", engine);
+const camera = new Camera("camera", engine, { position: vec(50, 50) });
 
-const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500) }, { background: "#110022" });
+const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500), background: "#110022" });
 
 const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64), isDebugEnabled: true });
-const actorB = new Actor("actorB", scene, { position: vec(-200, 450), size: vec(64, 64), velocity: vec(0.1, 0), isDebugEnabled: true });
 
 actorA.preload = async () => {
   const bitmap = await TextureCache.getInstance().load(characterSpritemap);
-
-  // long loading time example
-  //await new Promise(resolve => setTimeout(resolve, 1000));
-
   actorA.addTexture("texmap", bitmap, vec(32, 32), 200);
-  actorB.addTexture("texmap", bitmap, vec(32, 32), 200);
-
   actorA.textureID = "texmap";
-  actorB.textureID = "texmap";
 };
 
 actorA.addListener("onkeydown", (e) => {
@@ -57,18 +49,18 @@ actorA.addListener("ontick", (e) => {
   actorA.position.y += actorA.velocity.y * e.deltaTime;
 });
 
-actorB.addListener("ontick", (e) => {
-  actorB.position.x += actorB.velocity.x * e.deltaTime;
-
-  if (actorB.position.x > scene.size.x) {
-    actorB.position.x = -250;
-  }
+camera.addListener("whilekeydown", (e) => {
+  if (e.key === "d") camera.velocity.x = 0.4
+  if (e.key === "a") camera.velocity.x = -0.4
+  if (e.key === "w") camera.velocity.y = -0.4
+  if (e.key === "s") camera.velocity.y = 0.4
 });
 
-scene.addListener("ontick", (e) => {
-  scene.position.x += 0.1 * e.deltaTime;
+camera.addListener("ontick", (e) => {
+  camera.velocity = mult(camera.velocity, 0.96);
 
-  if (scene.position.x > 500) scene.position.x = 10;
+  camera.position.x += camera.velocity.x * e.deltaTime;
+  camera.position.y += camera.velocity.y * e.deltaTime;
 });
 
 engine.start();

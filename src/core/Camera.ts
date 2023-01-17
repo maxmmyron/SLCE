@@ -20,22 +20,33 @@ export default class Camera {
 
   position: Vector = vec();
 
+  velocity: Vector = vec();
+
   rotation: Vector = vec();
 
   zoom: number = 1;
 
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
-  constructor(name: string, engine: Engine, options: CameraOptions = {}) {
+  /**
+   * Creates a new camera instance.
+   * @param name unique name of camera
+   * @param engine engine to assign to camera
+   * @param defaultProperties optional properties to assign at creation
+   */
+  constructor(name: string, engine: Engine, defaultProperties: Partial<DefaultCameraProperties> = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
 
-    this.position = options.position ?? this.position;
-    this.rotation = options.rotation ?? this.rotation;
-    this.zoom = options.zoom ?? this.zoom;
+    defaultProperties.position && (this.position = defaultProperties.position);
+    defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
+    defaultProperties.zoom && (this.zoom = defaultProperties.zoom);
+
+    this.engine.debugger.baseSection.addSection(this.name, false)
+      .addItem("Position", () => this.position)
+      .addItem("Velocity", () => this.velocity)
+      .addItem("Zoom", () => this.zoom);
+
   }
 
   // ****************************************************************
