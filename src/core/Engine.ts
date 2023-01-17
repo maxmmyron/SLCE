@@ -161,6 +161,11 @@ export default class Engine {
       this._canvasSize = vec(w, h);
     });
 
+    this.eventHandler.addListener("onmousedown", (ev) => {
+      ev = <MouseEventPayload>ev;
+      this.debugger.lastClickPosition = vec(ev.x, ev.y);
+    });
+
     this.updateID = requestAnimationFrame(
       this.update
     );

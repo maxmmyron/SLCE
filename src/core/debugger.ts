@@ -7,36 +7,51 @@ export class Section {
   sections: Array<Section>;
   items: Array<DebuggerItem>;
 
-  constructor(name: string, isCollapsed: boolean) {
+  constructor(name: string, isCollapsed: boolean = false) {
     this.title = name;
     this.isCollapsed = isCollapsed;
     this.sections = [];
     this.items = [];
   }
 
-  render(ctx: CanvasRenderingContext2D, position: Vector): Vector {
+  render(ctx: CanvasRenderingContext2D, position: Vector, lastClickPosition: Vector): Vector {
+    let items = this.items.map(item => `${item.title}: ${JSON.stringify(item.callback(), (_, value: any) => {
+      if (typeof value === "function") return value.name;
+      if (typeof value === "number") return value.toFixed(2);
+      return value;
+    })}`);
+
     const backgroundPos = vec(position.x, position.y);
-    const backgroundWidth = Math.max(...this.items.map(item => ctx.measureText(`${item.title}: ${JSON.stringify(item.callback())}`).width)) + 16;
+    let backgroundWidth = Math.max(...items.map(item => ctx.measureText(item).width)) + 64;
+    backgroundWidth -= backgroundWidth % 50;
+
+    if (lastClickPosition.x > backgroundPos.x &&
+      lastClickPosition.x < backgroundPos.x + backgroundWidth &&
+      lastClickPosition.y > backgroundPos.y &&
+      lastClickPosition.y < backgroundPos.y + 24)
+      this.isCollapsed = !this.isCollapsed;
+
+    if (!this.isCollapsed) {
+      ctx.fillStyle = "rgba(0,0,0,0.65)";
+      ctx.fillRect(backgroundPos.x, backgroundPos.y, backgroundWidth, this.items.length * 16 + 32);
+    }
 
     ctx.fillStyle = this.isCollapsed ? "#222" : "#444";
-    ctx.fillRect(position.x, position.y, backgroundWidth, 24);
+    ctx.fillRect(position.x, position.y, this.isCollapsed ? 150 : backgroundWidth, 24);
     position.y += 24;
-
-    ctx.fillStyle = "rgba(0,0,0,0.65)";
-    ctx.fillRect(backgroundPos.x, backgroundPos.y, backgroundWidth, this.items.length * 16 + 32);
 
     ctx.font = "16px monospace";
     ctx.fillStyle = "white";
-    ctx.fillText(this.title, position.x + 4, position.y - 8);
+    ctx.fillText(this.title + (this.isCollapsed ? " +" : " -"), position.x + 4, position.y - 8);
 
     if (this.isCollapsed) return position;
 
     ctx.font = "11px monospace";
-    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.callback())}`, position.x + 8, position.y += 16));
+    items.forEach(item => ctx.fillText(item, position.x + 8, position.y += 16));
 
     if (this.items.length) position.y += 8;
 
-    this.sections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y)).y);
+    this.sections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y), lastClickPosition).y);
 
     return position;
   }
@@ -86,6 +101,7 @@ export class Section {
 export class Debugger {
   readonly position: Vector = vec(16, 16);
   readonly baseSection: Section;
+  lastClickPosition: Vector = vec(0, 0);
 
   private readonly ctx: CanvasRenderingContext2D;
 
@@ -95,6 +111,7 @@ export class Debugger {
   }
 
   render(): void {
-    this.baseSection.render(this.ctx, vec(this.position.x, this.position.y));
+    this.baseSection.render(this.ctx, vec(this.position.x, this.position.y), this.lastClickPosition);
+    this.lastClickPosition = vec(0, 0);
   }
 }
