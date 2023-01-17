@@ -16,8 +16,12 @@ type DebuggerItem = {
   callback: () => Object;
 }
 
-type CameraOptions = {
+type DefaultCameraProperties = {
   position?: Vector;
   rotation?: Vector;
   zoom?: number;
+}
+
+type DefaultEngineProperties = {
+  isDebugEnabled?: boolean;
 }

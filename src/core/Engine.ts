@@ -102,43 +102,33 @@ export default class Engine {
    */
   private isDebugEnabled: boolean = true;
 
-
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
-
   /**
    * Creates a new instance of an Engine.
    *
    * @param canvasElement canvas on which to draw to
-   * @param properties optional property arguments for engine
+   * @param defaultProperties optional properties to assign at creation
    */
-  constructor(canvasElement: HTMLCanvasElement, properties: any = {}) {
+  constructor(canvasElement: HTMLCanvasElement, defaultProperties: Partial<DefaultEngineProperties> = {}) {
     this.canvasElement = canvasElement;
 
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
-    let envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
-    let envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
-
+    const envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
+    const envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
     this._canvasSize = vec(envWidth, envHeight);
 
     this.eventHandler = EventHandler.getInstance();
 
     this.fixDPI();
 
-    this.debugger = new Debugger(this.ctx);
+    this.isDebugEnabled = defaultProperties.isDebugEnabled || false;
 
+    this.debugger = new Debugger(this.ctx);
     this.debugger.baseSection
       .addItem("FPS", () => this._FPS)
       .addItem("runtime", () => ((performance.now() - this._engineStartTime) / 1000))
       .addItem("tick lag", () => this.lag);
   }
-
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
 
