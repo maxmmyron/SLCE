@@ -78,6 +78,8 @@ export default class Element {
     this.isDebugEnabled = properties.isDebugEnabled ?? this.isDebugEnabled;
 
     this.previousState = this.createLastState();
+
+
   }
 
   // ****************************************************************
@@ -154,6 +156,8 @@ export default class Element {
     ctx.save();
 
     this.internalRender(ctx, interpolationFactor);
+
+    // this.engine.debugger.getInstance().getSection(this.name).updateItem("Position", this.position).updateItem("Velocity", this.velocity);
 
     // restore context
     ctx.restore();

@@ -79,6 +79,10 @@ export default class Actor extends Element {
 
     this.previousState = this.createLastState();
     this.isDebugEnabled = properties?.isDebugEnabled || false;
+
+    this.engine.debugger.baseSection.getSection(scene.name).addSection(this.name, false)
+      .addItem("Position", () => this.position)
+      .addItem("Velocity", () => this.velocity)
   }
 
   // ****************************************************************
@@ -99,6 +103,9 @@ export default class Actor extends Element {
 
     // restore the context to its previous state so we don't clip the debug content
     ctx.restore();
+
+
+
     if (this.isDebugEnabled) this.renderDebug(ctx);
   };
 

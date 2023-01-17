@@ -3,6 +3,7 @@ import { assert } from "../util/asserts";
 import Camera from "./camera";
 import { EventHandler } from "../util/event_handler";
 import Scene from "../elements/scene";
+import { Debugger } from "./debugger";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -19,6 +20,8 @@ export default class Engine {
 
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
+
+  readonly debugger: Debugger;
 
   scenes: Map<string, Scene> = new Map();
 
@@ -123,6 +126,13 @@ export default class Engine {
     this.eventHandler = EventHandler.getInstance();
 
     this.fixDPI();
+
+    this.debugger = new Debugger(this.ctx);
+
+    this.debugger.baseSection
+      .addItem("FPS", () => this._FPS)
+      .addItem("runtime", () => ((performance.now() - this._engineStartTime) / 1000))
+      .addItem("tick lag", () => this.lag);
   }
 
 
@@ -149,6 +159,11 @@ export default class Engine {
     this.eventHandler.addListener("onresize", () => {
       const [w, h] = this.fixDPI();
       this._canvasSize = vec(w, h);
+    });
+
+    this.eventHandler.addListener("onmousedown", (ev) => {
+      ev = <MouseEventPayload>ev;
+      this.debugger.lastClickPosition = vec(ev.x, ev.y);
     });
 
     this.updateID = requestAnimationFrame(
@@ -255,46 +270,28 @@ export default class Engine {
    * @param {number} interpolationFactor - interpolation value
    */
   private render = (interpolationFactor: number) => {
-    // *****************************
-    // pre-draw operations
-
     if (!this.isPreloaded) this.renderPreloadScreen();
-
     if (this._isPaused || !this.isPreloaded) return;
 
-
-    // clear canvas
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
-
-    // *****************************
-    // primary draw operations
 
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
-    // *****************************
-    // debug render
-    if (!this.isDebugEnabled || isNaN(this._FPS)) return;
+    if (this.isDebugEnabled) this.debugger.render();
 
-    const debugLines = [
-      `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
-      `FPS:                   ${this._FPS}`,
-      `------------------------`,
-      `total ticks:           ${this.updatesSinceEngineStart}`,
-      `current tick lag:      ${this.lag}`,
-      `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
-      `------------------------`,
-      `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
-      `frame duration:        ${1000 / this._FPS}`,
-      `render interpolation:  ${interpolationFactor}`,
-    ];
 
-    debugLines.forEach((line, index) => {
-      this.ctx.font = "11px monospace";
-      this.ctx.fillStyle = "white";
-      this.ctx.fillText(line, 5, 15 + (index * 12));
-    });
+    // `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
+    // `FPS:                   ${this._FPS}`,
+    // `------------------------`,
+    // `total ticks:           ${this.updatesSinceEngineStart}`,
+    // `current tick lag:      ${this.lag}`,
+    // `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
+    // `------------------------`,
+    // `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
+    // `frame duration:        ${1000 / this._FPS}`,
+    // `render interpolation:  ${interpolationFactor}`,
   };
 
   private renderPreloadScreen(): void {
@@ -327,7 +324,6 @@ export default class Engine {
       .getPropertyValue("height")
       .slice(0, -2));
 
-    // scale dimensions by DPI
     const computedWidth: number = currentWidth * dpi;
     const computedHeight: number = currentHeight * dpi;
 

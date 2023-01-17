@@ -24,7 +24,7 @@ actorA.preload = async () => {
   const bitmap = await TextureCache.getInstance().load(characterSpritemap);
 
   // long loading time example
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  //await new Promise(resolve => setTimeout(resolve, 1000));
 
   actorA.addTexture("texmap", bitmap, vec(32, 32), 200);
   actorB.addTexture("texmap", bitmap, vec(32, 32), 200);

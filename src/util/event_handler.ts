@@ -67,28 +67,28 @@ export const EventHandler = (() => {
 
 
     const queueMouseDownEvents = (e: any): void => {
-      addToQueue("onmousedown", { button: e.button, x: e.x, y: e.y });
-      addToQueue("whilemousedown", { button: e.button, x: e.x, y: e.y }, true, "onmouseup");
+      addToQueue("onmousedown", <MouseEventPayload>{ button: e.button, x: e.x, y: e.y });
+      addToQueue("whilemousedown", <MouseEventPayload>{ button: e.button, x: e.x, y: e.y }, true, "onmouseup");
     };
 
     const queueMouseUpEvents = (e: any): void => {
-      addToQueue("onmouseup", { button: e.button, x: e.x, y: e.y });
+      addToQueue("onmouseup", <MouseEventPayload>{ button: e.button, x: e.x, y: e.y });
     };
 
     const queueMouseMoveEvents = (e: any): void => {
-      addToQueue("onmousemove", { button: e.button, x: e.x, y: e.y });
+      addToQueue("onmousemove", <MouseEventPayload>{ button: e.button, x: e.x, y: e.y });
     }
 
 
     const queueKeyDownEvents = (e: any): void => {
       if (e.repeat) return;
 
-      addToQueue("onkeydown", { key: e.key });
-      addToQueue("whilekeydown", { key: e.key }, true, "onkeyup");
+      addToQueue("onkeydown", <KeyEventPayload>{ key: e.key });
+      addToQueue("whilekeydown", <KeyEventPayload>{ key: e.key }, true, "onkeyup");
     };
 
     const queueKeyUpEvents = (e: any): void => {
-      addToQueue("onkeyup", { key: e.key });
+      addToQueue("onkeyup", <KeyEventPayload>{ key: e.key });
     }
 
     const eventHandlerMap: Map<string, ((e: any) => void) | null> = new Map([
@@ -111,7 +111,7 @@ export const EventHandler = (() => {
     const getEventIndex = (name: string): number => events.findIndex(e => e.name === name);
 
     return {
-      addListener: (name: ValidEventType, callback: ((event: any) => void)): void => {
+      addListener: (name: ValidEventType, callback: ((event: ValidEventPayload) => void)): void => {
         const eventIndex = getEventIndex(name);
 
         if (eventIndex === -1) events.push({ name, callbacks: [callback] })
@@ -121,7 +121,7 @@ export const EventHandler = (() => {
         }
       },
 
-      removeListener: (name: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => {
+      removeListener: (name: ValidEventType, callback: ((event: ValidEventPayload) => void)): void => {
         const eventIndex = getEventIndex(name);
         if (eventIndex === -1) return;
 
