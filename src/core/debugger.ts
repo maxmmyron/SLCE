@@ -18,31 +18,25 @@ export class Section {
     const backgroundPos = vec(position.x, position.y);
     const backgroundWidth = Math.max(...this.items.map(item => ctx.measureText(`${item.title}: ${JSON.stringify(item.callback())}`).width)) + 16;
 
-    ctx.font = "16px monospace";
     ctx.fillStyle = this.isCollapsed ? "#222" : "#444";
-
     ctx.fillRect(position.x, position.y, backgroundWidth, 24);
     position.y += 24;
 
     ctx.fillStyle = "rgba(0,0,0,0.65)";
     ctx.fillRect(backgroundPos.x, backgroundPos.y, backgroundWidth, this.items.length * 16 + 32);
 
+    ctx.font = "16px monospace";
     ctx.fillStyle = "white";
     ctx.fillText(this.title, position.x + 4, position.y - 8);
 
     if (this.isCollapsed) return position;
 
     ctx.font = "11px monospace";
-    ctx.fillStyle = "white";
-
     this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.callback())}`, position.x + 8, position.y += 16));
 
     if (this.items.length) position.y += 8;
 
     this.sections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y)).y);
-
-    ctx.restore();
-
 
     return position;
   }
