@@ -15,31 +15,34 @@ export class Section {
   }
 
   render(ctx: CanvasRenderingContext2D, position: Vector): Vector {
+    const backgroundPos = vec(position.x, position.y);
+    const backgroundWidth = Math.max(...this.items.map(item => ctx.measureText(`${item.title}: ${JSON.stringify(item.callback())}`).width)) + 16;
+
     ctx.font = "16px monospace";
     ctx.fillStyle = this.isCollapsed ? "#222" : "#444";
 
-    ctx.fillRect(position.x, position.y, 100, 24);
+    ctx.fillRect(position.x, position.y, backgroundWidth, 24);
     position.y += 24;
+
+    ctx.fillStyle = "rgba(0,0,0,0.65)";
+    ctx.fillRect(backgroundPos.x, backgroundPos.y, backgroundWidth, this.items.length * 16 + 32);
 
     ctx.fillStyle = "white";
     ctx.fillText(this.title, position.x + 4, position.y - 8);
-
-    ctx.font = "11px monospace";
-    ctx.fillStyle = "black";
-    ctx.save();
 
     if (this.isCollapsed) return position;
 
     ctx.font = "11px monospace";
     ctx.fillStyle = "white";
 
-
-
-    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.value())}`, position.x + 8, position.y += 16));
+    this.items.forEach(item => ctx.fillText(`${item.title}: ${JSON.stringify(item.callback())}`, position.x + 8, position.y += 16));
 
     if (this.items.length) position.y += 8;
 
     this.sections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y)).y);
+
+    ctx.restore();
+
 
     return position;
   }
@@ -69,10 +72,10 @@ export class Section {
     return <Section>section;
   }
 
-  addItem(title: string, value: Function): Section {
+  addItem(title: string, callback: () => Object): Section {
     assert(this.items.find((value) => value.title === title) === undefined, `Item with title ${title} already exists`);
 
-    const item: DebuggerItem = { title, value };
+    const item: DebuggerItem = { title, callback };
     this.items.push(item);
     return this;
   }
