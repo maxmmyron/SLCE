@@ -66,16 +66,12 @@ export default class Actor extends Element {
    * @param scene scene reference to add actor to
    * @param properties Element properties to apply to actor
    */
-  constructor(name: string, scene: Scene, properties?: ElementProperties) {
+  constructor(name: string, scene: Scene, properties: Partial<ElementProperties>) {
     super(name, scene.engine, properties);
 
     this.scene = scene;
 
     this.scene.actors.set(this.ID, this);
-
-    this.position = properties?.position || vec(0, 0);
-    this.velocity = properties?.velocity || vec(0, 0);
-    this.size = properties?.size || vec(0, 0);
 
     this.previousState = this.createLastState();
     this.isDebugEnabled = properties?.isDebugEnabled || false;

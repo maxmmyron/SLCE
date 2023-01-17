@@ -7,11 +7,11 @@ interface Texture {
 }
 
 type ElementProperties = {
-  position?: Vector;
-  velocity?: Vector;
-  rotation?: Vector;
-  size?: Vector;
-  isDebugEnabled?: boolean;
+  position: Vector;
+  velocity: Vector;
+  rotation: Vector;
+  size: Vector;
+  isDebugEnabled: boolean;
 }
 
 type ElementState = {

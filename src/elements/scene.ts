@@ -35,7 +35,7 @@ export default class Scene extends Element {
    * @param properties scene properties
    * @param environment scene environment
    */
-  constructor(name: string, engine: Engine, camera: Camera, properties?: ElementProperties, environment?: SceneEnvironment) {
+  constructor(name: string, engine: Engine, camera: Camera, properties?: ElementProperties, environment?: Partial<SceneEnvironment>) {
     super(name, engine, properties);
 
     this.camera = camera;

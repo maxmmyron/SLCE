@@ -65,17 +65,17 @@ export default class Element {
    * @param scene engine reference
    * @param properties Element properties to apply
    */
-  constructor(name: string, engine: Engine, properties: ElementProperties = {}) {
+  constructor(name: string, engine: Engine, properties?: Partial<ElementProperties>) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
 
-    this.position = properties.position ?? this.position;
-    this.velocity = properties.velocity ?? this.velocity;
-    this.rotation = properties.rotation ?? this.rotation;
-    this.size = properties.size ?? this.size;
-    this.isDebugEnabled = properties.isDebugEnabled ?? this.isDebugEnabled;
+    properties?.position && (this.position = properties.position);
+    properties?.velocity && (this.velocity = properties.velocity);
+    properties?.rotation && (this.rotation = properties.rotation);
+    properties?.size && (this.size = properties.size);
+    properties?.isDebugEnabled && (this.isDebugEnabled = properties.isDebugEnabled);
 
     this.previousState = this.createLastState();
 
