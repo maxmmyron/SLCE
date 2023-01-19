@@ -92,6 +92,8 @@ export default class Engine {
 
   private updatesSinceEngineStart: number = 0;
 
+  private canvasScale: number = 1;
+
 
   // ****************************************************************
   // ⚓ DEBUG DECLARATIONS
@@ -270,6 +272,10 @@ export default class Engine {
    * @param {number} interpolationFactor - interpolation value
    */
   private render = (interpolationFactor: number) => {
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    this.ctx.scale(this.canvasScale, this.canvasScale);
+
     if (!this.isPreloaded) this.renderPreloadScreen();
     if (this._isPaused || !this.isPreloaded) return;
 
@@ -280,18 +286,6 @@ export default class Engine {
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
     if (this.isDebugEnabled) this.debugger.render();
-
-
-    // `runtime:               ${(performance.now() - this._engineStartTime) / 1000}`,
-    // `FPS:                   ${this._FPS}`,
-    // `------------------------`,
-    // `total ticks:           ${this.updatesSinceEngineStart}`,
-    // `current tick lag:      ${this.lag}`,
-    // `avg. ticks/frame:      ${this.updatesSinceEngineStart / this._currentEngineTime * 1000}`,
-    // `------------------------`,
-    // `active scenes:         ${Array.from(this.scenes.values()).map(scene => scene.name).join(", ")}`,
-    // `frame duration:        ${1000 / this._FPS}`,
-    // `render interpolation:  ${interpolationFactor}`,
   };
 
   private renderPreloadScreen(): void {
@@ -314,18 +308,18 @@ export default class Engine {
    * @returns {[number, number]} - [scaledWidth, scaledHeight]
    */
   private fixDPI = (): [number, number] => {
-    const dpi: number = window.devicePixelRatio;
+    this.canvasScale = window.devicePixelRatio;
 
     // get canvas computed dimensions
-    const currentWidth: number = Number(getComputedStyle(this.canvasElement)
+    const currentWidth: number = Math.floor(Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("width")
-      .slice(0, -2));
-    const currentHeight: number = Number(getComputedStyle(this.canvasElement)
+      .slice(0, -2)));
+    const currentHeight: number = Math.floor(Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("height")
-      .slice(0, -2));
+      .slice(0, -2)));
 
-    const computedWidth: number = currentWidth * dpi;
-    const computedHeight: number = currentHeight * dpi;
+    const computedWidth: number = currentWidth * this.canvasScale;
+    const computedHeight: number = currentHeight * this.canvasScale;
 
     // set canvas element dimensions to scaled dimensions
     this.canvasElement.setAttribute("width", String(computedWidth));
