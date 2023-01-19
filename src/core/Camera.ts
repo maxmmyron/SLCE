@@ -8,9 +8,6 @@ import Engine from "./engine";
  * @unused
  */
 export default class Camera {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
 
   readonly name: string;
 
@@ -48,10 +45,6 @@ export default class Camera {
       .addItem("Zoom", () => this.zoom);
 
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   addListener(name: ValidEventType, callback: ((event: any) => void)): void {
     this.engine.eventHandler.addListener(name, callback);

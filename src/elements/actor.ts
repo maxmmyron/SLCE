@@ -9,10 +9,6 @@ import Scene from "./scene";
  * @class
  */
 export default class Actor extends Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
-
   readonly scene: Scene;
 
   isGravityEnabled: boolean = true;
@@ -29,20 +25,12 @@ export default class Actor extends Element {
    */
   textureID: string = "";
 
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/ getters)
-  // ****************************************************************
-
   private _textureFrame: number = 0;
 
   private renderPosition: Vector = vec();
 
   private _textures: { [key: string]: Texture } = {};
 
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/o getters)
-  // ****************************************************************
 
   /**
    * Current sum of delta time for a given animation frame.
@@ -56,10 +44,6 @@ export default class Actor extends Element {
    */
   private textureSourcePosition: Vector = vec(0, 0);
 
-
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
 
   /**
    * Creates a new Actor instance.
@@ -84,10 +68,6 @@ export default class Actor extends Element {
       .addItem("Velocity", () => this.velocity)
       .addItem("Texture ID", () => this.textureID)
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   override internalTick = (timestep: number): void => {
     if (this.isGravityEnabled) {
@@ -146,10 +126,6 @@ export default class Actor extends Element {
     return true;
   };
 
-  // ****************************************************************
-  // ⚓ PRIVATE METHODS
-  // ****************************************************************
-
   /**
    * Tracks delta time and increments the current animation frame if
    * delta time exceeds the duration of the current frame.
@@ -199,10 +175,6 @@ export default class Actor extends Element {
     );
   };
 
-  // ****************************************************************
-  // ⚓ DEBUG METHODS
-  // ****************************************************************
-
   /**
    * Renders debug information
    *
@@ -216,10 +188,6 @@ export default class Actor extends Element {
 
     ctx.restore();
   };
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATION GETTERS
-  // ****************************************************************
 
   get textures(): { [key: string]: Texture } {
     return this._textures;

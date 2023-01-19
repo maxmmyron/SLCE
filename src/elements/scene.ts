@@ -9,9 +9,6 @@ import Element from "./element";
  * A collection of actors and cameras.
  */
 export default class Scene extends Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
 
   camera: Camera;
 
@@ -45,10 +42,6 @@ export default class Scene extends Element {
       .addItem("Position", () => this.position)
       .addItem("Velocity", () => this.velocity)
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   override start = (): Promise<any> => {
     return new Promise(async (resolve, reject) => {
