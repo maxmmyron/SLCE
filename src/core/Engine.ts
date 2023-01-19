@@ -189,7 +189,7 @@ export default class Engine {
   /**
    * keeps track of FPS and updates all relevant actors
    *
-   * @param {DOMHighResTimeStamp} timestamp - timestamp of current frame
+   * @param {DOMHighResTimeStamp} timestamp timestamp of current frame
    */
   private update = (timestamp: DOMHighResTimeStamp) => {
     this.updateID = requestAnimationFrame(this.update);
@@ -247,7 +247,7 @@ export default class Engine {
    * draws all relevant actors onto canvas
    *
    * @private
-   * @param {number} interpolationFactor - interpolation value
+   * @param {number} interpolationFactor interpolation value
    */
   private render = (interpolationFactor: number) => {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
