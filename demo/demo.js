@@ -15,7 +15,7 @@ const engine = new Engine(canvas, { isDebugEnabled: true });
 
 const camera = new Camera("camera", engine, { position: vec(50, 50) });
 
-const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(500, 500), background: "#110022" });
+const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(1000, 1000), background: "#110022" });
 
 const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64), isDebugEnabled: true });
 
