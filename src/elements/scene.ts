@@ -9,9 +9,6 @@ import Element from "./element";
  * A collection of actors and cameras.
  */
 export default class Scene extends Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
 
   camera: Camera;
 
@@ -21,10 +18,6 @@ export default class Scene extends Element {
     background: "transparent",
     gravity: vec(0, 0)
   };
-
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
 
   /**
    * Creates a new Scene instance.
@@ -45,10 +38,6 @@ export default class Scene extends Element {
 
     this.engine.scenes.set(this.ID, this);
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   override preload = () => {
     return Promise.all(Array.from(this.actors.values()).map(actor => actor.preload()));

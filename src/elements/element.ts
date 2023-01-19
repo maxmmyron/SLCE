@@ -6,10 +6,6 @@ import { add, mult, sub, vec } from "../math/vector";
  * The base class for all engine elements.
  */
 export default class Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
-
   readonly name: string;
 
   readonly engine: Engine;
@@ -35,10 +31,6 @@ export default class Element {
    */
   isDebugEnabled: boolean = false;
 
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS
-  // ****************************************************************
-
   private readonly internalID: string;
 
   /**
@@ -52,10 +44,6 @@ export default class Element {
  * A struct containing previous state of the actor.
  */
   protected previousState: ElementState;
-
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
 
   /**
    * Creates a new Element instance.
@@ -78,10 +66,6 @@ export default class Element {
 
     this.previousState = this.createLastState();
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   addListener = (name: ValidEventType, callback: ((event: any) => void)): void => {
     this.engine.eventHandler.addListener(name, callback);
@@ -159,10 +143,6 @@ export default class Element {
     this.isInterpolationEnabled = false;
   }
 
-  // ****************************************************************
-  // ⚓ PRIVATE METHODS
-  // ****************************************************************
-
   protected createLastState = (): ElementState => {
     return {
       position: this.position,
@@ -170,10 +150,6 @@ export default class Element {
       size: this.size,
     };
   };
-
-  // ****************************************************************
-  // ⚓ GETTERS
-  // ****************************************************************
 
   get ID(): string { return this.internalID; }
 }

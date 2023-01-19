@@ -13,9 +13,6 @@ const MAX_UPDATES_PER_FRAME: number = 240;
  * @class
  */
 export default class Engine {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
 
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
@@ -23,10 +20,6 @@ export default class Engine {
   scenes: Map<string, Scene> = new Map();
 
   camera: Camera | null = null;
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/ getters)
-  // ****************************************************************
 
   private _canvasSize: Vector;
 
@@ -43,10 +36,6 @@ export default class Engine {
   private _FPS: number = 0;
 
   private _isPaused: boolean = false;
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS (w/o getters)
-  // ****************************************************************
 
   readonly eventHandler: EventHandler;
 
@@ -84,10 +73,6 @@ export default class Engine {
   private updatesSinceEngineStart: number = 0;
 
 
-  // ****************************************************************
-  // ⚓ DEBUG DECLARATIONS
-  // ****************************************************************
-
   /**
    * Whether the engine will display a debug overlay with performance diagnostics.
    */
@@ -98,10 +83,6 @@ export default class Engine {
    */
   private isLoggingEnabled: boolean = false;
 
-
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
 
   /**
    * Creates a new instance of an Engine.
@@ -124,10 +105,6 @@ export default class Engine {
     this.fixDPI();
   }
 
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
 
@@ -176,10 +153,6 @@ export default class Engine {
 
   removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.removeListener(eventName, callback);
 
-
-  // ****************************************************************
-  // ⚓ PRIVATE METHODS
-  // ****************************************************************
 
   /**
    * keeps track of FPS and updates all relevant actors
@@ -312,10 +285,6 @@ export default class Engine {
   private removeScene = (scene: Scene) => {
     this.scenes.delete(scene.ID);
   }
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATION GETTERS
-  // ****************************************************************
 
   get canvasSize(): Vector {
     return this._canvasSize;
