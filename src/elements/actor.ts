@@ -4,9 +4,6 @@ import Scene from "./scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
- *
- * @type {Actor}
- * @class
  */
 export default class Actor extends Element {
   readonly scene: Scene;
