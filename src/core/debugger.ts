@@ -40,13 +40,13 @@ export class Section {
     ctx.fillRect(position.x, position.y, this.isCollapsed ? 150 : backgroundWidth, 24);
     position.y += 24;
 
-    ctx.font = "16px monospace";
+    ctx.font = "1rem monospace";
     ctx.fillStyle = "white";
     ctx.fillText(this.title + (this.isCollapsed ? " +" : " -"), position.x + 4, position.y - 8);
 
     if (this.isCollapsed) return position;
 
-    ctx.font = "11px monospace";
+    ctx.font = "1rem monospace";
     items.forEach(item => ctx.fillText(item, position.x + 8, position.y += 16));
 
     if (this.items.length) position.y += 8;
