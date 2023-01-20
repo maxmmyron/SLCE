@@ -83,11 +83,6 @@ export default class Engine {
 
   private canvasScale: number = 1;
 
-
-  // ****************************************************************
-  // ⚓ DEBUG DECLARATIONS
-  // ****************************************************************
-
   /**
    * Whether the engine will display a debug overlay with performance diagnostics.
    */
@@ -142,9 +137,6 @@ export default class Engine {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    await Promise.all(Array.from(this.scenes.values()).map(scene => scene.preload()));
-
-    this.eventHandler.attachEventListeners(this.canvasElement);
     this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixDPI());
 
     this.eventHandler.addListener("onmousedown", (ev) => {
@@ -152,23 +144,18 @@ export default class Engine {
       this.debugger.lastClickPosition = vec(ev.x, ev.y);
     });
 
-    // begin measuring performance and run engine.
-    this._engineStartTime = performance.now();
     this.updateID = requestAnimationFrame(this.update);
 
     this.totalActorCount = Array.from(this.scenes.values()).reduce((acc, scene) => acc + scene.actors.size, 0);
 
-    // wait for each scene to load up assets and connect textures / animations
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.start()));
 
-    // initialize events
     this.eventHandler.attachEventListeners(this.canvasElement);
 
     this.isPreloaded = true;
     this.isStarted = true;
 
     this._engineStartTime = performance.now();
-
     this.updatePauseState(false);
   };
 
