@@ -13,7 +13,7 @@ import characterSpritemap from "./characterSpritemap.png";
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas, { isDebugEnabled: false });
 
-const camera = new Camera("camera", engine, { position: vec(50, 50), zoom: 1.5 });
+const camera = new Camera("camera", engine, { position: vec(50, 50), zoom: 1 });
 
 const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(1000, 1000), background: "#110022" });
 
