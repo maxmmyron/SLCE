@@ -74,7 +74,6 @@ export default class Actor extends Element {
     ctx.save();
     if (this.textureID) this.renderTexture(ctx);
 
-    // restore the context to its previous state so we don't clip the debug content
     ctx.restore();
     if (this.isDebugEnabled) this.renderDebug(ctx);
   };
@@ -151,21 +150,15 @@ export default class Actor extends Element {
     const renderSize = this.size || texture.frameSize;
 
     ctx.drawImage(
-      // source bitmap
       texture.bitmap,
-      // vector of sub-rectangle in source bitmap
       this.textureSourcePosition.x,
       this.textureSourcePosition.y,
-      // vector of sub-rectangle in source bitmap
       texture.frameSize.x,
       texture.frameSize.y,
-      // vector of destination on canvas (actor pos)
       this.position.x + this.scene.position.x,
       this.position.y + this.scene.position.y,
-      // vector representing width/height at which to render source bitmap to
-      // canvas (if actor size not specified, use texture frame size)
       renderSize.x,
-      renderSize.y
+      renderSize.y,
     );
   };
 
@@ -179,7 +172,6 @@ export default class Actor extends Element {
 
     ctx.save();
 
-    // draw bounds border
     ctx.strokeStyle = "red";
     ctx.strokeRect(offsetPosition.x, offsetPosition.y, this.size.x, this.size.y);
 

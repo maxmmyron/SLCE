@@ -55,13 +55,11 @@ export default class Scene extends Element {
 
     ctx.save();
 
-    // clip the context to the scene size
     ctx.beginPath();
     ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
     ctx.clip();
 
     Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
-
     ctx.restore();
   }
 }
