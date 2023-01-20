@@ -103,10 +103,8 @@ export default class Element {
    */
   tick = (frameTimestep: number): void => {
     if (!this.isTickEnabled || this.isQueuedForDisposal) return;
-    // ****************************************************************
-    // pre-update operations
 
-    // round down position and velocity if less than EPSILON
+    // TODO: implement precision threshold
     if (Math.abs(this.position.x) < Number.EPSILON) this.position.x = 0;
     if (Math.abs(this.position.y) < Number.EPSILON) this.position.y = 0;
     if (Math.abs(this.velocity.x) < Number.EPSILON) this.velocity.x = 0;
@@ -128,20 +126,11 @@ export default class Element {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
     let ctx = this.engine.ctx;
 
-    // interpolate position based on previous frame
-    if (this.isInterpolationEnabled) {
-      this.position = add(this.previousState.position, mult(sub(this.position, this.previousState.position), interpolationFactor));
-    }
+    if (this.isInterpolationEnabled) this.position = add(this.previousState.position, mult(sub(this.position, this.previousState.position), interpolationFactor));
     this.isInterpolationEnabled = true;
 
-    // save current context
     ctx.save();
-
     this.internalRender(ctx, interpolationFactor);
-
-    // this.engine.debugger.getInstance().getSection(this.name).updateItem("Position", this.position).updateItem("Velocity", this.velocity);
-
-    // restore context
     ctx.restore();
   };
 

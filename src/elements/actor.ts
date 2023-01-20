@@ -79,6 +79,7 @@ export default class Actor extends Element {
 
     ctx.save();
     if (this.textureID) this.renderTexture(ctx);
+
     ctx.restore();
 
     if (this.isDebugEnabled) this.renderDebug(ctx);
@@ -157,18 +158,14 @@ export default class Actor extends Element {
 
     ctx.drawImage(
       texture.bitmap,
-
       this.textureSourcePosition.x,
       this.textureSourcePosition.y,
-
       texture.frameSize.x,
       texture.frameSize.y,
-
       this.renderPosition.x,
       this.renderPosition.y,
-
       renderSize.x,
-      renderSize.y
+      renderSize.y,
     );
   };
 

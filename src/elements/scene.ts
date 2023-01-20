@@ -64,7 +64,6 @@ export default class Scene extends Element {
 
     ctx.save();
 
-    // clip the context to the scene size
     ctx.beginPath();
     ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
     ctx.clip();
@@ -72,7 +71,6 @@ export default class Scene extends Element {
     ctx.scale(this.camera.zoom, this.camera.zoom);
 
     Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
-
     ctx.restore();
   }
 }
