@@ -1,9 +1,8 @@
-import { vec } from "../math/vector";
-import { assert } from "../util/asserts";
-import Camera from "./camera";
-import { EventHandler } from "../util/event_handler";
 import Scene from "../elements/scene";
-import { Debugger } from "./debugger";
+import { assert } from "../util/asserts";
+import Debugger from "./debugger";
+import { EventHandler } from "../util/event_handler";
+import { vec } from "../math/vector";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -13,98 +12,202 @@ const MAX_UPDATES_PER_FRAME: number = 240;
  *
  * @class
  */
-export default class Engine {
+export default class Engine implements Engineable {
 
+  /**
+   * Canvas element on which to attach context and event listeners
+   *
+   * @readonly
+   */
   readonly canvasElement: HTMLCanvasElement;
+
+  /**
+   * Canvas context to draw to. Initialized on engine start.
+   *
+   * @readonly
+   */
   readonly ctx: CanvasRenderingContext2D;
 
-  readonly debugger: Debugger;
+  /**
+   * The engine's debugger instance. Used to set up and manage debug sections and items.
+   *
+   * @readonly
+   */
+  readonly debugger: Debuggerable;
 
+  /**
+   * An eventHandler used to manage event listeners.
+   *
+   * @readonly
+   */
+  readonly eventHandler: EventHandler;
+
+  /**
+   * A map containing string IDs and associated scenes.
+   *
+   * @default new Map()
+   */
   scenes: Map<string, Scene> = new Map();
 
-  camera: Camera | null = null;
+  /**
+   * The current camera used to render the scene.
+   *
+   * @default null
+   */
+  camera: Camerable | null = null;
 
+  /**
+   * A count of actors that have been successfully preloaded.
+   * Used during engine start to determine preload progress.
+   *
+   * @default 0
+   */
   preloadedActorCount: number = 0;
 
+  /**
+   * The current size of the canvas element.
+   *
+   * @private
+   */
   private _canvasSize: Vector;
 
   /**
-   * Current runtime of engine in milliseconds
+   * The current engine runtime in milliseconds.
+   *
+   * @private
+   * @default 0
    */
-  private _currentEngineTime: number = 0;
+  private _engineRuntimeMilliseconds: number = 0;
 
   /**
-   * Unix timestamp of when engine was started
+   * High-res timestamp of engine start.
+   *
+   * @private
+   * @default 0
    */
-  private _engineStartTime: number = 0;
+  private _engineStartTimestamp: number = 0;
 
+  /**
+   * The current FPS of the engine.
+   *
+   * @private
+   * @default 0
+   */
   private _FPS: number = 0;
 
+  /**
+   * Whether or not the engine has paused ticks and render calls.
+   *
+   * @private
+   * @default false
+   */
   private _isPaused: boolean = false;
 
-  readonly eventHandler: EventHandler;
-
+  /**
+   * Whether or not the engine has been initialized. This flag only changes
+   * once during the engine's lifetime.
+   *
+   * @private
+   * @default false
+   */
   private isStarted: boolean = false;
 
+  /**
+   * Whether or not the engine has finished preload operations.
+   *
+   * @private
+   * @default false
+   */
   private isPreloaded: boolean = false;
 
+  /**
+   * The total number of actors that are currently in the engine.
+   * Used to determine preload progress.
+   *
+   * @private
+   * @default 0
+   */
   private totalActorCount: number = 0;
 
   /**
-   * Accumulated lag time between updates in ms. Used to determine how many updates to perform in a single frame.
+   * Accumulated lag time between updates in ms. Used to determine how many
+   * updates to perform in a single frame.
    */
   private lag: number = 0;
 
   /**
-   * Maximum number of updates to perform between draw calls. If this number is exceeded, engine will panic and reset metrics.
+   * Maximum number of updates to perform between draw calls. If this number is
+   * exceeded, the engine will panic and reset the lag accumulator.
    *
    * @default MAX_UPDATES_PER_FRAME
    */
   private readonly maxUpdatesPerFrame: number = MAX_UPDATES_PER_FRAME;
 
-  private previousTimestamp: number = 0;
+  /**
+   * The previous high-res timestamp of the engine in milliseconds. Used to calculate the
+   * delta time between frames.
+   *
+   * @private
+   * @default 0
+   */
+  private previousUpdateTimestamp: DOMHighResTimeStamp = 0;
 
   /**
-   * timestep of an individual frame in ms. Used as constant timestep for update method
+   * Ideal tick duration in milliseconds. Used for update calculations.
    *
    * @default 1000 / TARGET_FPS
    */
-  private readonly targetFrameTimestep: number = 1000 / TARGET_FPS;
+  private readonly targetTickDurationMilliseconds: number = 1000 / TARGET_FPS;
 
   /**
-   * ID of current animation frame
+   * Current ID of update loop.
    *
+   * @private
    * @default -1
    * @unused
    */
   private updateID: number = -1;
 
+  /**
+   * Number of ticks that have occurred since engine start. Used to calculate
+   * FPS.
+   *
+   * @private
+   * @default 0
+   * @unused
+   */
   private updatesSinceEngineStart: number = 0;
 
+  /**
+   * The current rendering scale of the canvas. At a low level, this value is
+   * equivalent to the window device pixel ratio.
+   *
+   * @private
+   * @default 1
+   */
   private canvasScale: number = 1;
 
   /**
    * Whether the engine will display a debug overlay with performance diagnostics.
+   *
+   * @private
+   * @default true
    */
+  // TODO: move this to debugger instance
   private isDebugEnabled: boolean = true;
 
   /**
-   * Whether the engine will log performance metrics to the console.
-   */
-  private isLoggingEnabled: boolean = false;
-
-
-  /**
-   * Creates a new instance of an Engine.
+   * Creates a new Engine instance.
    *
-   * @param canvasElement canvas on which to draw to
-   * @param defaultProperties optional properties to assign at creation
+   * @param canvasElement the canvas element to render to.
+   * @param defaultProperties default properties to apply to the engine.
    */
   constructor(canvasElement: HTMLCanvasElement, defaultProperties: Partial<DefaultEngineProperties> = {}) {
     this.canvasElement = canvasElement;
 
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
+    // FIXME: remove; this._canvasSize can be assigned using fixDPI()
     const envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
     const envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
     this._canvasSize = vec(envWidth, envHeight);
@@ -118,18 +221,18 @@ export default class Engine {
     this.debugger = new Debugger(this.ctx);
     this.debugger.baseSection
       .addItem("FPS", () => this._FPS)
-      .addItem("runtime", () => ((performance.now() - this._engineStartTime) / 1000))
+      .addItem("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
       .addItem("tick lag", () => this.lag);
   }
 
-  getScenesByName = (sceneName: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === sceneName);
+  getScenesByName = (name: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === name);
 
   /**
    * Starts engine update loop. Used only once at startup.
    *
    * @throws {Error} if the start function has already been called.
    */
-  start = async () => {
+  start = async (): Promise<void> => {
     assert(!this.isStarted, "Engine has already been started.");
 
     this.fixDPI();
@@ -155,7 +258,7 @@ export default class Engine {
     this.isPreloaded = true;
     this.isStarted = true;
 
-    this._engineStartTime = performance.now();
+    this._engineStartTimestamp = performance.now();
     this.updatePauseState(false);
   };
 
@@ -170,15 +273,29 @@ export default class Engine {
    */
   resume = (): void => this.updatePauseState(false);
 
-  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.addListener(eventName, callback);
-
-  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)) => this.eventHandler.removeListener(eventName, callback);
-
+  /**
+   * Creates a new event listener for the given event name.
+   *
+   * @param eventName the event name to listen for
+   * @param callback a callback that is executed when the event is fired
+   */
+  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => this.eventHandler.addListener(eventName, callback);
 
   /**
-   * keeps track of FPS and updates all relevant actors
+   * Removes an existing event listener for the given event name.
    *
-   * @param {DOMHighResTimeStamp} timestamp timestamp of current frame
+   * @param eventName the event name from which to remove the listener
+   * @param callback a reference to the callback to remove
+   */
+  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => this.eventHandler.removeListener(eventName, callback);
+
+  /**
+   * Performs general update logic and manages tick cycle.
+   *
+   * @private
+   *
+   * @param timestamp a timestamp provided by the browser to determine the delta
+   * time since the last update.
    */
   private update = (timestamp: DOMHighResTimeStamp) => {
     this.updateID = requestAnimationFrame(this.update);
@@ -188,25 +305,25 @@ export default class Engine {
       return;
     }
 
-    const delta = timestamp - this.previousTimestamp;
-    this.previousTimestamp = timestamp;
+    const delta = timestamp - this.previousUpdateTimestamp;
+    this.previousUpdateTimestamp = timestamp;
 
     this.lag += delta;
-    this._currentEngineTime += delta;
+    this._engineRuntimeMilliseconds += delta;
 
     this._FPS = 1000 / delta;
 
     let cycleUpdateCount = 0;
-    while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
-      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetFrameTimestep });
+    while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
+      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds });
 
       Array.from(this.scenes.values())
         .filter(scene => scene.isTickEnabled)
-        .forEach(scene => scene.tick(this.targetFrameTimestep));
+        .forEach(scene => scene.tick(this.targetTickDurationMilliseconds));
 
       this.eventHandler.dispatchQueue();
 
-      this.lag -= this.targetFrameTimestep;
+      this.lag -= this.targetTickDurationMilliseconds;
 
       this.updatesSinceEngineStart++;
 
@@ -216,18 +333,18 @@ export default class Engine {
       }
     }
 
-    this.render(this.lag / this.targetFrameTimestep);
+    this.render(this.lag / this.targetTickDurationMilliseconds);
 
     this.scenes = new Map(Array
       .from(this.scenes.entries())
       .filter(([key, scene]) => !(scene.isQueuedForDisposal && this.removeScene(scene))));
   };
 
-
   /**
-   * draws all relevant actors onto canvas
+   * Draws relevant elements onto the context
    *
    * @private
+   *
    * @param {number} interpolationFactor interpolation value
    */
   private render = (interpolationFactor: number) => {
@@ -247,6 +364,11 @@ export default class Engine {
     if (this.isDebugEnabled) this.debugger.render();
   };
 
+  /**
+   * Renders the preload screen.
+   *
+   * @private
+   */
   private renderPreloadScreen(): void {
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvasSize.x, this.canvasSize.y);
@@ -262,10 +384,13 @@ export default class Engine {
   }
 
   /**
-   * fixes DPI of canvas
+   * Normalizes the canvas size towards device DPI
    *
-   * @returns {Vector} new canvas size
+   * @private
+   *
+    * @returns the normalized canvas size
    */
+  //TODO: potentially rename?
   private fixDPI = (): Vector => {
     this.canvasScale = window.devicePixelRatio;
 
@@ -285,11 +410,27 @@ export default class Engine {
     return vec(width, height);
   };
 
+  /**
+   * Updates the pause state of the game. This is wrapped since multiple separate
+   * systems may need to be "paused" pause the game.
+   *
+   * @private
+   *
+   * @param isPaused whether or not the engine is paused
+   */
+  // TODO: update eventHandler to accept arrow func reference instead of variable
   private updatePauseState = (isPaused: boolean) => {
     this._isPaused = isPaused;
     this.eventHandler.setIsEnginePaused(isPaused);
   }
 
+  /**
+   * Removes a scene from the engine.
+   *
+   * @private
+   *
+   * @param scene the scene to remove from the engine
+   */
   private removeScene = (scene: Scene) => {
     this.scenes.delete(scene.ID);
   }
@@ -298,12 +439,12 @@ export default class Engine {
     return this._canvasSize;
   }
 
-  get currentEngineTime(): number {
-    return this._currentEngineTime;
+  get engineRuntimeMilliseconds(): number {
+    return this._engineRuntimeMilliseconds;
   }
 
-  get engineStartTime(): number {
-    return this._engineStartTime;
+  get engineStartTimestamp(): number {
+    return this._engineStartTimestamp;
   }
 
   get FPS(): number {

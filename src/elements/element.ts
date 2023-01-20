@@ -1,4 +1,3 @@
-import Engine from "../core/engine";
 import { add, mult, sub, vec } from "../math/vector";
 
 /**
@@ -7,13 +6,20 @@ import { add, mult, sub, vec } from "../math/vector";
 export default class Element {
   readonly name: string;
 
-  readonly engine: Engine;
+  readonly engine: Engineable;
 
   isQueuedForDisposal: boolean = false;
 
   isRenderEnabled: boolean = true;
 
   isTickEnabled: boolean = true;
+
+  /**
+   * Whether or not the actor will draw debug information.
+   *
+   * @default false
+   */
+  isDebugEnabled: boolean = false;
 
   position: Vector = vec();
 
@@ -23,16 +29,7 @@ export default class Element {
 
   size: Vector = vec();
 
-  /**
-   * Whether or not the actor will draw debug information.
-   *
-   * @default false
-   */
-  isDebugEnabled: boolean = false;
-
   protected isPreloaded: boolean = false;
-
-  private readonly internalID: string;
 
   /**
    * Whether or not interpolation should be factored in when calculating the
@@ -46,6 +43,8 @@ export default class Element {
  */
   protected previousState: ElementState;
 
+  private readonly internalID: string;
+
   /**
    * Creates a new Element instance.
    *
@@ -53,7 +52,7 @@ export default class Element {
    * @param scene engine reference
    * @param defaultProperties Element properties to apply on startup
    */
-  constructor(name: string, engine: Engine, defaultProperties: Partial<ElementDefaultProperties>) {
+  constructor(name: string, engine: Engineable, defaultProperties: Partial<ElementDefaultProperties>) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
@@ -68,7 +67,7 @@ export default class Element {
     this.previousState = this.createLastState();
   }
 
-  addListener = (name: ValidEventType, callback: ((event: any) => void)): void => {
+  addListener = (name: ValidEventType, callback: ((event: ValidEventPayload) => void)): void => {
     this.engine.eventHandler.addListener(name, callback);
   }
 

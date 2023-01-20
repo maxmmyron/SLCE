@@ -1,5 +1,4 @@
 import { vec } from "../math/vector";
-import Engine from "./engine";
 
 /**
  * @class Camera
@@ -7,13 +6,13 @@ import Engine from "./engine";
  *
  * @unused
  */
-export default class Camera {
+export default class Camera implements Camerable {
 
   readonly name: string;
 
   private readonly internalID: string;
 
-  readonly engine: Engine;
+  readonly engine: Engineable;
 
   position: Vector = vec();
 
@@ -29,7 +28,7 @@ export default class Camera {
    * @param engine engine to assign to camera
    * @param defaultProperties optional properties to assign at creation
    */
-  constructor(name: string, engine: Engine, defaultProperties: Partial<DefaultCameraProperties> = {}) {
+  constructor(name: string, engine: Engineable, defaultProperties: Partial<DefaultCameraProperties> = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 

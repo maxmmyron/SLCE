@@ -1,7 +1,7 @@
 import { vec } from "../math/vector";
 import { assert } from "../util/asserts";
 
-export class Section {
+export class Section implements DebugSectionable {
   title: string;
   isCollapsed: boolean;
   sections: Array<Section>;
@@ -98,7 +98,7 @@ export class Section {
   }
 }
 
-export class Debugger {
+export default class Debugger implements Debuggerable {
   readonly position: Vector = vec(16, 16);
   readonly baseSection: Section;
   lastClickPosition: Vector = vec(0, 0);

@@ -1,7 +1,4 @@
 import { vec } from "../math/vector";
-import Actor from "./actor";
-import Camera from "../core/camera";
-import Engine from "../core/engine";
 import Element from "./element";
 
 /**
@@ -10,9 +7,9 @@ import Element from "./element";
  */
 export default class Scene extends Element {
 
-  camera: Camera;
+  camera: Camerable;
 
-  actors: Map<string, Actor> = new Map();
+  actors: Map<string, Actorable> = new Map();
 
   environment: SceneEnvironment = {
     background: "transparent",
@@ -27,7 +24,7 @@ export default class Scene extends Element {
    * @param camera camera to attach to scene
    * @param defaultProperties optional properties to assign at creation
    */
-  constructor(name: string, engine: Engine, camera: Camera, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
+  constructor(name: string, engine: Engineable, camera: Camerable, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
     super(name, engine, defaultProperties);
 
     this.camera = camera;

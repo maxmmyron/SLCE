@@ -1,12 +1,11 @@
 import { vec, add, sub, div, mult } from "../math/vector";
 import Element from "./element";
-import Scene from "./scene";
 
 /**
  * An actor that can be added to the engine and manipulated.
  */
 export default class Actor extends Element {
-  readonly scene: Scene;
+  readonly scene: Sceneable;
 
   isGravityEnabled: boolean = true;
 
@@ -26,7 +25,7 @@ export default class Actor extends Element {
 
   private renderPosition: Vector = vec();
 
-  private _textures: { [key: string]: Texture } = {};
+  private _textures: { [key: string]: Textureable } = {};
 
 
   /**
@@ -49,7 +48,7 @@ export default class Actor extends Element {
    * @param scene scene reference to add actor to
     * @param defaultProperties default properties to apply at creation
    */
-  constructor(name: string, scene: Scene, defaultProperties: Partial<ElementDefaultProperties> = {}) {
+  constructor(name: string, scene: Sceneable, defaultProperties: Partial<ElementDefaultProperties> = {}) {
     super(name, scene.engine, defaultProperties);
 
     this.scene = scene;
@@ -131,7 +130,7 @@ export default class Actor extends Element {
    * @param delta the current delta time for the update loop
    */
   private updateTexture = (timestep: number): void => {
-    let texture: Texture = this._textures[this.textureID];
+    let texture: Textureable = this._textures[this.textureID];
 
     if ((this.textureDeltaSum += timestep) >= texture.frameDuration) {
       this.textureDeltaSum -= texture.frameDuration;
@@ -152,7 +151,7 @@ export default class Actor extends Element {
    * @param ctx the canvas context to render to
    */
   private renderTexture = (ctx: CanvasRenderingContext2D): void => {
-    const texture: Texture = this._textures[this.textureID];
+    const texture: Textureable = this._textures[this.textureID];
 
     const renderSize = this.size || texture.frameSize;
 
@@ -183,7 +182,7 @@ export default class Actor extends Element {
     ctx.restore();
   };
 
-  get textures(): { [key: string]: Texture } {
+  get textures(): { [key: string]: Textureable } {
     return this._textures;
   }
 
