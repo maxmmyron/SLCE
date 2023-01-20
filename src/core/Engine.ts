@@ -139,10 +139,12 @@ export default class Engine {
 
     this.fixDPI();
 
-    // focus onto canvas on start so we can pick up key events
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
+    await Promise.all(Array.from(this.scenes.values()).map(scene => scene.preload()));
+
+    this.eventHandler.attachEventListeners(this.canvasElement);
     this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixDPI());
 
     this.eventHandler.addListener("onmousedown", (ev) => {
@@ -199,18 +201,14 @@ export default class Engine {
       return;
     }
 
-    // *****************************
-    // Calculate delta time and lag
-
-    let dt = timestamp - this.previousTimestamp;
+    const delta = timestamp - this.previousTimestamp;
     this.previousTimestamp = timestamp;
 
-    this.lag += dt;
-    this._currentEngineTime += dt;
+    this.lag += delta;
+    this._currentEngineTime += delta;
 
-    this._FPS = 1000 / dt;
+    this._FPS = 1000 / delta;
 
-    // Perform engine updates based on current lag
     let cycleUpdateCount = 0;
     while (this.lag >= this.targetFrameTimestep && !this.isPaused) {
       this.eventHandler.queueEvent("ontick", { deltaTime: this.targetFrameTimestep });
@@ -225,18 +223,14 @@ export default class Engine {
 
       this.updatesSinceEngineStart++;
 
-      // if the number of updates exceeds the max number of updates allowed for a single frame, panic.
       if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
         this.lag = 0;
         break;
       }
     }
 
-    const interpolationFactor = this.lag / this.targetFrameTimestep;
+    this.render(this.lag / this.targetFrameTimestep);
 
-    this.render(interpolationFactor);
-
-    // filter out scenes that are queued for disposal while disposing of them
     this.scenes = new Map(Array
       .from(this.scenes.entries())
       .filter(([key, scene]) => !(scene.isQueuedForDisposal && this.removeScene(scene))));
@@ -286,8 +280,6 @@ export default class Engine {
    * @returns {Vector} new canvas size
    */
   private fixDPI = (): Vector => {
-
-    // get canvas computed dimensions
     let width: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("width")
       .slice(0, -2));
@@ -295,11 +287,9 @@ export default class Engine {
       .getPropertyValue("height")
       .slice(0, -2));
 
-    // scale dimensions by DPI
     width *= window.devicePixelRatio;
     height *= window.devicePixelRatio;
 
-    // set canvas element dimensions to scaled dimensions
     this.canvasElement.setAttribute("width", String(width));
     this.canvasElement.setAttribute("height", String(height));
 
