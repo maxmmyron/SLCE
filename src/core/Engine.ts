@@ -267,6 +267,8 @@ export default class Engine {
    * @returns {Vector} new canvas size
    */
   private fixDPI = (): Vector => {
+    this.canvasScale = window.devicePixelRatio;
+
     let width: number = Number(getComputedStyle(this.canvasElement)
       .getPropertyValue("width")
       .slice(0, -2));
@@ -274,8 +276,8 @@ export default class Engine {
       .getPropertyValue("height")
       .slice(0, -2));
 
-    width *= window.devicePixelRatio;
-    height *= window.devicePixelRatio;
+    width *= this.canvasScale;
+    height *= this.canvasScale;
 
     this.canvasElement.setAttribute("width", String(width));
     this.canvasElement.setAttribute("height", String(height));
