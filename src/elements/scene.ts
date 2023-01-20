@@ -22,26 +22,21 @@ export default class Scene extends Element {
     gravity: vec(0, 0)
   };
 
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
-
   /**
    * Creates a new Scene instance.
    *
    * @param name name of scene
    * @param engine engine reference to attach scene to
    * @param camera camera to attach to scene
-   * @param properties scene properties
-   * @param environment scene environment
+   * @param defaultProperties optional properties to assign at creation
    */
-  constructor(name: string, engine: Engine, camera: Camera, properties?: ElementProperties, environment?: SceneEnvironment) {
-    super(name, engine, properties);
+  constructor(name: string, engine: Engine, camera: Camera, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
+    super(name, engine, defaultProperties);
 
     this.camera = camera;
 
-    this.environment.background = environment?.background ?? this.environment.background;
-    this.environment.gravity = environment?.gravity ?? this.environment.gravity;
+    this.environment.background = defaultProperties?.background ?? this.environment.background;
+    this.environment.gravity = defaultProperties?.gravity ?? this.environment.gravity;
 
     this.engine.scenes.set(this.ID, this);
 
@@ -80,6 +75,8 @@ export default class Scene extends Element {
     ctx.beginPath();
     ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
     ctx.clip();
+
+    ctx.scale(this.camera.zoom, this.camera.zoom);
 
     Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
 

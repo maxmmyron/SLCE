@@ -6,12 +6,12 @@ interface Texture {
   frameCount: Vector;
 }
 
-type ElementProperties = {
-  position?: Vector;
-  velocity?: Vector;
-  rotation?: Vector;
-  size?: Vector;
-  isDebugEnabled?: boolean;
+type ElementDefaultProperties = {
+  position: Vector;
+  velocity: Vector;
+  rotation: Vector;
+  size: Vector;
+  isDebugEnabled: boolean;
 }
 
 type ElementState = {
