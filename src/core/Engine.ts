@@ -208,14 +208,9 @@ export default class Engine implements Engineable {
 
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
-    // FIXME: remove; this._canvasSize can be assigned using fixDPI()
-    const envWidth: number = Number(getComputedStyle(canvasElement).getPropertyValue("width").slice(0, -2));
-    const envHeight: number = Number(getComputedStyle(canvasElement).getPropertyValue("height").slice(0, -2));
-    this._canvasSize = vec(envWidth, envHeight);
-
     this.eventHandler = EventHandler.getInstance();
 
-    this.fixDPI();
+    this._canvasSize = this.fixDPI();
 
     this.isDebugEnabled = defaultProperties.isDebugEnabled || false;
 
