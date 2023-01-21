@@ -1,7 +1,7 @@
 interface Engineable {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
-  readonly debugger: Debuggerable;
+  readonly parameterGUI: GUIable;
   readonly eventHandler: EventHandler;
 
   scenes: Map<string, import("../elements/scene").default>;
@@ -41,32 +41,30 @@ interface Camerable {
   removeListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
 }
 
-interface Debuggerable {
+interface GUIable {
   readonly position: Vector;
-  readonly baseSection: DebugSectionable;
+  readonly baseSection: GUISectionable;
 
   lastClickPosition: Vector;
 
   render(): void;
 }
 
-interface DebugSectionable {
-  title: string;
+interface GUISectionable {
+  name: string;
   isCollapsed: boolean;
-  sections: Array<import("./debugger").Section>;
-  items: Array<DebuggerItem>;
+  subsections: Array<GUISectionable>;
+  parameters: Map<string, () => Object>;
 
-  addItem: (title: string, callback: () => Object) => import("./debugger").Section;
-  removeItem: (title: string) => import("./debugger").Section;
-  addSection: (title: string, isCollapsed: boolean) => import("./debugger").Section;
-  removeSection: (title: string) => import("./debugger").Section;
+  addParameter: (name: string, callback: () => Object) => GUISectionable;
+  removeParameter: (name: string) => boolean;
+  addSubsection: (name: string, isCollapsed: boolean) => GUISectionable;
+  removeSubsection: (name: string) => boolean;
+
+  clear: () => void;
   render: (ctx: CanvasRenderingContext2D, position: Vector, lastClickPosition: Vector) => Vector;
-  getSection: (title: string) => import("./debugger").Section;
-}
 
-type DebuggerItem = {
-  title: string;
-  callback: () => Object;
+  getSubsectionByTitle: (name: string) => GUISectionable;
 }
 
 type DefaultCameraProperties = {

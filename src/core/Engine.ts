@@ -1,6 +1,6 @@
 import Scene from "../elements/scene";
 import { assert } from "../util/asserts";
-import Debugger from "./debugger";
+import Debugger from "./gui";
 import { EventHandler } from "../util/event_handler";
 import { vec } from "../math/vector";
 
