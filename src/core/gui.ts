@@ -14,11 +14,15 @@ export class ParameterSection implements GUISectionable {
 
   /**
    * A list of subsections that are contained within this section.
+   *
+   * @default []
    */
   subsections: Array<GUISectionable> = [];
 
   /**
    * A map containing string keys and callback functions that return a parameter to be displayed.
+   *
+   * @default new Map()
    */
   parameters: Map<string, () => Object> = new Map();
 
@@ -162,19 +166,48 @@ export class ParameterSection implements GUISectionable {
 }
 
 export default class ParameterGUI implements GUIable {
+  /**
+   * The position of the overlay
+   *
+   * @default vec(16, 16)
+   */
   readonly position: Vector = vec(16, 16);
+
+  /**
+   * The base section of the GUI. All other sections are attached to this one.
+   */
   readonly baseSection: GUISectionable;
+
+  /**
+   * The position of the last click made on the overlay
+   *
+   * @default vec(0, 0)
+   */
   lastClickPosition: Vector = vec(0, 0);
 
-  private readonly ctx: CanvasRenderingContext2D;
+  /**
+   * Whether the engine will display a debug overlay with performance diagnostics.
+   *
+   * @default false
+   */
+  isEnabled: boolean = false;
 
-  constructor(ctx: CanvasRenderingContext2D) {
-    this.ctx = ctx;
+  /**
+   * Creates a new ParameterGUI instance.
+   */
+  constructor() {
     this.baseSection = new ParameterSection("Engine", false);
   }
 
-  render(): void {
-    this.baseSection.render(this.ctx, vec(this.position.x, this.position.y), this.lastClickPosition);
+  /**
+   * Renders the parameter GUI overlay if it is enabled.
+   *
+   * @param ctx the canavs context to render to
+   */
+  render(ctx: CanvasRenderingContext2D): void {
+    if (!this.isEnabled) return;
+
+    this.baseSection.render(ctx, vec(this.position.x, this.position.y), this.lastClickPosition);
     this.lastClickPosition = vec(0, 0);
   }
 }

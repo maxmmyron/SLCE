@@ -189,15 +189,6 @@ export default class Engine implements Engineable {
   private canvasScale: number = 1;
 
   /**
-   * Whether the engine will display a debug overlay with performance diagnostics.
-   *
-   * @private
-   * @default true
-   */
-  // TODO: move this to debugger instance
-  private isDebugEnabled: boolean = true;
-
-  /**
    * Creates a new Engine instance.
    *
    * @param canvasElement the canvas element to render to.
@@ -212,9 +203,7 @@ export default class Engine implements Engineable {
 
     this._canvasSize = this.fixDPI();
 
-    this.isDebugEnabled = defaultProperties.isDebugEnabled || false;
-
-    this.parameterGUI = new ParameterGUI(this.ctx);
+    this.parameterGUI = new ParameterGUI();
     this.parameterGUI.baseSection
       .addParameter("FPS", () => this._FPS)
       .addParameter("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
@@ -357,7 +346,7 @@ export default class Engine implements Engineable {
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
-    if (this.isDebugEnabled) this.parameterGUI.render();
+    this.parameterGUI.render(this.ctx);
   };
 
   /**

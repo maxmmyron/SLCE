@@ -47,7 +47,9 @@ interface GUIable {
 
   lastClickPosition: Vector;
 
-  render(): void;
+  isEnabled: boolean;
+
+  render(ctx: CanvasRenderingContext2D): void;
 }
 
 interface GUISectionable {
