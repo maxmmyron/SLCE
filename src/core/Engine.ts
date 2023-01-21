@@ -3,6 +3,7 @@ import { assert } from "../util/asserts";
 import Debugger from "./gui";
 import { EventHandler } from "../util/event_handler";
 import { vec } from "../math/vector";
+import ParameterGUI from "./gui";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -29,11 +30,11 @@ export default class Engine implements Engineable {
   readonly ctx: CanvasRenderingContext2D;
 
   /**
-   * The engine's debugger instance. Used to set up and manage debug sections and items.
+   * The engine's parameter
    *
    * @readonly
    */
-  readonly debugger: Debuggerable;
+  readonly parameterGUI: GUIable
 
   /**
    * An eventHandler used to manage event listeners.
@@ -218,11 +219,11 @@ export default class Engine implements Engineable {
 
     this.isDebugEnabled = defaultProperties.isDebugEnabled || false;
 
-    this.debugger = new Debugger(this.ctx);
-    this.debugger.baseSection
-      .addItem("FPS", () => this._FPS)
-      .addItem("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
-      .addItem("tick lag", () => this.lag);
+    this.parameterGUI = new ParameterGUI(this.ctx);
+    this.parameterGUI.baseSection
+      .addParameter("FPS", () => this._FPS)
+      .addParameter("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
+      .addParameter("tick lag", () => this.lag);
   }
 
   getScenesByName = (name: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === name);
@@ -244,7 +245,7 @@ export default class Engine implements Engineable {
 
     this.eventHandler.addListener("onmousedown", (ev) => {
       ev = <MouseEventPayload>ev;
-      this.debugger.lastClickPosition = vec(ev.x, ev.y);
+      this.parameterGUI.lastClickPosition = vec(ev.x, ev.y);
     });
 
     this.updateID = requestAnimationFrame(this.update);
@@ -361,7 +362,7 @@ export default class Engine implements Engineable {
 
     this.eventHandler.queueEvent("onrender", { interpolationFactor });
 
-    if (this.isDebugEnabled) this.debugger.render();
+    if (this.isDebugEnabled) this.parameterGUI.render();
   };
 
   /**

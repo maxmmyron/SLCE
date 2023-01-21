@@ -38,10 +38,10 @@ export default class Camera implements Camerable {
     defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
     defaultProperties.zoom && (this.zoom = defaultProperties.zoom);
 
-    this.engine.debugger.baseSection.addSection(this.name, false)
-      .addItem("Position", () => this.position)
-      .addItem("Velocity", () => this.velocity)
-      .addItem("Zoom", () => this.zoom);
+    this.engine.parameterGUI.baseSection.addSubsection(this.name, false)
+      .addParameter("Position", () => this.position)
+      .addParameter("Velocity", () => this.velocity)
+      .addParameter("Zoom", () => this.zoom);
 
   }
 

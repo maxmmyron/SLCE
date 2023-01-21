@@ -34,10 +34,10 @@ export default class Scene extends Element {
 
     this.engine.scenes.set(this.ID, this);
 
-    this.engine.debugger.baseSection.addSection(this.name, false)
-      .addItem("background", () => this.environment.background)
-      .addItem("Position", () => this.position)
-      .addItem("Velocity", () => this.velocity)
+    this.engine.parameterGUI.baseSection.addSubsection(this.name, false)
+      .addParameter("background", () => this.environment.background)
+      .addParameter("Position", () => this.position)
+      .addParameter("Velocity", () => this.velocity)
   }
 
   override start = (): Promise<any> => {

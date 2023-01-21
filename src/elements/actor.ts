@@ -58,11 +58,12 @@ export default class Actor extends Element {
     this.previousState = this.createLastState();
     this.isDebugEnabled = defaultProperties?.isDebugEnabled || false;
 
-    this.engine.debugger.baseSection.getSection(scene.name).addSection(this.name, false)
-      .addItem("Position", () => this.position)
-      .addItem("Render Position", () => this.renderPosition)
-      .addItem("Velocity", () => this.velocity)
-      .addItem("Texture ID", () => this.textureID)
+    this.engine.parameterGUI.baseSection.getSubsectionByTitle(scene.name)
+      .addSubsection(this.name, false)
+      .addParameter("Position", () => this.position)
+      .addParameter("Render Position", () => this.renderPosition)
+      .addParameter("Velocity", () => this.velocity)
+      .addParameter("Texture ID", () => this.textureID)
   }
 
   override internalTick = (timestep: number): void => {
