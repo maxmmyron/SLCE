@@ -17,6 +17,12 @@ Slice consists of a few core classes that are used to create a game loop and man
 Scenes can be thought of as a `div` element: they are useful for grouping actors together and managing their visibility within the engine.
 - `actor.js`: An actor is an object that can move around, interact with other actors, and be drawn to the screen.
 
+SLiCE works on a regular canvas element:
+
+```html
+<canvas id="game-canvas"></canvas>
+```
+
 To begin, import the engine, camera, and scene elements, and link them together:
 
 ```js
@@ -42,11 +48,14 @@ engine.start();
 
 which will initialize preload functions and start the game loop.
 
-To pause or resume the engine loop, we can use the respective functions:
+To pause or resume the engine loop, use the `isPaused` property.
+
+When the engine is paused, the tick and render cycles will not execute, and the engine will not dispatch any new events.
 
 ```js
-engine.pause();
-engine.resume();
+engine.isPaused = true;
+
+engine.isPaused = false;
 ```
 
 ## Adding actors
@@ -54,13 +63,13 @@ engine.resume();
 Actors are added to scenes and are managed by the engine.
 
 ```js
-import Actor from "./src/objects/Actor.js";
-import {vec} from "./src/math/Vector.js";
+import Actor from "./src/elements/actor.js";
+import Vector2D from "./src/math/vector2d.js";
 
 let actor = new Actor("actor", scene, {
-  pos: vec(0, 0),
-  vel: vec(0, 0),
-  size: vec(64, 64),
+  position: new Vector2D(),
+  velocity: new Vector2D(),
+  size: new Vector2D(64, 64),
 });
 ```
 
@@ -91,8 +100,8 @@ If we want to add an animation to the actor, we can use the same function with a
 actor.preload = async () => {
   let animationBitmap = await TextureLoader.getInstance().load(texturePath);
 
-  actor.addTexture("textureA", bitmap, vec(64, 64), 200);
-  actor.textureID = "textureA";
+  actor.addTexture("textureBitmap", bitmap, new Vector2D(64, 64), 200);
+  actor.textureID = "textureBitmap";
 };
 ```
 
@@ -154,8 +163,6 @@ const listener = (e) => {/* ... */};
 
 actor.addListener("onmousedown", listener);
 
-// ...
-
 actor.removeListener("onmousedown", listener);
 ```
 
@@ -165,28 +172,28 @@ We can use listeners to add some simple movement logic to our actor:
 actor.addListener("onkeydown", (e) => {
   // reset the actor to its original position
   if (e.key === "r") {
-    actor.vel = vec();
-    actor.setPosition(vec(/* some position */));
+    actor.velocity = new Vector2D();
+    actor.setPosition(new Vector2D(/* ... */));
+
+    // Note the use of the setPosition() function. This is used to immediately set the position of an actor without accounting for render interpolation.
   }
 });
 
 actor.addListener("whilekeydown", (e) => {
   // add a bit of velocity based on the key pressed
-  if (e.key === "ArrowRight") actor.vel.x += 0.01;
-  if (e.key === "ArrowLeft") actor.vel.x += -0.01;
-  if (e.key === "ArrowUp") actor.vel.y += -0.01;
-  if (e.key === "ArrowDown") actor.vel.y += 0.01;
+  if (e.key === "ArrowRight") actor.velocity.x += 0.01;
+  if (e.key === "ArrowLeft") actor.velocity.x += -0.01;
+  if (e.key === "ArrowUp") actor.velocity.y += -0.01;
+  if (e.key === "ArrowDown") actor.velocity.y += 0.01;
 
   // clamp the velocity within a reasonable range
-  actor.vel.x = Math.min(Math.max(actor.vel.x, -0.5), 0.5);
-  actor.vel.y = Math.min(Math.max(actor.vel.y, -0.5), 0.5);
+  actor.velocity.x = Math.min(Math.max(actor.velocity.x, -0.5), 0.5);
+  actor.velocity.y = Math.min(Math.max(actor.velocity.y, -0.5), 0.5);
 });
 
 actor.addListener("ontick", (e) => {
   // factor in the current delta time so we stay hardware independent.
-  actor.pos.x += actor.vel.x * e.deltaTime;
-  actor.pos.y += actor.vel.y * e.deltaTime;
+  actor.position.x += actor.velocity.x * e.deltaTime;
+  actor.position.y += actor.velocity.y * e.deltaTime;
 });
 ```
-
-Note the use of the `setPosition()` function. This is used to immediately set the position of an actor without accounting for render interpolation.
