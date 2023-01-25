@@ -193,7 +193,7 @@ export default class Engine implements Engineable {
     this.eventHandler = EventHandler.getInstance();
     this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
 
-    this._canvasSize = this.fixDPI();
+    this._canvasSize = this.fixRenderScale();
 
     this.parameterGUI = new ParameterGUI();
     this.parameterGUI.baseSection
@@ -212,12 +212,12 @@ export default class Engine implements Engineable {
   start = async (): Promise<void> => {
     assert(!this.isStarted, "Engine has already been started.");
 
-    this.fixDPI();
+    this.fixRenderScale();
 
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixDPI());
+    this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixRenderScale());
 
     this.eventHandler.addListener("onmousedown", (ev) => {
       ev = <MouseEventPayload>ev;
@@ -356,8 +356,7 @@ export default class Engine implements Engineable {
    *
     * @returns the normalized canvas size
    */
-  //TODO: potentially rename?
-  private fixDPI = (): Vector2D => {
+  private fixRenderScale = (): Vector2D => {
     this.canvasScale = window.devicePixelRatio;
 
     let width: number = Number(getComputedStyle(this.canvasElement)
