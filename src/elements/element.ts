@@ -1,4 +1,4 @@
-import { add, mult, sub, vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 
 /**
  * The base class for all engine elements.
@@ -21,13 +21,13 @@ export default class Element {
    */
   isDebugEnabled: boolean = false;
 
-  position: Vector = vec();
+  position: Vector2D = new Vector2D();
 
-  velocity: Vector = vec();
+  velocity: Vector2D = new Vector2D();
 
-  rotation: Vector = vec();
+  rotation: Vector2D = new Vector2D();
 
-  size: Vector = vec();
+  size: Vector2D = new Vector2D();
 
   protected isPreloaded: boolean = false;
 
@@ -125,7 +125,7 @@ export default class Element {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
     let ctx = this.engine.ctx;
 
-    if (this.isInterpolationEnabled) this.position = add(this.previousState.position, mult(sub(this.position, this.previousState.position), interpolationFactor));
+    if (this.isInterpolationEnabled) this.position = this.previousState.position.add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
     this.isInterpolationEnabled = true;
 
     ctx.save();
@@ -141,7 +141,7 @@ export default class Element {
    *
    * @param pos position to move actor to
    */
-  setPosition = (pos: Vector): void => {
+  setPosition = (pos: Vector2D): void => {
     this.position = pos;
     this.isInterpolationEnabled = false;
   }

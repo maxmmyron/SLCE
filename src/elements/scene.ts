@@ -1,4 +1,4 @@
-import { vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 import Element from "./element";
 
 /**
@@ -13,7 +13,7 @@ export default class Scene extends Element {
 
   environment: SceneEnvironment = {
     background: "transparent",
-    gravity: vec(0, 0)
+    gravity: new Vector2D()
   };
 
   /**

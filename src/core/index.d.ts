@@ -21,7 +21,7 @@ interface Engineable {
   addListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
   removeListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
 
-  get canvasSize(): Vector;
+  get canvasSize(): Vectorable;
   get engineRuntimeMilliseconds(): number;
   get engineStartTimestamp(): number;
   get FPS(): number;
@@ -32,9 +32,9 @@ interface Camerable {
   readonly name: string;
   readonly engine: Engineable;
 
-  position: Vector;
-  velocity: Vector;
-  rotation: Vector;
+  position: Vectorable;
+  velocity: Vectorable;
+  rotation: Vectorable;
   zoom: number;
 
   addListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
@@ -42,10 +42,10 @@ interface Camerable {
 }
 
 interface GUIable {
-  readonly position: Vector;
+  readonly position: Vectorable;
   readonly baseSection: GUISectionable;
 
-  lastClickPosition: Vector;
+  lastClickPosition: Vectorable;
 
   isEnabled: boolean;
 
@@ -64,14 +64,14 @@ interface GUISectionable {
   removeSubsection: (name: string) => boolean;
 
   clear: () => void;
-  render: (ctx: CanvasRenderingContext2D, position: Vector, lastClickPosition: Vector) => Vector;
+  render: (ctx: CanvasRenderingContext2D, position: Vectorable, lastClickPosition: Vectorable) => Vectorable;
 
   getSubsectionByTitle: (name: string) => GUISectionable;
 }
 
 type DefaultCameraProperties = {
-  position?: Vector;
-  rotation?: Vector;
+  position?: Vectorable;
+  rotation?: Vectorable;
   zoom?: number;
 }
 

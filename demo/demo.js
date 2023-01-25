@@ -3,7 +3,7 @@
 import Camera from "../src/core/camera";
 import Engine from "../src/core/engine";
 import Scene from "../src/elements/scene";
-import { vec, mult } from "../src/math/vector";
+import Vector2D from "../src/math/vector2d";
 import Actor from "../src/elements/actor";
 import { TextureCache } from "../src/util/texture_cache";
 

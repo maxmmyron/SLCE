@@ -2,7 +2,7 @@ import Scene from "../elements/scene";
 import { assert } from "../util/asserts";
 import Debugger from "./gui";
 import { EventHandler } from "../util/event_handler";
-import { vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 import ParameterGUI from "./gui";
 
 const TARGET_FPS: number = 60;
@@ -70,7 +70,7 @@ export default class Engine implements Engineable {
    *
    * @private
    */
-  private _canvasSize: Vector;
+  private _canvasSize: Vector2D;
 
   /**
    * The current engine runtime in milliseconds.
@@ -229,7 +229,7 @@ export default class Engine implements Engineable {
 
     this.eventHandler.addListener("onmousedown", (ev) => {
       ev = <MouseEventPayload>ev;
-      this.parameterGUI.lastClickPosition = vec(ev.x, ev.y);
+      this.parameterGUI.lastClickPosition = new Vector2D(ev.x, ev.y);
     });
 
     this.updateID = requestAnimationFrame(this.update);
@@ -374,7 +374,7 @@ export default class Engine implements Engineable {
     * @returns the normalized canvas size
    */
   //TODO: potentially rename?
-  private fixDPI = (): Vector => {
+  private fixDPI = (): Vector2D => {
     this.canvasScale = window.devicePixelRatio;
 
     let width: number = Number(getComputedStyle(this.canvasElement)
@@ -390,7 +390,7 @@ export default class Engine implements Engineable {
     this.canvasElement.setAttribute("width", String(width));
     this.canvasElement.setAttribute("height", String(height));
 
-    return vec(width, height);
+    return new Vector2D(width, height);
   };
 
   /**
@@ -407,7 +407,7 @@ export default class Engine implements Engineable {
     this.eventHandler.setIsEnginePaused(isPaused);
   }
 
-  get canvasSize(): Vector {
+  get canvasSize(): Vector2D {
     return this._canvasSize;
   }
 

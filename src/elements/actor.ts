@@ -1,4 +1,5 @@
-import { vec, add, sub, div, mult } from "../math/vector";
+import { isVariableDeclarationList } from "typescript";
+import Vector2D from "../math/vector2d";
 import Element from "./element";
 
 /**
@@ -23,7 +24,7 @@ export default class Actor extends Element {
 
   private _textureFrame: number = 0;
 
-  private renderPosition: Vector = vec();
+  private renderPosition: Vector2D = new Vector2D();
 
   private _textures: { [key: string]: Textureable } = {};
 
@@ -38,7 +39,7 @@ export default class Actor extends Element {
   /**
    * The offset to start drawing the texture from the top left corner of the actor.
    */
-  private textureSourcePosition: Vector = vec(0, 0);
+  private textureSourcePosition: Vector2D = new Vector2D();
 
 
   /**
@@ -68,14 +69,14 @@ export default class Actor extends Element {
 
   override internalTick = (timestep: number): void => {
     if (this.isGravityEnabled) {
-      this.velocity = add(this.velocity, div(this.scene.environment.gravity, timestep));
+      this.velocity.add(this.scene.environment.gravity.divide(timestep));
     }
 
     if (this.textureID && this.isTextureEnabled) this.updateTexture(timestep);
   };
 
   override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
-    this.renderPosition = add(this.position, sub(this.scene.position, this.scene.camera.position));
+    this.renderPosition = this.position.add(this.position.subtract(this.scene.camera.position));
 
     ctx.save();
     if (this.textureID) this.renderTexture(ctx);
@@ -93,8 +94,8 @@ export default class Actor extends Element {
    * @param frameSize the size of a single frame in the texture (defaults to the size of the texture)
    * @param frameDuration the duration of a single frame in the texture (defaults to 200ms)
    */
-  addTexture = (textureID: string, texture: ImageBitmap, frameSize: Vector = vec(), frameDuration: number = 200): void => {
-    const textureSize = vec(texture.width, texture.height);
+  addTexture = (textureID: string, texture: ImageBitmap, frameSize: Vector2D = new Vector2D(), frameDuration: number = 200): void => {
+    const textureSize: Vector2D = new Vector2D(texture.width, texture.height);
 
     if (frameSize.x === 0 || frameSize.y === 0) {
       frameSize = textureSize;
@@ -105,7 +106,7 @@ export default class Actor extends Element {
       size: textureSize,
       frameSize,
       frameDuration,
-      frameCount: vec(Math.floor(textureSize.x / frameSize.x), Math.floor(textureSize.y / frameSize.y)),
+      frameCount: new Vector2D(Math.floor(textureSize.x / frameSize.x), Math.floor(textureSize.y / frameSize.y)),
     };
   }
 
@@ -140,7 +141,7 @@ export default class Actor extends Element {
         (this._textureFrame + 1) % (texture.frameCount.x * texture.frameCount.y);
     } else return;
 
-    this.textureSourcePosition = vec(
+    this.textureSourcePosition = new Vector2D(
       this._textureFrame % texture.frameCount.x * texture.frameSize.x,
       (this._textureFrame - this._textureFrame % texture.frameCount.x) / texture.frameCount.y * texture.frameSize.y
     );

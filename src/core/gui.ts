@@ -1,4 +1,4 @@
-import { vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 import { assert } from "../util/asserts";
 
 export class ParameterSection implements GUISectionable {
@@ -107,14 +107,14 @@ export class ParameterSection implements GUISectionable {
    *
    * @returns the posiiton at which to render the next section
    */
-  render(ctx: CanvasRenderingContext2D, position: Vector, lastClickPosition: Vector): Vector {
+  render(ctx: CanvasRenderingContext2D, position: Vector2D, lastClickPosition: Vector2D): Vector2D {
     let formattedParameters = Array.from(this.parameters.entries()).map(([name, callback]) => `${name}: ${JSON.stringify(callback(), (_, value: any) => {
       if (typeof value === "function") return value.name;
       if (typeof value === "number") return value.toFixed(2);
       return value;
     })}`);
 
-    const backgroundPos = vec(position.x, position.y);
+    const backgroundPos = new Vector2D(position.x, position.y);
     let maxBackgroundWidth = Math.max(...formattedParameters.map(parameter => ctx.measureText(parameter).width)) + 64;
     maxBackgroundWidth -= maxBackgroundWidth % 50;
 
@@ -144,7 +144,7 @@ export class ParameterSection implements GUISectionable {
 
     if (this.parameters.size) position.y += 8;
 
-    this.subsections.forEach(section => position.y = section.render(ctx, vec(position.x + 8, position.y), lastClickPosition).y);
+    this.subsections.forEach(section => position.y = section.render(ctx, new Vector2D(position.x + 8, position.y), lastClickPosition).y);
 
     return position;
   }
@@ -167,11 +167,9 @@ export class ParameterSection implements GUISectionable {
 
 export default class ParameterGUI implements GUIable {
   /**
-   * The position of the overlay
-   *
-   * @default vec(16, 16)
+   * The position of the overlay on the screen.
    */
-  readonly position: Vector = vec(16, 16);
+  readonly position: Vector2D = new Vector2D(16, 16);
 
   /**
    * The base section of the GUI. All other sections are attached to this one.
@@ -180,10 +178,8 @@ export default class ParameterGUI implements GUIable {
 
   /**
    * The position of the last click made on the overlay
-   *
-   * @default vec(0, 0)
    */
-  lastClickPosition: Vector = vec(0, 0);
+  lastClickPosition: Vector2D = new Vector2D(0, 0);
 
   /**
    * Whether the engine will display a debug overlay with performance diagnostics.
@@ -207,7 +203,7 @@ export default class ParameterGUI implements GUIable {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.isEnabled) return;
 
-    this.baseSection.render(ctx, vec(this.position.x, this.position.y), this.lastClickPosition);
-    this.lastClickPosition = vec(0, 0);
+    this.baseSection.render(ctx, new Vector2D(this.position.x, this.position.y), this.lastClickPosition);
+    this.lastClickPosition = new Vector2D(0, 0);
   }
 }

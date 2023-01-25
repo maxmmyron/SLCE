@@ -1,4 +1,4 @@
-import { vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 
 /**
  * @class Camera
@@ -14,11 +14,11 @@ export default class Camera implements Camerable {
 
   readonly engine: Engineable;
 
-  position: Vector = vec();
+  position: Vector2D = new Vector2D();
 
-  velocity: Vector = vec();
+  velocity: Vector2D = new Vector2D();
 
-  rotation: Vector = vec();
+  rotation: Vector2D = new Vector2D();
 
   zoom: number = 1;
 

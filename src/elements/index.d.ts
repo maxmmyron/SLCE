@@ -7,10 +7,10 @@ interface Elementable {
   isTickEnabled: boolean;
   isDebugEnabled: boolean;
 
-  position: Vector;
-  velocity: Vector;
-  rotation: Vector;
-  size: Vector;
+  position: Vectorable;
+  velocity: Vectorable;
+  rotation: Vectorable;
+  size: Vectorable;
 
   addListener(event: ValidEventType, callback: ((event: ValidEventPayload) => void)): void;
   removeListener(event: ValidEventType, callback: ((event: ValidEventPayload) => void)): void;
@@ -23,7 +23,7 @@ interface Elementable {
 
   render(interpolationFactor: number): void;
 
-  setPosition(position: Vector): void;
+  setPosition(position: Vectorable): void;
 
   get ID(): string;
 }
@@ -48,27 +48,27 @@ interface Actorable extends Elementable {
 
 interface Textureable {
   bitmap: ImageBitmap;
-  size: Vector;
-  frameSize: Vector
+  size: Vectorable;
+  frameSize: Vectorable;
   frameDuration: number;
-  frameCount: Vector;
+  frameCount: Vectorable;
 }
 
 type ElementDefaultProperties = {
-  position: Vector;
-  velocity: Vector;
-  rotation: Vector;
-  size: Vector;
+  position: Vectorable;
+  velocity: Vectorable;
+  rotation: Vectorable;
+  size: Vectorable;
   isDebugEnabled: boolean;
 }
 
 type ElementState = {
-  position: Vector;
-  velocity: Vector;
-  size: Vector;
+  position: Vectorable;
+  velocity: Vectorable;
+  size: Vectorable;
 };
 
 type SceneEnvironment = {
   background: string;
-  gravity: Vector;
+  gravity: Vectorable;
 }
