@@ -1,6 +1,5 @@
 import Scene from "../elements/scene";
 import { assert } from "../util/asserts";
-import Debugger from "./gui";
 import { EventHandler } from "../util/event_handler";
 import Vector2D from "../math/vector2d";
 import ParameterGUI from "./gui";
@@ -66,6 +65,13 @@ export default class Engine implements Engineable {
   preloadedActorCount: number = 0;
 
   /**
+   * Whether or not the engine has paused ticks and render calls.
+   *
+   * @default false
+   */
+  isPaused: boolean = true;
+
+  /**
    * The current size of the canvas element.
    *
    * @private
@@ -95,14 +101,6 @@ export default class Engine implements Engineable {
    * @default 0
    */
   private _FPS: number = 0;
-
-  /**
-   * Whether or not the engine has paused ticks and render calls.
-   *
-   * @private
-   * @default false
-   */
-  private _isPaused: boolean = false;
 
   /**
    * Whether or not the engine has been initialized. This flag only changes
@@ -200,6 +198,7 @@ export default class Engine implements Engineable {
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
     this.eventHandler = EventHandler.getInstance();
+    this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
 
     this._canvasSize = this.fixDPI();
 
@@ -240,23 +239,12 @@ export default class Engine implements Engineable {
 
     this.eventHandler.attachEventListeners(this.canvasElement);
 
+    this._engineStartTimestamp = performance.now();
+
     this.isPreloaded = true;
     this.isStarted = true;
-
-    this._engineStartTimestamp = performance.now();
-    this.updatePauseState(false);
+    this.isPaused = false;
   };
-
-  /**
-   * Pauses engine tick and render functions. The Engine will continue calling
-   * the outer loop, but will not perform any logic.
-   */
-  pause = (): void => this.updatePauseState(true);
-
-  /**
-   * Resumes engine update loop.
-   */
-  resume = (): void => this.updatePauseState(false);
 
   /**
    * Creates a new event listener for the given event name.
@@ -299,6 +287,8 @@ export default class Engine implements Engineable {
     this._FPS = 1000 / delta;
 
     let cycleUpdateCount: number = 0;
+    console.log("update", this.lag, this.targetTickDurationMilliseconds, this.isPaused);
+
     while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
       this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds });
       this.eventHandler.dispatchQueue();
@@ -336,7 +326,7 @@ export default class Engine implements Engineable {
     this.ctx.scale(this.canvasScale, this.canvasScale);
 
     if (!this.isPreloaded) this.renderPreloadScreen();
-    if (this._isPaused || !this.isPreloaded) return;
+    if (this.isPaused || !this.isPreloaded) return;
 
     this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
 
@@ -393,20 +383,6 @@ export default class Engine implements Engineable {
     return new Vector2D(width, height);
   };
 
-  /**
-   * Updates the pause state of the game. This is wrapped since multiple separate
-   * systems may need to be "paused" pause the game.
-   *
-   * @private
-   *
-   * @param isPaused whether or not the engine is paused
-   */
-  // TODO: update eventHandler to accept arrow func reference instead of variable
-  private updatePauseState = (isPaused: boolean) => {
-    this._isPaused = isPaused;
-    this.eventHandler.setIsEnginePaused(isPaused);
-  }
-
   get canvasSize(): Vector2D {
     return this._canvasSize;
   }
@@ -421,9 +397,5 @@ export default class Engine implements Engineable {
 
   get FPS(): number {
     return this._FPS;
-  }
-
-  get isPaused(): boolean {
-    return this._isPaused;
   }
 }

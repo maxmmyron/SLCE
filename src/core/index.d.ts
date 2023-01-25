@@ -12,11 +12,11 @@ interface Engineable {
 
   preloadedActorCount: number;
 
+  isPaused: boolean;
+
   getScenesByName(name: string): Array<(import("../elements/scene").default)>;
 
   start(): Promise<void>;
-  pause(): void;
-  resume(): void;
 
   addListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
   removeListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
@@ -25,7 +25,6 @@ interface Engineable {
   get engineRuntimeMilliseconds(): number;
   get engineStartTimestamp(): number;
   get FPS(): number;
-  get isPaused(): boolean;
 }
 
 interface Camerable {

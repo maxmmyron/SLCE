@@ -17,7 +17,7 @@ export const EventHandler = (() => {
     /**
      * A boolean describing the current pause state of the engine.
      */
-    let isEnginePaused: boolean = true;
+    let enginePauseStateCallback: (() => boolean) = () => true;
 
     let resizeObserver: ResizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]): void => {
       entries.forEach(entry => {
@@ -29,18 +29,15 @@ export const EventHandler = (() => {
     let canvasElement: HTMLCanvasElement;
 
     const addToQueue = (type: ValidEventType, payload: ValidEventPayload, isPersistent: boolean = false, comparisonType: string = ""): void => {
-      // filter events when engine is paused
-      if (!isEnginePaused) queue.push({ type, payload, isPersistent, comparisonType });
+      if (enginePauseStateCallback()) return;
+
+      queue.push({ type, payload, isPersistent, comparisonType });
     };
 
     const filterQueue = (): void => {
-      // filter persistent events
       queue = queue.filter(queuedEvent => {
-        // if event has no comparisonType, don't filter
         if (queuedEvent.comparisonType === "") return true;
 
-        // filter out persistent events by type and payload (if strict).
-        // if found, return false to filter out
         return queue.findIndex(e => {
           if (e.type !== queuedEvent.comparisonType) return false;
 
@@ -53,7 +50,6 @@ export const EventHandler = (() => {
         }) === -1;
       });
 
-      // remove non-persistent events
       queue = queue.filter(queuedEvent => queuedEvent.isPersistent);
     };
 
@@ -97,7 +93,6 @@ export const EventHandler = (() => {
       ["mousemove", queueMouseMoveEvents],
       ["keydown", queueKeyDownEvents],
       ["keyup", queueKeyUpEvents],
-      // handled with ResizeObserver so we don't need a handler function
       ["resize", null],
     ]);
 
@@ -177,14 +172,10 @@ export const EventHandler = (() => {
         });
       },
 
-      // ****************************************************************
-      // ⚓ GETTERS AND SETTERS
-      // ****************************************************************
-
       getQueuedEvents: (): Array<QueuedEvent> => queue,
 
-      setIsEnginePaused: (isPaused: boolean): void => {
-        isEnginePaused = isPaused;
+      setEnginePauseStateCallback: (callback: (() => boolean)): void => {
+        enginePauseStateCallback = callback;
       },
     };
   };
