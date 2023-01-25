@@ -1,31 +1,18 @@
-import Engine from "../core/engine";
-import { add, mult, sub, vec } from "../math/vector";
+import Vector2D from "../math/vector2d";
 
 /**
  * The base class for all engine elements.
  */
 export default class Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
-
   readonly name: string;
 
-  readonly engine: Engine;
+  readonly engine: Engineable;
 
   isQueuedForDisposal: boolean = false;
 
   isRenderEnabled: boolean = true;
 
   isTickEnabled: boolean = true;
-
-  position: Vector = vec();
-
-  velocity: Vector = vec();
-
-  rotation: Vector = vec();
-
-  size: Vector = vec();
 
   /**
    * Whether or not the actor will draw debug information.
@@ -34,13 +21,15 @@ export default class Element {
    */
   isDebugEnabled: boolean = false;
 
+  position: Vector2D = new Vector2D();
+
+  velocity: Vector2D = new Vector2D();
+
+  rotation: Vector2D = new Vector2D();
+
+  size: Vector2D = new Vector2D();
+
   protected isPreloaded: boolean = false;
-
-  // ****************************************************************
-  // ⚓ PRIVATE DECLARATIONS
-  // ****************************************************************
-
-  private readonly internalID: string;
 
   /**
    * Whether or not interpolation should be factored in when calculating the
@@ -54,9 +43,7 @@ export default class Element {
  */
   protected previousState: ElementState;
 
-  // ****************************************************************
-  // ⚓ CONSTRUCTOR
-  // ****************************************************************
+  private readonly internalID: string;
 
   /**
    * Creates a new Element instance.
@@ -65,7 +52,7 @@ export default class Element {
    * @param scene engine reference
    * @param defaultProperties Element properties to apply on startup
    */
-  constructor(name: string, engine: Engine, defaultProperties: Partial<ElementDefaultProperties>) {
+  constructor(name: string, engine: Engineable, defaultProperties: Partial<ElementDefaultProperties>) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
@@ -80,11 +67,7 @@ export default class Element {
     this.previousState = this.createLastState();
   }
 
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
-
-  addListener = (name: ValidEventType, callback: ((event: any) => void)): void => {
+  addListener = (name: ValidEventType, callback: ((event: ValidEventPayload) => void)): void => {
     this.engine.eventHandler.addListener(name, callback);
   }
 
@@ -119,10 +102,8 @@ export default class Element {
    */
   tick = (frameTimestep: number): void => {
     if (!this.isTickEnabled || this.isQueuedForDisposal) return;
-    // ****************************************************************
-    // pre-update operations
 
-    // round down position and velocity if less than EPSILON
+    // TODO: implement precision threshold
     if (Math.abs(this.position.x) < Number.EPSILON) this.position.x = 0;
     if (Math.abs(this.position.y) < Number.EPSILON) this.position.y = 0;
     if (Math.abs(this.velocity.x) < Number.EPSILON) this.velocity.x = 0;
@@ -144,20 +125,14 @@ export default class Element {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
     let ctx = this.engine.ctx;
 
-    // interpolate position based on previous frame
-    if (this.isInterpolationEnabled) {
-      this.position = add(this.previousState.position, mult(sub(this.position, this.previousState.position), interpolationFactor));
-    }
+    if (this.isInterpolationEnabled) this.position = this.previousState.position
+      .add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
+
+    this.previousState.position = this.previousState.position.add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
     this.isInterpolationEnabled = true;
 
-    // save current context
     ctx.save();
-
     this.internalRender(ctx, interpolationFactor);
-
-    // this.engine.debugger.getInstance().getSection(this.name).updateItem("Position", this.position).updateItem("Velocity", this.velocity);
-
-    // restore context
     ctx.restore();
   };
 
@@ -169,14 +144,10 @@ export default class Element {
    *
    * @param pos position to move actor to
    */
-  setPosition = (pos: Vector): void => {
+  setPosition = (pos: Vector2D): void => {
     this.position = pos;
     this.isInterpolationEnabled = false;
   }
-
-  // ****************************************************************
-  // ⚓ PRIVATE METHODS
-  // ****************************************************************
 
   protected createLastState = (): ElementState => {
     return {
@@ -185,10 +156,6 @@ export default class Element {
       size: this.size,
     };
   };
-
-  // ****************************************************************
-  // ⚓ GETTERS
-  // ****************************************************************
 
   get ID(): string { return this.internalID; }
 }

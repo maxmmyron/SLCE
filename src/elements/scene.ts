@@ -1,7 +1,4 @@
-import { vec } from "../math/vector";
-import Actor from "./actor";
-import Camera from "../core/camera";
-import Engine from "../core/engine";
+import Vector2D from "../math/vector2d";
 import Element from "./element";
 
 /**
@@ -9,17 +6,14 @@ import Element from "./element";
  * A collection of actors and cameras.
  */
 export default class Scene extends Element {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
 
-  camera: Camera;
+  camera: Camerable;
 
-  actors: Map<string, Actor> = new Map();
+  actors: Map<string, Actorable> = new Map();
 
   environment: SceneEnvironment = {
     background: "transparent",
-    gravity: vec(0, 0)
+    gravity: new Vector2D()
   };
 
   /**
@@ -30,7 +24,7 @@ export default class Scene extends Element {
    * @param camera camera to attach to scene
    * @param defaultProperties optional properties to assign at creation
    */
-  constructor(name: string, engine: Engine, camera: Camera, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
+  constructor(name: string, engine: Engineable, camera: Camerable, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
     super(name, engine, defaultProperties);
 
     this.camera = camera;
@@ -40,15 +34,11 @@ export default class Scene extends Element {
 
     this.engine.scenes.set(this.ID, this);
 
-    this.engine.debugger.baseSection.addSection(this.name, false)
-      .addItem("background", () => this.environment.background)
-      .addItem("Position", () => this.position)
-      .addItem("Velocity", () => this.velocity)
+    this.engine.parameterGUI.baseSection.addSubsection(this.name, false)
+      .addParameter("background", () => this.environment.background)
+      .addParameter("Position", () => this.position)
+      .addParameter("Velocity", () => this.velocity)
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   override start = (): Promise<any> => {
     return new Promise(async (resolve, reject) => {
@@ -71,7 +61,6 @@ export default class Scene extends Element {
 
     ctx.save();
 
-    // clip the context to the scene size
     ctx.beginPath();
     ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
     ctx.clip();
@@ -79,7 +68,6 @@ export default class Scene extends Element {
     ctx.scale(this.camera.zoom, this.camera.zoom);
 
     Array.from(this.actors.values()).forEach(actor => actor.render(interpolationFactor));
-
     ctx.restore();
   }
 }

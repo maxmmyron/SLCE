@@ -3,7 +3,7 @@
 import Camera from "../src/core/camera";
 import Engine from "../src/core/engine";
 import Scene from "../src/elements/scene";
-import { vec, mult } from "../src/math/vector";
+import Vector2D from "../src/math/vector2d";
 import Actor from "../src/elements/actor";
 import { TextureCache } from "../src/util/texture_cache";
 
@@ -13,22 +13,22 @@ import characterSpritemap from "./characterSpritemap.png";
 const canvas = document.getElementById("c");
 const engine = new Engine(canvas, { isDebugEnabled: false });
 
-const camera = new Camera("camera", engine, { position: vec(50, 50), zoom: 1.5 });
+const camera = new Camera("camera", engine, { position: new Vector2D(50, 50), zoom: 1 });
 
-const scene = new Scene("SceneA", engine, camera, { position: vec(10, 10), size: vec(1000, 1000), background: "#110022" });
+const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 10), size: new Vector2D(1000, 1000), background: "#110022" });
 
-const actorA = new Actor("actorA", scene, { position: vec(150, 150), size: vec(64, 64), isDebugEnabled: true });
+const actorA = new Actor("actorA", scene, { position: new Vector2D(150, 150), size: new Vector2D(64, 64), isDebugEnabled: true });
 
 actorA.preload = async () => {
   const bitmap = await TextureCache.getInstance().load(characterSpritemap);
-  actorA.addTexture("texmap", bitmap, vec(32, 32), 200);
+  actorA.addTexture("texmap", bitmap, new Vector2D(32, 32), 200);
   actorA.textureID = "texmap";
 };
 
 actorA.addListener("onkeydown", (e) => {
   if (e.key === "r") {
-    actorA.velocity = vec();
-    actorA.setPosition(vec(250, engine.canvasSize.y / 2 - 32));
+    actorA.velocity = new Vector2D();
+    actorA.setPosition(new Vector2D(250, engine.canvasSize.y / 2 - 32));
   }
 });
 
@@ -43,10 +43,9 @@ actorA.addListener("whilekeydown", (e) => {
 });
 
 actorA.addListener("ontick", (e) => {
-  actorA.velocity = mult(actorA.velocity, 0.99)
+  actorA.velocity = actorA.velocity.multiply(0.99);
 
-  actorA.position.x += actorA.velocity.x * e.deltaTime;
-  actorA.position.y += actorA.velocity.y * e.deltaTime;
+  actorA.position = actorA.position.add(actorA.velocity.multiply(e.deltaTime));
 });
 
 camera.addListener("whilekeydown", (e) => {
@@ -57,10 +56,14 @@ camera.addListener("whilekeydown", (e) => {
 });
 
 camera.addListener("ontick", (e) => {
-  camera.velocity = mult(camera.velocity, 0.96);
+  camera.velocity = camera.velocity.multiply(0.96);
+  camera.position = camera.position.add(camera.velocity.multiply(e.deltaTime));
 
-  camera.position.x += camera.velocity.x * e.deltaTime;
-  camera.position.y += camera.velocity.y * e.deltaTime;
+  console.log("a", engine.engineRuntimeMilliseconds);
 });
+
+engine.addListener("ontick", (e) => {
+  console.log(actorA.position.toString());
+})
 
 engine.start();

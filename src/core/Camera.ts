@@ -1,5 +1,4 @@
-import { vec } from "../math/vector";
-import Engine from "./engine";
+import Vector2D from "../math/vector2d";
 
 /**
  * @class Camera
@@ -7,22 +6,19 @@ import Engine from "./engine";
  *
  * @unused
  */
-export default class Camera {
-  // ****************************************************************
-  // ⚓ PUBLIC DECLARATIONS
-  // ****************************************************************
+export default class Camera implements Camerable {
 
   readonly name: string;
 
   private readonly internalID: string;
 
-  readonly engine: Engine;
+  readonly engine: Engineable;
 
-  position: Vector = vec();
+  position: Vector2D = new Vector2D();
 
-  velocity: Vector = vec();
+  velocity: Vector2D = new Vector2D();
 
-  rotation: Vector = vec();
+  rotation: Vector2D = new Vector2D();
 
   zoom: number = 1;
 
@@ -32,7 +28,7 @@ export default class Camera {
    * @param engine engine to assign to camera
    * @param defaultProperties optional properties to assign at creation
    */
-  constructor(name: string, engine: Engine, defaultProperties: Partial<DefaultCameraProperties> = {}) {
+  constructor(name: string, engine: Engineable, defaultProperties: Partial<DefaultCameraProperties> = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
@@ -42,16 +38,12 @@ export default class Camera {
     defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
     defaultProperties.zoom && (this.zoom = defaultProperties.zoom);
 
-    this.engine.debugger.baseSection.addSection(this.name, false)
-      .addItem("Position", () => this.position)
-      .addItem("Velocity", () => this.velocity)
-      .addItem("Zoom", () => this.zoom);
+    this.engine.parameterGUI.baseSection.addSubsection(this.name, false)
+      .addParameter("Position", () => this.position)
+      .addParameter("Velocity", () => this.velocity)
+      .addParameter("Zoom", () => this.zoom);
 
   }
-
-  // ****************************************************************
-  // ⚓ PUBLIC METHODS
-  // ****************************************************************
 
   addListener(name: ValidEventType, callback: ((event: any) => void)): void {
     this.engine.eventHandler.addListener(name, callback);

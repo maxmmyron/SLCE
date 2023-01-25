@@ -28,7 +28,7 @@ type EventHandler = {
   dequeueEvent: (type: ValidEventType) => void,
   dispatchQueue: () => void,
   getQueuedEvents: () => Array<QueuedEvent>,
-  setIsEnginePaused: (isPaused: boolean) => void,
+  setEnginePauseStateCallback: (callback: () => boolean) => void,
   attachEventListeners: (canvas: HTMLCanvasElement) => void,
   detachEventListeners: () => void
 }
