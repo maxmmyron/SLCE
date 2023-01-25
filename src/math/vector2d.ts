@@ -16,41 +16,27 @@ export default class Vector2D implements Vectorable {
   }
 
   public add = (vector: Vector2D): Vector2D => {
-    this.x += vector.x;
-    this.y += vector.y;
-
-    return this;
+    return new Vector2D(this.x + vector.x, this.y + vector.y);
   }
 
   subtract = (vector: Vector2D): Vector2D => {
-    this.x -= vector.x;
-    this.y -= vector.y;
-
-    return this;
+    return new Vector2D(this.x - vector.x, this.y - vector.y);
   }
 
   multiply = (scalar: number): Vector2D => {
-    this.x *= scalar;
-    this.y *= scalar;
-
-    return this;
+    return new Vector2D(this.x * scalar, this.y * scalar);
   }
 
   divide = (scalar: number): Vector2D => {
     assert(scalar !== 0, "Cannot divide by zero");
 
-    this.x /= scalar;
-    this.y /= scalar
-
-    return this;
+    return new Vector2D(this.x / scalar, this.y / scalar);
   }
 
   getMagnitude = (): number => Math.sqrt(this.x * this.x + this.y * this.y);
 
   normalize = (): Vector2D => {
-    this.divide(this.getMagnitude());
-
-    return this;
+    return this.divide(this.getMagnitude());
   }
 
   getDot = (vector: Vector2D): number => this.x * vector.x + this.y * vector.y;
@@ -64,9 +50,8 @@ export default class Vector2D implements Vectorable {
     const x = this.x * cosAngle - this.y * sinAngle;
     const y = this.x * sinAngle + this.y * cosAngle;
 
-    this.x = x;
-    this.y = y;
-
-    return this;
+    return new Vector2D(x, y);
   }
+
+  toString = (): string => `x: ${this.x}, y: ${this.y}`
 }

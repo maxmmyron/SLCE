@@ -125,7 +125,10 @@ export default class Element {
     if (!this.isRenderEnabled || this.isQueuedForDisposal) return;
     let ctx = this.engine.ctx;
 
-    if (this.isInterpolationEnabled) this.position = this.previousState.position.add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
+    if (this.isInterpolationEnabled) this.position = this.previousState.position
+      .add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
+
+    this.previousState.position = this.previousState.position.add(this.position.subtract(this.previousState.position).multiply(interpolationFactor));
     this.isInterpolationEnabled = true;
 
     ctx.save();

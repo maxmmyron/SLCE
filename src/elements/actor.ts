@@ -76,7 +76,7 @@ export default class Actor extends Element {
   };
 
   override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
-    this.renderPosition = this.position.add(this.position.subtract(this.scene.camera.position));
+    this.renderPosition = this.position.add(this.position.subtract(this.scene.camera.position).multiply(interpolationFactor));
 
     ctx.save();
     if (this.textureID) this.renderTexture(ctx);
