@@ -6,10 +6,6 @@ interface Engineable {
 
   scenes: Map<string, import("../elements/scene").default>;
 
-  // TODO: determine if this is a necessary property. Currently, cameras are
-  // attached to engine & scene; it may only be necessary to attach to scene.
-  camera: Camerable | null;
-
   preloadedActorCount: number;
 
   isPaused: boolean;

@@ -50,13 +50,6 @@ export default class Engine implements Engineable {
   scenes: Map<string, Scene> = new Map();
 
   /**
-   * The current camera used to render the scene.
-   *
-   * @default null
-   */
-  camera: Camerable | null = null;
-
-  /**
    * A count of actors that have been successfully preloaded.
    * Used during engine start to determine preload progress.
    *
