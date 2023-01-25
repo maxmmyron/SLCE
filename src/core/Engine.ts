@@ -290,7 +290,7 @@ export default class Engine implements Engineable {
       return;
     }
 
-    const delta = timestamp - this.previousUpdateTimestamp;
+    const delta: number = timestamp - this.previousUpdateTimestamp;
     this.previousUpdateTimestamp = timestamp;
 
     this.lag += delta;
@@ -298,20 +298,18 @@ export default class Engine implements Engineable {
 
     this._FPS = 1000 / delta;
 
-    let cycleUpdateCount = 0;
+    let cycleUpdateCount: number = 0;
     while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
       this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds });
+      this.eventHandler.dispatchQueue();
 
       Array.from(this.scenes.values())
         .filter(scene => scene.isTickEnabled)
         .forEach(scene => scene.tick(this.targetTickDurationMilliseconds));
 
-      this.eventHandler.dispatchQueue();
-
       this.lag -= this.targetTickDurationMilliseconds;
 
       this.updatesSinceEngineStart++;
-
       if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
         this.lag = 0;
         break;
@@ -320,9 +318,9 @@ export default class Engine implements Engineable {
 
     this.render(this.lag / this.targetTickDurationMilliseconds);
 
-    this.scenes = new Map(Array
-      .from(this.scenes.entries())
-      .filter(([key, scene]) => !(scene.isQueuedForDisposal && this.removeScene(scene))));
+    Array.from(this.scenes.values())
+      .filter(scene => scene.isQueuedForDisposal)
+      .forEach(scene => this.scenes.delete(scene.ID));
   };
 
   /**
@@ -407,17 +405,6 @@ export default class Engine implements Engineable {
   private updatePauseState = (isPaused: boolean) => {
     this._isPaused = isPaused;
     this.eventHandler.setIsEnginePaused(isPaused);
-  }
-
-  /**
-   * Removes a scene from the engine.
-   *
-   * @private
-   *
-   * @param scene the scene to remove from the engine
-   */
-  private removeScene = (scene: Scene) => {
-    this.scenes.delete(scene.ID);
   }
 
   get canvasSize(): Vector {
