@@ -2,16 +2,16 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es5",
+    "module": "ES6",
+    "target": "ES6",
     "downlevelIteration": true,
-    "jsx": "react",
     "allowJs": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "strict": true,
     "lib": [
       "es2016",
       "dom"
-    ]
+    ],
+    "allowImportingTsExtensions": true
   }
 }
