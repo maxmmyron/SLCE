@@ -1,8 +1,8 @@
-import Scene from "../elements/scene";
-import { assert } from "../util/asserts";
-import { EventHandler } from "../util/event_handler";
-import Vector2D from "../math/vector2d";
-import ParameterGUI from "./gui";
+import Scene from "../elements/scene.ts";
+import { assert } from "../util/asserts.ts";
+import { EventHandler } from "../util/event_handler.ts";
+import Vector2D from "../math/vector2d.ts";
+import ParameterGUI from "./gui.ts";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -12,7 +12,7 @@ const MAX_UPDATES_PER_FRAME: number = 240;
  *
  * @class
  */
-export default class Engine implements Engineable {
+class Engine implements Engineable {
 
   /**
    * Canvas element on which to attach context and event listeners
@@ -391,3 +391,5 @@ export default class Engine implements Engineable {
     return this._FPS;
   }
 }
+
+export default Engine;

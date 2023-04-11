@@ -1,6 +1,5 @@
-import { isVariableDeclarationList } from "typescript";
-import Vector2D from "../math/vector2d";
-import Element from "./element";
+import Vector2D from "../math/vector2d.ts";
+import Element from "./element.ts";
 
 /**
  * An actor that can be added to the engine and manipulated.

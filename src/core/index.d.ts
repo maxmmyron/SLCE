@@ -4,13 +4,13 @@ interface Engineable {
   readonly parameterGUI: GUIable;
   readonly eventHandler: EventHandler;
 
-  scenes: Map<string, import("../elements/scene").default>;
+  scenes: Map<string, import("../elements/scene.ts").default>;
 
   preloadedActorCount: number;
 
   isPaused: boolean;
 
-  getScenesByName(name: string): Array<(import("../elements/scene").default)>;
+  getScenesByName(name: string): Array<(import("../elements/scene.ts").default)>;
 
   start(): Promise<void>;
 
