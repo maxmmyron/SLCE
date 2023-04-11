@@ -1,8 +1,8 @@
-import Scene from "../elements/scene.ts";
-import { assert } from "../util/asserts.ts";
-import { EventHandler } from "../util/event_handler.ts";
-import Vector2D from "../math/vector2d.ts";
-import ParameterGUI from "./gui.ts";
+import Scene from "../elements/scene";
+import { assert } from "../util/asserts";
+import { EventHandler } from "../util/event_handler";
+import Vector2D from "../math/vector2d";
+import ParameterGUI from "./gui";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;

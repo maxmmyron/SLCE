@@ -1,4 +1,4 @@
-import { assert } from "../util/asserts.ts";
+import { assert } from "../util/asserts";
 
 export default class Vector2D implements Vectorable {
   x: number;

@@ -6,12 +6,11 @@
     "target": "ES6",
     "downlevelIteration": true,
     "allowJs": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "strict": true,
     "lib": [
       "es2016",
       "dom"
-    ],
-    "allowImportingTsExtensions": true
+    ]
   }
 }
