@@ -1,17 +1,36 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
-    "noImplicitAny": true,
-    "module": "es6",
-    "target": "es5",
-    "downlevelIteration": true,
-    "jsx": "react",
-    "allowJs": true,
-    "moduleResolution": "node",
-    "strict": true,
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
     "lib": [
-      "es2016",
-      "dom"
-    ]
-  }
+      "ESNext",
+      "DOM"
+    ],
+    "moduleResolution": "Node",
+    "strict": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+    },
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "test/**/*.ts",
+    "demo/*.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+  ]
 }

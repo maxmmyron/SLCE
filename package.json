@@ -1,16 +1,18 @@
 {
   "name": "slce",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "sweet little canvas engine",
   "main": "main.js",
   "directories": {
-    "example": "examples",
-    "test": "tests"
+    "example": "demo",
+    "test": "test"
   },
+  "type": "module",
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "demo": "webpack serve --open --config webpack.demo.config.js --port 3000",
-    "build-demo": "rm -rf ./demo/bundle.demo.js && webpack --config webpack.demo.config.js"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview",
+    "test": "vitest"
   },
   "repository": {
     "type": "git",
@@ -23,14 +25,9 @@
   },
   "homepage": "https://github.com/maxmmyron/SLCE#readme",
   "devDependencies": {
-    "file-loader": "^6.2.0",
-    "ts-loader": "^9.4.1",
-    "typescript": "^4.8.4",
-    "webpack": "^5.76.0",
-    "webpack-cli": "^4.10.0",
-    "webpack-dev-server": "^4.9.3"
-  },
-  "dependencies": {
-    "ts-node": "^10.9.1"
+    "jsdom": "^21.1.1",
+    "typescript": "^4.9.3",
+    "vite": "^4.2.0",
+    "vitest": "^0.30.1"
   }
 }
