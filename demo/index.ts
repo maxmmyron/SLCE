@@ -1,17 +1,18 @@
+/// <reference types="vite/client" />
+
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
-import Camera from "../src/core/camera";
-import Engine from "../src/core/engine";
-import Scene from "../src/elements/scene";
-import Vector2D from "../src/math/vector2d";
-import Actor from "../src/elements/actor";
-import { TextureCache } from "../src/util/texture_cache";
+import Camera from "@/core/camera";
+import Engine from "@/core/engine";
+import Scene from "@/elements/scene";
+import Vector2D from "@/math/vector2d";
+import Actor from "@/elements/actor";
+import { TextureCache } from "@/util/texture_cache";
 
-import animationSpritemap from "./animationSpritemap.png";
 import characterSpritemap from "./characterSpritemap.png";
 
 const canvas = document.getElementById("c");
-const engine = new Engine(canvas, { isDebugEnabled: false });
+const engine = new Engine(<HTMLCanvasElement>canvas, { isDebugEnabled: false });
 
 const camera = new Camera("camera", engine, { position: new Vector2D(50, 50), zoom: 1 });
 
