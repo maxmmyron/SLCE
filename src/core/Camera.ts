@@ -1,4 +1,4 @@
-import Vector2D from "../math/vector2d";
+import Vector2D from "../math/vector2d.ts";
 
 /**
  * @class Camera
