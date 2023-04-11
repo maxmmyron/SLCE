@@ -1,5 +1,5 @@
-import Vector2D from "../math/vector2d.ts";
-import Element from "./element.ts";
+import Vector2D from "../math/vector2d";
+import Element from "./element";
 
 /**
  * An actor that can be added to the engine and manipulated.

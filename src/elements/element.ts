@@ -1,4 +1,4 @@
-import Vector2D from "../math/vector2d.ts";
+import Vector2D from "../math/vector2d";
 
 /**
  * The base class for all engine elements.

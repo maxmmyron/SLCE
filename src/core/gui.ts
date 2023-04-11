@@ -1,5 +1,5 @@
-import Vector2D from "../math/vector2d.ts";
-import { assert } from "../util/asserts.ts";
+import Vector2D from "../math/vector2d";
+import { assert } from "../util/asserts";
 
 export class ParameterSection implements GUISectionable {
   /**
