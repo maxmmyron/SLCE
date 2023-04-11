@@ -1,7 +1,7 @@
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
-import Camera from "../src/core/camera";
-import Engine from "../src/core/engine";
+import Camera from "../src/core/Camera";
+import Engine from "../src/core/Engine";
 import Scene from "../src/elements/scene";
 import Vector2D from "../src/math/vector2d";
 import Actor from "../src/elements/actor";
@@ -11,17 +11,17 @@ import animationSpritemap from "./animationSpritemap.png";
 import characterSpritemap from "./characterSpritemap.png";
 
 const canvas = document.getElementById("c");
-const engine = new Engine(canvas, { isDebugEnabled: false });
+const engine = new Engine(canvas, { isDebugEnabled: true });
 
 const camera = new Camera("camera", engine, { position: new Vector2D(50, 50), zoom: 1 });
 
-const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 10), size: new Vector2D(1000, 1000), background: "#110022" });
+const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 10), size: new Vector2D(1000, 1000), background: "#110022", isDebugEnabled: true });
 
 const actorA = new Actor("actorA", scene, { position: new Vector2D(150, 150), size: new Vector2D(64, 64), isDebugEnabled: true });
 
 actorA.preload = async () => {
-  const bitmap = await TextureCache.getInstance().load(characterSpritemap);
-  actorA.addTexture("texmap", bitmap, new Vector2D(32, 32), 200);
+  const bitmap = await TextureCache.getInstance().load(animationSpritemap);
+  actorA.addTexture("texmap", bitmap, new Vector2D(64, 64), 200);
   actorA.textureID = "texmap";
 };
 
