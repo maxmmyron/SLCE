@@ -5,6 +5,7 @@ npm-debug.log*
 
 node_modules
 dist
+coverage
 
 # Editor directories and files
 .vscode/*
