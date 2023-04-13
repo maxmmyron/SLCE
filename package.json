@@ -12,7 +12,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
-    "test": "vitest"
+    "test": "vitest run --coverage"
   },
   "repository": {
     "type": "git",
