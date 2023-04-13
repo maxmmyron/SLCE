@@ -1,0 +1,11 @@
+name: ci
+on: 
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check coverage
+        uses: codecov/codecov-action@v3.1.2
