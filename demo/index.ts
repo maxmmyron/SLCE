@@ -2,8 +2,8 @@
 
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
-import Camera from "@/core/camera";
-import Engine from "@/core/engine";
+import Camera from "@/core/Camera";
+import Engine from "@/core/Engine";
 import Scene from "@/elements/scene";
 import Vector2D from "@/math/vector2d";
 import Actor from "@/elements/actor";

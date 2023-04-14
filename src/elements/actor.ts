@@ -1,4 +1,3 @@
-import { isVariableDeclarationList } from "typescript";
 import Vector2D from "../math/vector2d";
 import Element from "./element";
 
