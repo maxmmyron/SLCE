@@ -15,6 +15,7 @@ export default class EventHandler implements EventHandlerable {
     "onrender": []
   };
 
+  // TODO: reimplement as arrays
   private queuedEvents: { [Type in keyof EngineEventHandlersEventMap]: EngineEventHandlersEventMap[Type] | null } = {
     "onmousedown": null,
     "whilemousedown": null,
@@ -28,13 +29,7 @@ export default class EventHandler implements EventHandlerable {
     "onrender": null
   };
 
-  private resizeObserver: ResizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-    entries.forEach((entry: ResizeObserverEntry) => {
-      const { width, height } = entry.contentRect;
-
-      this.queueEvent("onresize", { type: "onresize", width, height });
-    });
-  });
+  private resizeObserver: ResizeObserver;
 
   private canvas: HTMLCanvasElement;
 
@@ -67,7 +62,12 @@ export default class EventHandler implements EventHandlerable {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
 
-    this.attachEventListeners
+    this.resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      const entry = entries[0];
+      this.queueEvent("onresize", { type: "onresize", width: entry.contentRect.width, height: entry.contentRect.height });
+    });
+
+    this.attachEventListeners();
   }
 
   destroy(): void {
@@ -92,28 +92,35 @@ export default class EventHandler implements EventHandlerable {
   queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventHandlersEventMap[Type]): void {
     if(!this.enginePauseStateCallback()) return;
 
+    console.log(type, payload);
+
     switch (type) {
       case "onmousedown":
+        this.queuedEvents["onmousedown"] = payload as EngineEventHandlersEventMap["onmousedown"];
         this.queuedEvents["whilemousedown"] = {
           ...payload,
           type: "whilemousedown"
         } as EngineEventHandlersEventMap["whilemousedown"];
         break;
       case "onmouseup":
+        this.queuedEvents["onmouseup"] = payload as EngineEventHandlersEventMap["onmouseup"];
         this.queuedEvents["whilemousedown"] = null;
         break;
       case "onkeydown":
+        this.queuedEvents["onkeydown"] = payload as EngineEventHandlersEventMap["onkeydown"];
         this.queuedEvents["whilekeydown"] = {
           ...payload,
           type: "whilekeydown"
         } as EngineEventHandlersEventMap["whilekeydown"];
         break;
       case "onkeyup":
+        this.queuedEvents["onkeyup"] = payload as EngineEventHandlersEventMap["onkeyup"];
         this.queuedEvents["whilekeydown"] = null;
         break;
+      default:
+        this.queuedEvents[type] = payload;
+        break;
     }
-
-    this.queuedEvents[type] = payload;
   }
 
   dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void {
