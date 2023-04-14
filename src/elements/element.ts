@@ -67,13 +67,13 @@ export default class Element {
     this.previousState = this.createLastState();
   }
 
-  addListener = (name: ValidEventType, callback: ((event: ValidEventPayload) => void)): void => {
-    this.engine.eventHandler.addListener(name, callback);
-  }
+  registerEventCallback = <Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void => {
+    this.engine.eventHandler.registerEventCallback(type, callback);
+  };
 
-  removeListener = (name: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => {
-    this.engine.eventHandler.removeListener(name, callback);
-  }
+  unregisterEventCallback = <Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void => {
+    this.engine.eventHandler.unregisterEventCallback(type, callback);
+  };
 
   start = (): Promise<any> => {
     return new Promise((resolve, reject) => {

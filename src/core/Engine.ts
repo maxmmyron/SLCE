@@ -1,6 +1,6 @@
 import Scene from "../elements/scene";
 import { assert } from "../util/asserts";
-import { EventHandler } from "../util/event_handler";
+import EventHandler from "../util/EventHandler";
 import Vector2D from "../math/vector2d";
 import ParameterGUI from "./gui";
 
@@ -190,7 +190,7 @@ export default class Engine implements Engineable {
 
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
-    this.eventHandler = EventHandler.getInstance();
+    this.eventHandler = new EventHandler();
     this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
 
     this._canvasSize = this.fixRenderScale();
@@ -217,9 +217,9 @@ export default class Engine implements Engineable {
     this.canvasElement.tabIndex = -1;
     this.canvasElement.focus();
 
-    this.eventHandler.addListener("onresize", () => this._canvasSize = this.fixRenderScale());
+    this.eventHandler.registerEventCallback("onresize", () => this._canvasSize = this.fixRenderScale());
 
-    this.eventHandler.addListener("onmousedown", (ev) => {
+    this.eventHandler.registerEventCallback("onmousedown", (ev) => {
       ev = <MouseEventPayload>ev;
       this.parameterGUI.lastClickPosition = new Vector2D(ev.x, ev.y);
     });
@@ -239,21 +239,13 @@ export default class Engine implements Engineable {
     this.isPaused = false;
   };
 
-  /**
-   * Creates a new event listener for the given event name.
-   *
-   * @param eventName the event name to listen for
-   * @param callback a callback that is executed when the event is fired
-   */
-  addListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => this.eventHandler.addListener(eventName, callback);
+  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void {
+    this.eventHandler.registerEventCallback(type, callback);
+  }
 
-  /**
-   * Removes an existing event listener for the given event name.
-   *
-   * @param eventName the event name from which to remove the listener
-   * @param callback a reference to the callback to remove
-   */
-  removeListener = (eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void => this.eventHandler.removeListener(eventName, callback);
+  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void {
+    this.eventHandler.unregisterEventCallback(type, callback);
+  }
 
   /**
    * Performs general update logic and manages tick cycle.
@@ -283,7 +275,7 @@ export default class Engine implements Engineable {
     console.log("update", this.lag, this.targetTickDurationMilliseconds, this.isPaused);
 
     while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
-      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds });
+      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds, type: "ontick" });
       this.eventHandler.dispatchQueue();
 
       Array.from(this.scenes.values())
@@ -325,7 +317,7 @@ export default class Engine implements Engineable {
 
     Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
 
-    this.eventHandler.queueEvent("onrender", { interpolationFactor });
+    this.eventHandler.queueEvent("onrender", { interpolationFactor, type: "onrender" });
 
     this.parameterGUI.render(this.ctx);
   };
