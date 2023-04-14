@@ -32,7 +32,7 @@ interface EventHandlerable {
 
   dispatchQueue(): void;
 
-  attachEventListeners(canvas: HTMLCanvasElement): void;
+  attachEventListeners(): void;
   detachEventListeners(): void;
   setEnginePauseStateCallback(callback: () => boolean): void;
 
