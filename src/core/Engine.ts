@@ -190,7 +190,7 @@ export default class Engine implements Engineable {
 
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
-    this.eventHandler = new EventHandler();
+    this.eventHandler = new EventHandler(this.canvasElement);
     this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
 
     this._canvasSize = this.fixRenderScale();
@@ -229,8 +229,6 @@ export default class Engine implements Engineable {
     this.totalActorCount = Array.from(this.scenes.values()).reduce((acc, scene) => acc + scene.actors.size, 0);
 
     await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.start()));
-
-    this.eventHandler.attachEventListeners(this.canvasElement);
 
     this._engineStartTimestamp = performance.now();
 
