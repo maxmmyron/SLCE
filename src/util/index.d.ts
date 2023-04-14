@@ -37,7 +37,7 @@ interface EventHandlerable {
   setEnginePauseStateCallback(callback: () => boolean): void;
 
   getEventCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[];
-  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventHandlersEventMap[Type][];
+  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventHandlersEventMap[Type] | null;
 }
 
 interface TextureLoader {
