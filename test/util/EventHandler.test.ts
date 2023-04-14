@@ -37,9 +37,9 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("onrender", {type: "onrender", interpolationFactor: 0});
 
-      expect(eventHandler.getQueuedEvents("onrender").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("onrender")[0].type).toBe("onrender");
-      expect(eventHandler.getQueuedEvents("onrender")[0]).toEqual({
+      expect(eventHandler.getQueuedEvents("onrender")).not.toBeNull();
+      expect(eventHandler.getQueuedEvents("onrender")?.type).toBe("onrender");
+      expect(eventHandler.getQueuedEvents("onrender")).toEqual({
         type: "onrender",
         interpolationFactor: 0,
       });
@@ -51,13 +51,16 @@ describe("EventHandler", () => {
       const mousedownPayload = { type: "onmousedown", x: 0, y: 0, button: 0 }
       eventHandler.queueEvent("onmousedown", mousedownPayload);
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("onmousedown")[0].type).toBe("onmousedown");
-      expect(eventHandler.getQueuedEvents("onmousedown")[0]).toEqual(mousedownPayload);
+      expect(eventHandler.getQueuedEvents("onmousedown")).not.toBeNull();
+      expect(eventHandler.getQueuedEvents("onmousedown")?.type).toBe("onmousedown");
+      expect(eventHandler.getQueuedEvents("onmousedown")).toEqual(mousedownPayload);
 
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("whilemousedown")[0].type).toBe("whilemousedown");
-      expect(eventHandler.getQueuedEvents("whilemousedown")[0]).toEqual(mousedownPayload);
+      expect(eventHandler.getQueuedEvents("whilemousedown")).not.toBeNull();
+      expect(eventHandler.getQueuedEvents("whilemousedown")?.type).toBe("whilemousedown");
+      expect(eventHandler.getQueuedEvents("whilemousedown")).toEqual({
+        ...mousedownPayload,
+        type: "whilemousedown"
+      });
     });
 
     it("can be dequeued", () => {
@@ -65,15 +68,15 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("onmousedown", { type: "onmousedown", x: 0, y: 0, button: 0 });
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedEvents("onmousedown")).not.toBeNull();
+      expect(eventHandler.getQueuedEvents("whilemousedown")).not.toBeNull();
 
       eventHandler.dequeueEvent("onmousedown");
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
+      expect(eventHandler.getQueuedEvents("onmousedown")).toBeNull();
 
       // Persistent events are not removed from queue until the queue contains a comparibly-equivalent negator event
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedEvents("whilemousedown")).not.toBeNull();
     });
   });
 
@@ -95,7 +98,7 @@ describe("EventHandler", () => {
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("ontick").length).toBe(0);
+      expect(eventHandler.getQueuedEvents("ontick")).toBeNull();
       expect(ontickSpy).toHaveBeenCalled();
     });
 
@@ -121,8 +124,8 @@ describe("EventHandler", () => {
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedEvents("onmousedown")).toBeNull();
+      expect(eventHandler.getQueuedEvents("whilemousedown")).not.toBeNull();
 
       expect(mousedownSpy).toHaveBeenCalled();
       expect(whilemousedownSpy).toHaveBeenCalled();
