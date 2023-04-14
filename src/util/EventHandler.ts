@@ -34,16 +34,29 @@ export default class EventHandler implements EventHandlerable {
   };
 
   unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void {
-
+    this.callbackRegistry[type].splice(this.callbackRegistry[type].indexOf(callback), 1);
   }
 
   queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventHandlersEventMap[Type]): void {
     this.queuedEvents[type].push(payload);
   }
 
-  dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void {}
+  dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void {
+    this.queuedEvents[type].shift();
+  }
 
-  dispatchQueue(): void {}
+  dispatchQueue(): void {
+    for(let i = 0; i < Object.keys(this.queuedEvents).length; i++) {
+      const type = Object.keys(this.queuedEvents)[i] as keyof EngineEventHandlersEventMap;
+
+      const callbacks = this.callbackRegistry[type] as EngineEventCallback<keyof EngineEventHandlersEventMap>[];
+      const queuedEvents = this.queuedEvents[type] as EngineEventHandlersEventMap[keyof EngineEventHandlersEventMap][];
+
+      callbacks.forEach(callback => queuedEvents.forEach(queuedEvent => callback(queuedEvent)));
+    }
+
+    this.filterQueuedEvents();
+  }
 
   attachEventListeners(canvas: HTMLCanvasElement): void {}
 
@@ -58,4 +71,6 @@ export default class EventHandler implements EventHandlerable {
   getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventHandlersEventMap[Type][] {
     return this.queuedEvents[type];
   }
+
+  private filterQueuedEvents(): void {}
 }
