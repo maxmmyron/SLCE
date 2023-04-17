@@ -47,11 +47,11 @@ export default class EventHandler implements EventHandlerable {
     }],
     ["keydown", (event: any) => {
       event = event as KeyboardEvent
-      this.queueEvent("onkeydown", { type: "onkeydown", key: event.key });
+      this.queueEvent("onkeydown", { type: "onkeydown", key: event.key }, {repeat: event.repeat});
     }],
     ["keyup", (event: any) => {
       event = event as KeyboardEvent
-      this.queueEvent("onkeyup", { type: "onkeyup", key: event.key });
+      this.queueEvent("onkeyup", { type: "onkeyup", key: event.key }, { repeat: event.repeat });
     }],
     ["resize", null]
   ]);
@@ -93,12 +93,10 @@ export default class EventHandler implements EventHandlerable {
     this.callbackRegistry[type].splice(this.callbackRegistry[type].indexOf(callback), 1);
   }
 
-  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void {
+  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>, options?: Partial<EngineEventOptions>): void {
     if (this.getEnginePauseState()) return;
 
-    // switch through possible events, and perform special queue logic.
-    // ideally this can be done in a more elegant way but that is future me's problem. For now, a brute-force switch
-    // statement works just fine.
+    // TODO: this function is nasty. should be possible to refactor this into something that doesn't require a switch statement
 
     switch (type) {
       case "onmousedown":
@@ -113,6 +111,7 @@ export default class EventHandler implements EventHandlerable {
         this.queuedEventPayloads["whilemousedown"] = this.queuedEventPayloads["whilemousedown"].filter((event: EngineEventPayload<"whilemousedown">) => event.button !== (<MouseEventPayload>payload).button);
         break;
       case "onkeydown":
+        if(options?.repeat) return;
         this.queuedEventPayloads[type].push(payload);
         this.queuedEventPayloads["whilekeydown"].push(<KeyEventPayload>{
           ...payload,
@@ -120,6 +119,7 @@ export default class EventHandler implements EventHandlerable {
         });
         break;
       case "onkeyup":
+        if (options?.repeat) return;
         this.queuedEventPayloads[type].push(payload);
         this.queuedEventPayloads["whilekeydown"] = this.queuedEventPayloads["whilekeydown"].filter((event: EngineEventPayload<"whilekeydown">) => event.key !== (<KeyEventPayload>payload).key);
         break;

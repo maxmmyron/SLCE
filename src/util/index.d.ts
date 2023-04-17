@@ -24,11 +24,15 @@ interface EngineEventHandlersEventMap {
   "onrender": RenderEventPayload;
 };
 
+interface EngineEventOptions {
+  repeat: boolean;
+}
+
 interface EventHandlerable {
   registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: EngineEventCallback<Type>): void;
   unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: EngineEventCallback<Type>): void;
 
-  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void;
+  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>, options: Partial<EngineEventOptions<Type>>): void;
 
   dispatchQueue(): void;
 
