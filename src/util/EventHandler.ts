@@ -56,7 +56,12 @@ export default class EventHandler implements EventHandlerable {
     ["resize", null]
   ]);
 
-  private enginePauseStateCallback: () => boolean = () => false;
+  /**
+   * A callback that reports the current state of the engine's pause state. Used to dynamically link the engine's pause state to the event handler.
+   *
+   * @returns The current state of the engine's pause state. If true, no events will be queued.
+   */
+  private getEnginePauseState: () => boolean = () => false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -89,7 +94,7 @@ export default class EventHandler implements EventHandlerable {
   }
 
   queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void {
-    if(!this.enginePauseStateCallback()) return;
+    if (this.getEnginePauseState()) return;
 
     // switch through possible events, and perform special queue logic.
     // ideally this can be done in a more elegant way but that is future me's problem. For now, a brute-force switch
@@ -166,7 +171,7 @@ export default class EventHandler implements EventHandlerable {
   }
 
   setEnginePauseStateCallback(callback: () => boolean): void {
-    this.enginePauseStateCallback = callback;
+    this.getEnginePauseState = callback;
   }
 
   getRegisteredCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[] {
