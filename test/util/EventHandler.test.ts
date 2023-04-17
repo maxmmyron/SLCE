@@ -91,7 +91,6 @@ describe("EventHandler", () => {
       expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(3);
     });
 
-    // why dequeue when we can just filter out queue after cycle?
     it("can deqeue a simple event", () => {
       const eventHandler = new EventHandler(canvas);
 
@@ -99,10 +98,24 @@ describe("EventHandler", () => {
 
       expect(eventHandler.getQueuedPayloads("ontick").length).toBe(1);
 
-      // run this as a "cycle" passing
+      // equivalent to a update loop occurring
       eventHandler.dispatchQueue();
 
       expect(eventHandler.getQueuedPayloads("ontick").length).toBe(0);
+    });
+
+    // this test is more relevant to onkeydown/whilekeydown events, since if we
+    // hold down a key we don't want that browser-level requeueing to cause a
+    // bunch of duplicate events
+    it("will not queue multiple comparably equivalent events", () => {
+      const eventHandler = new EventHandler(canvas);
+
+      eventHandler.queueEvent("onkeydown", { type: "onkeydown", key: "E" });
+      eventHandler.queueEvent("onkeydown", { type: "onkeydown", key: "E" }, {repeat: true});
+
+      expect(eventHandler.getQueuedPayloads("onkeydown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("whilekeydown").length).toBe(1);
+
     });
 
     it("can dequeue an event with a persistent dependent without dequeueing that dependent", () => {
