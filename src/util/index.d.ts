@@ -9,6 +9,7 @@ interface TickEventPayload extends EngineEventable { deltaTime: number };
 interface RenderEventPayload extends EngineEventable { interpolationFactor: number };
 
 type EngineEventCallback<Type extends keyof EngineEventHandlersEventMap> = (payload: EngineEventHandlersEventMap[Type]) => any;
+type EngineEventPayload<Type extends keyof EngineEventHandlersEventMap> = EngineEventHandlersEventMap[Type];
 
 interface EngineEventHandlersEventMap {
   "onmousedown": MouseEventPayload;
@@ -27,7 +28,7 @@ interface EventHandlerable {
   registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: EngineEventCallback<Type>): void;
   unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: EngineEventCallback<Type>): void;
 
-  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventHandlersEventMap[Type]): void;
+  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void;
   dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void;
 
   dispatchQueue(): void;
@@ -37,7 +38,7 @@ interface EventHandlerable {
   setEnginePauseStateCallback(callback: () => boolean): void;
 
   getEventCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[];
-  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventHandlersEventMap[Type] | null;
+  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[];
 }
 
 interface TextureLoader {

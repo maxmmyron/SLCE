@@ -16,17 +16,17 @@ export default class EventHandler implements EventHandlerable {
   };
 
   // TODO: reimplement as arrays
-  private queuedEvents: { [Type in keyof EngineEventHandlersEventMap]: EngineEventHandlersEventMap[Type] | null } = {
-    "onmousedown": null,
-    "whilemousedown": null,
-    "onmouseup": null,
-    "onmousemove": null,
-    "onkeydown": null,
-    "whilekeydown": null,
-    "onkeyup": null,
-    "onresize": null,
-    "ontick": null,
-    "onrender": null
+  private queuedEvents: { [Type in keyof EngineEventHandlersEventMap]: EngineEventPayload<Type>[] } = {
+    "onmousedown": [],
+    "whilemousedown": [],
+    "onmouseup": [],
+    "onmousemove": [],
+    "onkeydown": [],
+    "whilekeydown": [],
+    "onkeyup": [],
+    "onresize": [],
+    "ontick": [],
+    "onrender": []
   };
 
   private resizeObserver: ResizeObserver;
@@ -177,7 +177,7 @@ export default class EventHandler implements EventHandlerable {
     return this.callbackRegistry[type];
   }
 
-  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventHandlersEventMap[Type] | null {
+  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[] {
     return this.queuedEvents[type];
   }
 }

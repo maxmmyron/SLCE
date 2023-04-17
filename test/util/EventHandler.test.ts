@@ -100,7 +100,7 @@ describe("EventHandler", () => {
       expect(eventHandler.getQueuedEvents("ontick").length).toBe(1);
 
       // run this as a "cycle" passing
-      eventHandler.dequeueSimpleEvents();
+      eventHandler.dispatchQueue();
 
       expect(eventHandler.getQueuedEvents("ontick").length).toBe(0);
     });
@@ -113,7 +113,7 @@ describe("EventHandler", () => {
       expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(1);
       expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
 
-      eventHandler.dequeueSimpleEvents();
+      eventHandler.dispatchQueue();
 
       expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
 
@@ -131,7 +131,7 @@ describe("EventHandler", () => {
       expect(eventHandler.getQueuedEvents("onkeydown").length).toBe(2);
       expect(eventHandler.getQueuedEvents("whilekeydown").length).toBe(2);
 
-      eventHandler.dequeueSimpleEvents();
+      eventHandler.dispatchQueue();
 
       expect(eventHandler.getQueuedEvents("onkeydown").length).toBe(0);
       expect(eventHandler.getQueuedEvents("whilekeydown").length).toBe(2);
@@ -181,11 +181,11 @@ describe("EventHandler", () => {
       const eventHandler = new EventHandler(canvas);
 
       const callbacks = {
-        onmousedownA: (payload: MouseDownEventPayload) => {
-          expectTypeOf(payload).toEqualTypeOf<MouseDownEventPayload>();
+        onmousedownA: (payload: MouseEventPayload) => {
+          expectTypeOf(payload).toEqualTypeOf<MouseEventPayload>();
         },
-        onmousedownB: (payload: MouseDownEventPayload) => {
-          expectTypeOf(payload).toEqualTypeOf<MouseDownEventPayload>();
+        onmousedownB: (payload: MouseEventPayload) => {
+          expectTypeOf(payload).toEqualTypeOf<MouseEventPayload>();
         }
       };
 
