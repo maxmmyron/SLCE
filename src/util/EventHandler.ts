@@ -136,9 +136,8 @@ export default class EventHandler implements EventHandlerable {
 
       registeredCallbacks.forEach((callback) => queuedPayloads.forEach((payload) => callback(payload)));
 
-      for(let i = 0; i < queuedPayloads.length; i++) {
-        if(type === "whilemousedown" || type === "whilekeydown") continue;
-        queuedPayloads.splice(i, 1);
+      if(type !== "whilemousedown" && type !== "whilekeydown") {
+        this.queuedEventPayloads[type as keyof EngineEventHandlersEventMap] = [];
       }
     }
   }
