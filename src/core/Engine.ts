@@ -270,7 +270,6 @@ export default class Engine implements Engineable {
     this._FPS = 1000 / delta;
 
     let cycleUpdateCount: number = 0;
-    console.log("update", this.lag, this.targetTickDurationMilliseconds, this.isPaused);
 
     while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
       this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds, type: "ontick" });
