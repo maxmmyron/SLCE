@@ -14,8 +14,8 @@ interface Engineable {
 
   start(): Promise<void>;
 
-  addListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
-  removeListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
+  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
+  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
 
   get canvasSize(): Vectorable;
   get engineRuntimeMilliseconds(): number;
@@ -32,8 +32,8 @@ interface Camerable {
   rotation: Vectorable;
   zoom: number;
 
-  addListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
-  removeListener(eventName: ValidEventType, callback: ((ev: ValidEventPayload) => void)): void;
+  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
+  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
 }
 
 interface GUIable {

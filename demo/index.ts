@@ -2,8 +2,8 @@
 
 // Character spritemap is an edited version of the original made by Buch: https://opengameart.org/users/buch
 
-import Camera from "@/core/camera";
-import Engine from "@/core/engine";
+import Camera from "@/core/Camera";
+import Engine from "@/core/Engine";
 import Scene from "@/elements/scene";
 import Vector2D from "@/math/vector2d";
 import Actor from "@/elements/actor";
@@ -26,14 +26,14 @@ actorA.preload = async () => {
   actorA.textureID = "texmap";
 };
 
-actorA.addListener("onkeydown", (e) => {
+actorA.registerEventCallback("onkeydown", (e) => {
   if (e.key === "r") {
     actorA.velocity = new Vector2D();
     actorA.setPosition(new Vector2D(250, engine.canvasSize.y / 2 - 32));
   }
 });
 
-actorA.addListener("whilekeydown", (e) => {
+actorA.registerEventCallback("whilekeydown", (e) => {
   if (e.key === "ArrowRight") actorA.velocity.x += 0.01;
   if (e.key === "ArrowLeft") actorA.velocity.x += -0.01;
   if (e.key === "ArrowUp") actorA.velocity.y += -0.01;
@@ -43,28 +43,28 @@ actorA.addListener("whilekeydown", (e) => {
   actorA.velocity.y = Math.min(Math.max(actorA.velocity.y, -0.5), 0.5);
 });
 
-actorA.addListener("ontick", (e) => {
+actorA.registerEventCallback("ontick", (e) => {
   actorA.velocity = actorA.velocity.multiply(0.99);
 
   actorA.position = actorA.position.add(actorA.velocity.multiply(e.deltaTime));
 });
 
-camera.addListener("whilekeydown", (e) => {
+camera.registerEventCallback("whilekeydown", (e) => {
   if (e.key === "d") camera.velocity.x = 0.4
   if (e.key === "a") camera.velocity.x = -0.4
   if (e.key === "w") camera.velocity.y = -0.4
   if (e.key === "s") camera.velocity.y = 0.4
 });
 
-camera.addListener("ontick", (e) => {
+camera.registerEventCallback("ontick", (e) => {
   camera.velocity = camera.velocity.multiply(0.96);
   camera.position = camera.position.add(camera.velocity.multiply(e.deltaTime));
 
-  console.log("a", engine.engineRuntimeMilliseconds);
+  // console.log("a", engine.engineRuntimeMilliseconds);
 });
 
-engine.addListener("ontick", (e) => {
-  console.log(actorA.position.toString());
+engine.registerEventCallback("ontick", (e) => {
+  console.log(engine.eventHandler.getQueuedPayloads("whilekeydown"))
 })
 
 engine.start();

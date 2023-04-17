@@ -12,8 +12,8 @@ interface Elementable {
   rotation: Vectorable;
   size: Vectorable;
 
-  addListener(event: ValidEventType, callback: ((event: ValidEventPayload) => void)): void;
-  removeListener(event: ValidEventType, callback: ((event: ValidEventPayload) => void)): void;
+  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
+  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
 
   start(): Promise<any>;
 
