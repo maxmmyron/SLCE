@@ -23,7 +23,7 @@ describe("EventHandler", () => {
 
       eventHandler.registerEventCallback("onmousedown", () => {});
 
-      expect(eventHandler.getEventCallbacks("onmousedown").length).toBe(1);
+      expect(eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(1);
     });
 
     it("can register multiple callbacks", () => {
@@ -32,7 +32,7 @@ describe("EventHandler", () => {
       eventHandler.registerEventCallback("onmousedown", () => {});
       eventHandler.registerEventCallback("onmousedown", () => {});
 
-      expect(eventHandler.getEventCallbacks("onmousedown").length).toBe(2);
+      expect(eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(2);
     });
 
     it("can unregister a callback", () => {
@@ -41,10 +41,10 @@ describe("EventHandler", () => {
       let callback: EngineEventCallback<"onmousedown"> = () => {};
 
       eventHandler.registerEventCallback("onmousedown", callback);
-      expect(eventHandler.getEventCallbacks("onmousedown").length).toBe(1);
+      expect(eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(1);
 
       eventHandler.unregisterEventCallback("onmousedown", callback);
-      expect(eventHandler.getEventCallbacks("onmousedown").length).toBe(0);
+      expect(eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(0);
     });
   });
 
@@ -54,9 +54,9 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("onrender", {type: "onrender", interpolationFactor: 0});
 
-      expect(eventHandler.getQueuedEvents("onrender").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("onrender")[0].type).toBe("onrender");
-      expect(eventHandler.getQueuedEvents("onrender")[0]).toEqual({
+      expect(eventHandler.getQueuedPayloads("onrender").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("onrender")[0].type).toBe("onrender");
+      expect(eventHandler.getQueuedPayloads("onrender")[0]).toEqual({
         type: "onrender",
         interpolationFactor: 0,
       });
@@ -68,13 +68,13 @@ describe("EventHandler", () => {
       const mousedownPayload = { type: "onmousedown", x: 0, y: 0, button: 0 }
       eventHandler.queueEvent("onmousedown", mousedownPayload);
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("onmousedown")[0].type).toBe("onmousedown");
-      expect(eventHandler.getQueuedEvents("onmousedown")[0]).toEqual(mousedownPayload);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("onmousedown")[0].type).toBe("onmousedown");
+      expect(eventHandler.getQueuedPayloads("onmousedown")[0]).toEqual(mousedownPayload);
 
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("whilemousedown")[0].type).toBe("whilemousedown");
-      expect(eventHandler.getQueuedEvents("whilemousedown")[0]).toEqual({
+      expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("whilemousedown")[0].type).toBe("whilemousedown");
+      expect(eventHandler.getQueuedPayloads("whilemousedown")[0]).toEqual({
         ...mousedownPayload,
         type: "whilemousedown"
       });
@@ -87,8 +87,8 @@ describe("EventHandler", () => {
       eventHandler.queueEvent("onmousedown", { type: "onmousedown", x: 0, y: 0, button: 1 });
       eventHandler.queueEvent("onmousedown", { type: "onmousedown", x: 0, y: 0, button: 2 });
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(3);
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(3);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(3);
+      expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(3);
     });
 
     // why dequeue when we can just filter out queue after cycle?
@@ -97,12 +97,12 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("ontick", { type: "ontick", deltaTime: 0 });
 
-      expect(eventHandler.getQueuedEvents("ontick").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("ontick").length).toBe(1);
 
       // run this as a "cycle" passing
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("ontick").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("ontick").length).toBe(0);
     });
 
     it("can dequeue an event with a persistent dependent without dequeueing that dependent", () => {
@@ -110,15 +110,15 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("onmousedown", { type: "onmousedown", x: 0, y: 0, button: 0 });
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(1);
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(0);
 
       // Persistent events are not removed from queue until the queue contains a comparibly-equivalent negator event
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(1);
     });
 
     it("will dequeue the comparably-equivalent persistent event when a negator event is queued", () => {
@@ -128,18 +128,18 @@ describe("EventHandler", () => {
       eventHandler.queueEvent("onkeydown", { type: "onkeydown", key: "E" });
       eventHandler.queueEvent("onkeydown", { type: "onkeydown", key: "Q" });
 
-      expect(eventHandler.getQueuedEvents("onkeydown").length).toBe(2);
-      expect(eventHandler.getQueuedEvents("whilekeydown").length).toBe(2);
+      expect(eventHandler.getQueuedPayloads("onkeydown").length).toBe(2);
+      expect(eventHandler.getQueuedPayloads("whilekeydown").length).toBe(2);
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("onkeydown").length).toBe(0);
-      expect(eventHandler.getQueuedEvents("whilekeydown").length).toBe(2);
+      expect(eventHandler.getQueuedPayloads("onkeydown").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("whilekeydown").length).toBe(2);
 
       eventHandler.queueEvent("onkeyup", { type: "onkeyup", key: "E" });
 
-      expect(eventHandler.getQueuedEvents("onkeyup").length).toBe(1);
-      expect(eventHandler.getQueuedEvents("whilekeydown").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("onkeyup").length).toBe(1);
+      expect(eventHandler.getQueuedPayloads("whilekeydown").length).toBe(1);
     });
 
     it("will not queue an event if the engine is paused", () => {
@@ -149,8 +149,8 @@ describe("EventHandler", () => {
 
       eventHandler.queueEvent("onmousedown", { type: "onmousedown", x: 0, y: 0, button: 0 });
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
-      expect(eventHandler.getQueuedEvents("whilemousedown").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("whilemousedown").length).toBe(0);
     });
   });
 
@@ -173,7 +173,7 @@ describe("EventHandler", () => {
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("ontick").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("ontick").length).toBe(0);
       expect(ontickSpy).toHaveBeenCalled();
     });
 
@@ -199,7 +199,7 @@ describe("EventHandler", () => {
 
       eventHandler.dispatchQueue();
 
-      expect(eventHandler.getQueuedEvents("onmousedown").length).toBe(0);
+      expect(eventHandler.getQueuedPayloads("onmousedown").length).toBe(0);
 
       expect(onmousedownASpy).toHaveBeenCalled();
       expect(onmousedownBSpy).toHaveBeenCalled();
