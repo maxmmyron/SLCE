@@ -96,37 +96,24 @@ export default class EventHandler implements EventHandlerable {
   queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>, options?: Partial<EngineEventOptions>): void {
     if (this.getEnginePauseState()) return;
 
-    // TODO: this function is nasty. should be possible to refactor this into something that doesn't require a switch statement
+    if (options?.repeat) return;
 
     switch (type) {
       case "onmousedown":
-        this.queuedEventPayloads[type].push(payload);
-        this.queuedEventPayloads["whilemousedown"].push(<MouseEventPayload>{
-          ...payload,
-          type: "whilemousedown"
-        });
+        this.queuedEventPayloads["whilemousedown"].push(<MouseEventPayload>{...payload, type: "whilemousedown"});
         break;
       case "onmouseup":
-        this.queuedEventPayloads[type].push(payload);
         this.queuedEventPayloads["whilemousedown"] = this.queuedEventPayloads["whilemousedown"].filter((event: EngineEventPayload<"whilemousedown">) => event.button !== (<MouseEventPayload>payload).button);
         break;
       case "onkeydown":
-        if(options?.repeat) return;
-        this.queuedEventPayloads[type].push(payload);
-        this.queuedEventPayloads["whilekeydown"].push(<KeyEventPayload>{
-          ...payload,
-          type: "whilekeydown"
-        });
+        this.queuedEventPayloads["whilekeydown"].push(<KeyEventPayload>{...payload, type: "whilekeydown"});
         break;
       case "onkeyup":
-        if (options?.repeat) return;
-        this.queuedEventPayloads[type].push(payload);
         this.queuedEventPayloads["whilekeydown"] = this.queuedEventPayloads["whilekeydown"].filter((event: EngineEventPayload<"whilekeydown">) => event.key !== (<KeyEventPayload>payload).key);
         break;
-      default:
-        this.queuedEventPayloads[type].push(payload);
-        break;
     }
+
+    this.queuedEventPayloads[type].push(payload);
   }
 
   dispatchQueue(): void {
