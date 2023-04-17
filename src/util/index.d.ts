@@ -29,7 +29,6 @@ interface EventHandlerable {
   unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: EngineEventCallback<Type>): void;
 
   queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void;
-  dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void;
 
   dispatchQueue(): void;
 
@@ -37,8 +36,8 @@ interface EventHandlerable {
   detachEventListeners(): void;
   setEnginePauseStateCallback(callback: () => boolean): void;
 
-  getEventCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[];
-  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[];
+  getRegisteredCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[];
+  getQueuedPayloads<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[];
 }
 
 interface TextureLoader {

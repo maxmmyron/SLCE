@@ -15,8 +15,7 @@ export default class EventHandler implements EventHandlerable {
     "onrender": []
   };
 
-  // TODO: reimplement as arrays
-  private queuedEvents: { [Type in keyof EngineEventHandlersEventMap]: EngineEventPayload<Type>[] } = {
+  private queuedEventPayloads: { [Type in keyof EngineEventHandlersEventMap]: EngineEventPayload<Type>[] } = {
     "onmousedown": [],
     "whilemousedown": [],
     "onmouseup": [],
@@ -75,7 +74,7 @@ export default class EventHandler implements EventHandlerable {
 
     for (const type of Object.keys(this.callbackRegistry)) {
       this.callbackRegistry[type as keyof EngineEventHandlersEventMap] = [];
-      this.queuedEvents[type as keyof EngineEventHandlersEventMap] = null;
+      this.queuedEventPayloads[type as keyof EngineEventHandlersEventMap] = [];
     }
 
     this.resizeObserver.disconnect();
@@ -89,55 +88,52 @@ export default class EventHandler implements EventHandlerable {
     this.callbackRegistry[type].splice(this.callbackRegistry[type].indexOf(callback), 1);
   }
 
-  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventHandlersEventMap[Type]): void {
+  queueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type, payload: EngineEventPayload<Type>): void {
     if(!this.enginePauseStateCallback()) return;
 
-    console.log(type, payload);
+    // switch through possible events, and perform special queue logic.
+    // ideally this can be done in a more elegant way but that is future me's problem. For now, a brute-force switch
+    // statement works just fine.
 
     switch (type) {
       case "onmousedown":
-        this.queuedEvents["onmousedown"] = payload as EngineEventHandlersEventMap["onmousedown"];
-        this.queuedEvents["whilemousedown"] = {
+        this.queuedEventPayloads[type].push(payload);
+        this.queuedEventPayloads["whilemousedown"].push(<MouseEventPayload>{
           ...payload,
           type: "whilemousedown"
-        } as EngineEventHandlersEventMap["whilemousedown"];
+        });
         break;
       case "onmouseup":
-        this.queuedEvents["onmouseup"] = payload as EngineEventHandlersEventMap["onmouseup"];
-        this.queuedEvents["whilemousedown"] = null;
+        this.queuedEventPayloads[type].push(payload);
+        this.queuedEventPayloads["whilemousedown"] = this.queuedEventPayloads["whilemousedown"].filter((event: EngineEventPayload<"whilemousedown">) => event.button !== (<MouseEventPayload>payload).button);
         break;
       case "onkeydown":
-        this.queuedEvents["onkeydown"] = payload as EngineEventHandlersEventMap["onkeydown"];
-        this.queuedEvents["whilekeydown"] = {
+        this.queuedEventPayloads[type].push(payload);
+        this.queuedEventPayloads["whilekeydown"].push(<KeyEventPayload>{
           ...payload,
           type: "whilekeydown"
-        } as EngineEventHandlersEventMap["whilekeydown"];
+        });
         break;
       case "onkeyup":
-        this.queuedEvents["onkeyup"] = payload as EngineEventHandlersEventMap["onkeyup"];
-        this.queuedEvents["whilekeydown"] = null;
+        this.queuedEventPayloads[type].push(payload);
+        this.queuedEventPayloads["whilekeydown"] = this.queuedEventPayloads["whilekeydown"].filter((event: EngineEventPayload<"whilekeydown">) => event.key !== (<KeyEventPayload>payload).key);
         break;
       default:
-        this.queuedEvents[type] = payload;
+        this.queuedEventPayloads[type].push(payload);
         break;
     }
   }
 
-  dequeueEvent<Type extends keyof EngineEventHandlersEventMap>(type: Type): void {
-    this.queuedEvents[type] = null;
-  }
-
   dispatchQueue(): void {
-    for(let i = 0; i < Object.keys(this.queuedEvents).length; i++) {
-      const type = Object.keys(this.queuedEvents)[i] as keyof EngineEventHandlersEventMap;
+    for(const type in this.queuedEventPayloads) {
+      const registeredCallbacks = this.callbackRegistry[type as keyof EngineEventHandlersEventMap] as EngineEventCallback<keyof EngineEventHandlersEventMap>[];
+      const queuedPayloads = this.queuedEventPayloads[type as keyof EngineEventHandlersEventMap] as EngineEventPayload<keyof EngineEventHandlersEventMap>[];
 
-      const callbacks = this.callbackRegistry[type] as EngineEventCallback<keyof EngineEventHandlersEventMap>[];
-      const queuedEvents = this.queuedEvents[type] as EngineEventHandlersEventMap[keyof EngineEventHandlersEventMap];
+      registeredCallbacks.forEach((callback) => queuedPayloads.forEach((payload) => callback(payload)));
 
-      callbacks.forEach(callback => callback(queuedEvents));
-
-      if(type !== "whilemousedown" && type !== "whilekeydown") {
-        this.dequeueEvent(type);
+      for(let i = 0; i < queuedPayloads.length; i++) {
+        if(type === "whilemousedown" || type === "whilekeydown") continue;
+        queuedPayloads.splice(i, 1);
       }
     }
   }
@@ -173,11 +169,11 @@ export default class EventHandler implements EventHandlerable {
     this.enginePauseStateCallback = callback;
   }
 
-  getEventCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[] {
+  getRegisteredCallbacks<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventCallback<Type>[] {
     return this.callbackRegistry[type];
   }
 
-  getQueuedEvents<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[] {
-    return this.queuedEvents[type];
+  getQueuedPayloads<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[] {
+    return this.queuedEventPayloads[type];
   }
 }
