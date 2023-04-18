@@ -44,6 +44,11 @@ interface EventHandlerable {
   getQueuedPayloads<Type extends keyof EngineEventHandlersEventMap>(type: Type): EngineEventPayload<Type>[];
 }
 
-interface TextureLoader {
-  load(path: string): Promise<ImageBitmap>;
+interface TextureHandlerable {
+  async registerTextureFromPath(name: string, path: string): Promise<ImageBitmap>;
+  registerTextureFromBitmap(name: string, texture: ImageBitmap): ImageBitmap;
+  unregisterTexture(name: string): void;
+
+  getRegisteredTexture(name: string): ImageBitmap;
+  getTextureCache(): Map<string, ImageBitmap>;
 }
