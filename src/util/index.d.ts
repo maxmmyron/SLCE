@@ -45,7 +45,7 @@ interface EventHandlerable {
 }
 
 interface TextureHandlerable {
-  async registerTextureFromPath(name: string, path: string): Promise<ImageBitmap>;
+  registerTextureFromPath(name: string, path: string): Promise<ImageBitmap>;
   registerTextureFromBitmap(name: string, texture: ImageBitmap): ImageBitmap;
   unregisterTexture(name: string): void;
 
