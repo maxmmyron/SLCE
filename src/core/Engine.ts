@@ -3,6 +3,7 @@ import { assert } from "../util/asserts";
 import EventHandler from "../util/EventHandler";
 import Vector2D from "../math/vector2d";
 import ParameterGUI from "./gui";
+import TextureHandler from "@/util/TextureHandler";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;
@@ -41,6 +42,13 @@ export default class Engine implements Engineable {
    * @readonly
    */
   readonly eventHandler: EventHandler;
+
+  /**
+   * A texture handler used to manage textures.
+   *
+   * @readonly
+   */
+  readonly textureHandler: TextureHandler;
 
   /**
    * A map containing string IDs and associated scenes.
@@ -192,6 +200,8 @@ export default class Engine implements Engineable {
 
     this.eventHandler = new EventHandler(this.canvasElement);
     this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
+
+    this.textureHandler = new TextureHandler();
 
     this._canvasSize = this.fixRenderScale();
 
