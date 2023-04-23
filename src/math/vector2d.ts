@@ -15,7 +15,7 @@ export default class Vector2D implements Vectorable {
     this.y = y;
   }
 
-  public add = (vector: Vector2D): Vector2D => {
+  add = (vector: Vector2D): Vector2D => {
     return new Vector2D(this.x + vector.x, this.y + vector.y);
   }
 
