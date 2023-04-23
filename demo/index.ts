@@ -7,7 +7,6 @@ import Engine from "@/core/Engine";
 import Scene from "@/elements/scene";
 import Vector2D from "@/math/vector2d";
 import Actor from "@/elements/actor";
-import { TextureCache } from "@/util/texture_cache";
 
 import characterSpritemap from "./characterSpritemap.png";
 
@@ -21,7 +20,7 @@ const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 1
 const actorA = new Actor("actorA", scene, { position: new Vector2D(150, 150), size: new Vector2D(64, 64), isDebugEnabled: true });
 
 actorA.preload = async () => {
-  const bitmap = await TextureCache.getInstance().load(characterSpritemap);
+  const bitmap = await engine.textureHandler.registerTextureFromPath("character", characterSpritemap);
   actorA.addTexture("texmap", bitmap, new Vector2D(32, 32), 200);
   actorA.textureID = "texmap";
 };
@@ -59,8 +58,6 @@ camera.registerEventCallback("whilekeydown", (e) => {
 camera.registerEventCallback("ontick", (e) => {
   camera.velocity = camera.velocity.multiply(0.96);
   camera.position = camera.position.add(camera.velocity.multiply(e.deltaTime));
-
-  // console.log("a", engine.engineRuntimeMilliseconds);
 });
 
 engine.registerEventCallback("ontick", (e) => {
