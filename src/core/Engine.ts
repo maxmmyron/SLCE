@@ -1,7 +1,7 @@
 import Scene from "../elements/scene";
 import { assert } from "../util/asserts";
 import EventHandler from "../util/EventHandler";
-import Vector2D from "../math/vector2d";
+import Vector2D from "../math/Vector2D";
 import ParameterGUI from "./gui";
 import TextureHandler from "@/util/TextureHandler";
 

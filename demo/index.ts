@@ -5,7 +5,7 @@
 import Camera from "@/core/Camera";
 import Engine from "@/core/Engine";
 import Scene from "@/elements/scene";
-import Vector2D from "@/math/vector2d";
+import Vector2D from "@/math/Vector2D";
 import Actor from "@/elements/actor";
 
 import characterSpritemap from "./characterSpritemap.png";
