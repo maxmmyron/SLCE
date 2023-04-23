@@ -1,9 +1,9 @@
-import Scene from "../elements/scene";
-import { assert } from "../util/asserts";
-import EventHandler from "../util/EventHandler";
-import Vector2D from "../math/vector2d";
-import ParameterGUI from "./gui";
+import Scene from "@/elements/scene";
+import { assert } from "@/util/asserts";
+import EventHandler from "@/util/EventHandler";
+import Vector2D from "@/math/Vector2D";
 import TextureHandler from "@/util/TextureHandler";
+import ParameterGUI from "./gui";
 
 const TARGET_FPS: number = 60;
 const MAX_UPDATES_PER_FRAME: number = 240;

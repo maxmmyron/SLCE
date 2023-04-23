@@ -1,4 +1,4 @@
-import { assert } from "../util/asserts";
+import { assert } from "@/util/asserts";
 
 export default class Vector2D implements Vectorable {
   x: number;
@@ -15,7 +15,7 @@ export default class Vector2D implements Vectorable {
     this.y = y;
   }
 
-  public add = (vector: Vector2D): Vector2D => {
+  add = (vector: Vector2D): Vector2D => {
     return new Vector2D(this.x + vector.x, this.y + vector.y);
   }
 
@@ -33,19 +33,21 @@ export default class Vector2D implements Vectorable {
     return new Vector2D(this.x / scalar, this.y / scalar);
   }
 
-  getMagnitude = (): number => Math.sqrt(this.x * this.x + this.y * this.y);
-
-  normalize = (): Vector2D => {
-    return this.divide(this.getMagnitude());
+  get magnitude(): number {
+    return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
-  getDot = (vector: Vector2D): number => this.x * vector.x + this.y * vector.y;
+  normalize = (): Vector2D => {
+    return this.divide(this.magnitude);
+  }
 
-  getCross = (vector: Vector2D): number => this.x * vector.y - this.y * vector.x;
+  dot = (vector: Vector2D): number => this.x * vector.x + this.y * vector.y;
 
-  rotate = (angle: number): Vector2D => {
-    const sinAngle = Math.sin(angle);
-    const cosAngle = Math.cos(angle);
+  cross = (vector: Vector2D): number => this.x * vector.y - this.y * vector.x;
+
+  rotate = (radians: number): Vector2D => {
+    const sinAngle = Math.sin(radians);
+    const cosAngle = Math.cos(radians);
 
     const x = this.x * cosAngle - this.y * sinAngle;
     const y = this.x * sinAngle + this.y * cosAngle;
@@ -53,5 +55,13 @@ export default class Vector2D implements Vectorable {
     return new Vector2D(x, y);
   }
 
+  equals = (vector: Vector2D): boolean => this.x === vector.x && this.y === vector.y;
+
   toString = (): string => `x: ${this.x}, y: ${this.y}`
+
+  toObject = (): Object => ({ x: this.x, y: this.y });
+
+  floor = (): Vector2D => new Vector2D(Math.floor(this.x), Math.floor(this.y));
+
+  ceil = (): Vector2D => new Vector2D(Math.ceil(this.x), Math.ceil(this.y));
 }

@@ -6,9 +6,14 @@ interface Vectorable {
   subtract(vector: Vectorable): Vectorable;
   multiply(scalar: number): Vectorable;
   divide(scalar: number): Vectorable;
-  getMagnitude(): number;
+  get magnitude(): number;
   normalize(): Vectorable;
-  getDot(vector: Vectorable): number;
-  getCross(vector: Vectorable): number;
+  dot(vector: Vectorable): number;
+  cross(vector: Vectorable): number;
+  equals(vector: Vectorable): boolean;
   rotate(angle: number): Vectorable;
+  toString(): string;
+  toObject(): Object;
+  floor(): Vectorable;
+  ceil(): Vectorable;
 }

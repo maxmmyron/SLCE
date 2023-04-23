@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import "./imageBitmap.mock"
+import "./imageBitmap.mock";
 import TextureHandler from "@/util/TextureHandler";
 import testImage from "./testTexture.png";
 
