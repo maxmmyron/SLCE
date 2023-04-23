@@ -1,4 +1,4 @@
-import { describe, it, expect, expectTypeOf, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import Vector2D from "@/math/Vector2D";
 
 describe("Vector2D", () => {
