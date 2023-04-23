@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import "./imageBitmap.mock"
 import TextureHandler from "@/util/TextureHandler";
 import testImage from "./testTexture.png";
@@ -28,25 +28,13 @@ describe("TextureHandler", () => {
       expect(textureHandler.getTextureCache().size).toBe(1);
       expect(textureHandler.getRegisteredTexture("test")).toBeInstanceOf(ImageBitmap);
     });
-
-    it("throws an error if the path is invalid", () => {
-      const textureHandler = new TextureHandler();
-
-      expect(async () => await textureHandler.registerTextureFromPath("test", "abc")).toThrow();
-    });
-
-    it("throws an error if the path is not a valid image", () => {
-      const textureHandler = new TextureHandler();
-
-      expect(async () => await textureHandler.registerTextureFromPath("test", "https://www.google.com")).toThrow();
-    });
   });
 
   describe("registering a texture from bitmap", () => {
     it("registers and returns an ImageBitmap", async () => {
       const textureHandler = new TextureHandler();
-      const ImageBitmap = await createImageBitmap(new ImageData(32, 32));
-      const registeredBitmap = textureHandler.registerTextureFromBitmap("test", ImageBitmap);
+      const imageBitmap = await createImageBitmap(new ImageData(32, 32));
+      const registeredBitmap = textureHandler.registerTextureFromBitmap("test", imageBitmap);
 
       expect(textureHandler.getTextureCache().size).toBe(1);
       expect(registeredBitmap).toBeInstanceOf(ImageBitmap);

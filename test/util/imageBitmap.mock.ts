@@ -18,6 +18,7 @@ Object.defineProperty(globalThis, "ImageBitmap", {
 Object.defineProperty(globalThis, "Image", {
   value: class Image {
     onload = () => { };
+    onerror = () => { };
     constructor() {
       setTimeout(() => {
         this.onload();
@@ -25,3 +26,10 @@ Object.defineProperty(globalThis, "Image", {
     }
   }
 });
+
+Object.defineProperty(globalThis, "ImageData", {
+  value: class ImageData {
+    constructor() { }
+  }
+});
+

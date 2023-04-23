@@ -16,22 +16,33 @@ export default class TextureHandler implements TextureHandlerable {
             this.textureCache.set(name, imageBitmap);
             resolve(imageBitmap);
           })
-          .catch((error: Error) => { reject(`Error loading image from path`); });
+          .catch((error: Error) => { reject(error); });
       };
 
-      image.onerror = () => { reject(`Error loading image from path`); }
+      image.onerror = (error) => reject(error);
     });
   }
 
   registerTextureFromBitmap(name: string, texture: ImageBitmap): ImageBitmap {
-    throw new Error("Method not implemented.");
+    if(this.textureCache.has(name)) {
+      return this.getRegisteredTexture(name);
+    }
+
+    this.textureCache.set(name, texture);
+    return texture;
   }
 
   unregisterTexture(name: string): void {
-    throw new Error("Method not implemented.");
+    if(!this.textureCache.has(name)) return;
+
+    this.textureCache.get(name)?.close();
+    this.textureCache.delete(name);
   }
   getRegisteredTexture(name: string): ImageBitmap {
-    throw new Error("Method not implemented.");
+    if(!this.textureCache.has(name)) {
+      throw new Error(`Texture ${name} not found in cache`);
+    }
+    return this.textureCache.get(name) as ImageBitmap;
   }
   getTextureCache(): Map<string, ImageBitmap> {
     return this.textureCache;
