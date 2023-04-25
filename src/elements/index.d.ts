@@ -26,20 +26,18 @@ interface Elementable {
 
 interface Sceneable extends Elementable {
   camera: Camerable;
-
   actors: Map<string, Actorable>;
-
   environment: SceneEnvironment;
 }
 
 interface Actorable extends Elementable {
   readonly scene: Sceneable;
 
+  textureID: string;
+
   isGravityEnabled: boolean;
   isCollisionEnabled: boolean;
   isTextureEnabled: boolean;
-
-  textureID: string;
 }
 
 type Texture = {
@@ -62,7 +60,7 @@ type ActorOptions = Partial<{
   isGravityEnabled: boolean;
   isCollisionEnabled: boolean;
   isTextureEnabled: boolean;
-}> & ElementOptions;
+} & ElementOptions>;
 
 type SceneOptions = Partial<ElementOptions & SceneEnvironment>
 
