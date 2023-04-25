@@ -219,7 +219,7 @@ export default class Engine implements Engineable {
    * @throws {Error} if the start function has already been called.
    */
   start = async (): Promise<void> => {
-    if(!this.isStarted)
+    if(this.isStarted)
       throw new Error("Engine has already been started.");
 
     this.fixRenderScale();
