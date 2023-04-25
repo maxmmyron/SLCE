@@ -1,4 +1,4 @@
-import Scene from "@/elements/scene";
+import Scene from "@/elements/Scene";
 import EventHandler from "@/util/EventHandler";
 import Vector2D from "@/math/Vector2D";
 import TextureHandler from "@/util/TextureHandler";
