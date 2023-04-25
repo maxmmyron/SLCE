@@ -1,5 +1,3 @@
-import { assert } from "@/util/asserts";
-
 export default class Vector2D implements Vectorable {
   x: number;
   y: number;
@@ -28,7 +26,7 @@ export default class Vector2D implements Vectorable {
   }
 
   divide = (scalar: number): Vector2D => {
-    assert(scalar !== 0, "Cannot divide by zero");
+    if(scalar === 0) throw new RangeError("Vector divide scalar cannot be 0.");
 
     return new Vector2D(this.x / scalar, this.y / scalar);
   }
