@@ -1,5 +1,4 @@
 import Vector2D from "@/math/Vector2D";
-import { assert } from "@/util/asserts";
 
 export class ParameterSection implements GUISectionable {
   /**
@@ -47,7 +46,7 @@ export class ParameterSection implements GUISectionable {
    * @returns The current section.
    */
   addParameter(name: string, callback: () => Object): GUISectionable {
-    assert(!this.parameters.has(name), `Parameter with name ${name} already exists`);
+    if(!this.parameters.has(name)) console.warn(`GUI Parameter with name ${name} already exists. This will be overwritten.`);
 
     this.parameters.set(name, callback);
     return this;
@@ -73,7 +72,8 @@ export class ParameterSection implements GUISectionable {
    * @returns The newly created section.
    */
   addSubsection(name: string, isCollapsed: boolean): GUISectionable {
-    assert(!this.subsections.find((section) => section.name === name), `Debug section with name ${name} already exists`);
+
+    if(!this.subsections.find((section) => section.name === name)) console.warn(`Debug section with name ${name} already exists. This will be overwritten.`);
 
     const section = new ParameterSection(name, isCollapsed);
 

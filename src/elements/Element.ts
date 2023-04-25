@@ -1,34 +1,32 @@
 import Vector2D from "@/math/Vector2D";
 
+type ElementState = {
+  position: Vector2D;
+  velocity: Vector2D;
+  rotation: number;
+  scale: Vector2D;
+};
+
 /**
  * The base class for all engine elements.
  */
 export default class Element {
   readonly name: string;
-
   readonly engine: Engineable;
 
-  isQueuedForDisposal: boolean = false;
-
-  isRenderEnabled: boolean = true;
-
-  isTickEnabled: boolean = true;
+  position: Vector2D;
+  velocity: Vector2D;
+  scale: Vector2D;
 
   /**
-   * Whether or not the actor will draw debug information.
-   *
-   * @default false
+   * The rotation of the element in radians.
    */
-  isDebugEnabled: boolean = false;
+  rotation: number;
 
-  position: Vector2D = new Vector2D();
-
-  velocity: Vector2D = new Vector2D();
-
-  rotation: Vector2D = new Vector2D();
-
-  size: Vector2D = new Vector2D();
-
+  isQueuedForDisposal: boolean = false;
+  isRenderEnabled: boolean = true;
+  isTickEnabled: boolean = true;
+  isDebugEnabled: boolean;
   protected isPreloaded: boolean = false;
 
   /**
@@ -50,19 +48,19 @@ export default class Element {
    *
    * @param name name of element.
    * @param scene engine reference
-   * @param defaultProperties Element properties to apply on startup
+   * @param options Element properties to apply on startup
    */
-  constructor(name: string, engine: Engineable, defaultProperties: Partial<ElementDefaultProperties>) {
+  constructor(name: string, engine: Engineable, options: ElementOptions = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
 
-    defaultProperties.position && (this.position = defaultProperties.position);
-    defaultProperties.velocity && (this.velocity = defaultProperties.velocity);
-    defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
-    defaultProperties.size && (this.size = defaultProperties.size);
-    defaultProperties.isDebugEnabled && (this.isDebugEnabled = defaultProperties.isDebugEnabled);
+    this.position = options.position ?? new Vector2D();
+    this.velocity = options.velocity ?? new Vector2D();
+    this.rotation = options.rotation ?? 0;
+    this.scale = options.scale ?? new Vector2D(1, 1);
+    this.isDebugEnabled = options.isDebugEnabled ?? false;
 
     this.previousState = this.createLastState();
   }
@@ -153,7 +151,8 @@ export default class Element {
     return {
       position: this.position,
       velocity: this.velocity,
-      size: this.size,
+      rotation: this.rotation,
+      scale: this.scale,
     };
   };
 
