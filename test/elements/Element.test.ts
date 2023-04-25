@@ -18,7 +18,7 @@ describe("Element", () => {
       expect(element.position.toObject()).toEqual({ x: 0, y: 0 });
       expect(element.velocity.toObject()).toEqual({ x: 0, y: 0 });
       expect(element.rotation).toEqual(0);
-      expect(element.scale.toObject()).toEqual({ x: 0, y: 0 });
+      expect(element.scale.toObject()).toEqual({ x: 1, y: 1 });
     });
 
     it("can be created with default properties", () => {
