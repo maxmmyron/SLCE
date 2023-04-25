@@ -1,2 +1,67 @@
 import { describe, it, expect } from "vitest";
 import Scene from "@/elements/Scene";
+import { createMockEngine } from "../mocks/Engine.mock";
+import Camera from "@/core/Camera";
+import Vector2D from "@/math/Vector2D";
+import Actor from "@/elements/Actor";
+
+describe("Scene", () => {
+  describe("constructor", () => {
+    it("instantiates new scene", () => {
+      const engine = createMockEngine();
+      const camera = new Camera("cam", engine);
+
+      const scene = new Scene("test", engine, camera);
+      expect(scene.name).toBe("test");
+    });
+
+    it("has default properties when no properties are passed", () => {
+      const engine = createMockEngine();
+      const camera = new Camera("cam", engine);
+
+      const scene = new Scene("test", engine, camera);
+
+      expect(scene.camera).toBe(camera);
+
+      expect(scene.environment.background).toBe("transparent");
+      expect(scene.environment.gravity.toObject()).toBe({ x: 0, y: 0 });
+    });
+
+    it("can be created with default properties", () => {
+      const engine = createMockEngine();
+      const camera = new Camera("cam", engine);
+
+      const scene = new Scene("test", engine, camera, {
+        background: "black",
+        gravity: new Vector2D(1, 2)
+      });
+
+      expect(scene.camera).toBe(camera);
+
+      expect(scene.environment.background).toBe("black");
+      expect(scene.environment.gravity.toObject()).toBe({ x: 1, y: 2 });
+    });
+  });
+
+  describe("actors", () => {
+    it("can be added to scene", () => {
+      const engine = createMockEngine();
+      const camera = new Camera("cam", engine);
+      const scene = new Scene("test", engine, camera);
+      const actor = new Actor("test", scene);
+
+      expect(scene.actors.size).toBe(1);
+    });
+
+    it("can be removed from scene", () => {
+      const engine = createMockEngine();
+      const camera = new Camera("cam", engine);
+      const scene = new Scene("test", engine, camera);
+      const actor = new Actor("test", scene);
+
+      scene.removeActor(actor);
+
+      expect(scene.actors.size).toBe(0);
+    });
+  });
+})

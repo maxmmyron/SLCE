@@ -17,8 +17,8 @@ describe("Element", () => {
 
       expect(element.position.toObject()).toEqual({ x: 0, y: 0 });
       expect(element.velocity.toObject()).toEqual({ x: 0, y: 0 });
-      expect(element.rotation.toObject()).toEqual({ x: 0, y: 0 });
-      expect(element.size.toObject()).toEqual({ x: 0, y: 0 });
+      expect(element.rotation).toEqual(0);
+      expect(element.scale.toObject()).toEqual({ x: 0, y: 0 });
     });
 
     it("can be created with default properties", () => {
@@ -26,14 +26,14 @@ describe("Element", () => {
       const element = new Element("test", engine, {
         position: new Vector2D(1, 2),
         velocity: new Vector2D(3, 4),
-        rotation: new Vector2D(5, 6),
-        size: new Vector2D(7, 8)
+        rotation: Math.PI,
+        scale: new Vector2D(7, 8)
       });
 
       expect(element.position.toObject()).toEqual({ x: 1, y: 2 });
       expect(element.velocity.toObject()).toEqual({ x: 3, y: 4 });
-      expect(element.rotation.toObject()).toEqual({ x: 5, y: 6 });
-      expect(element.size.toObject()).toEqual({ x: 7, y: 8 });
+      expect(element.rotation).toEqual(Math.PI);
+      expect(element.scale.toObject()).toEqual({ x: 7, y: 8 });
     });
   });
 
