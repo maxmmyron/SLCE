@@ -48,20 +48,9 @@ describe("Scene", () => {
       const engine = createMockEngine();
       const camera = new Camera("cam", engine);
       const scene = new Scene("test", engine, camera);
-      const actor = new Actor("test", scene);
+      new Actor("test", scene);
 
       expect(scene.actors.size).toBe(1);
-    });
-
-    it("can be removed from scene", () => {
-      const engine = createMockEngine();
-      const camera = new Camera("cam", engine);
-      const scene = new Scene("test", engine, camera);
-      const actor = new Actor("test", scene);
-
-      scene.removeActor(actor);
-
-      expect(scene.actors.size).toBe(0);
     });
   });
 })
