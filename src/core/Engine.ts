@@ -1,5 +1,4 @@
 import Scene from "@/elements/scene";
-import { assert } from "@/util/asserts";
 import EventHandler from "@/util/EventHandler";
 import Vector2D from "@/math/Vector2D";
 import TextureHandler from "@/util/TextureHandler";
@@ -220,7 +219,8 @@ export default class Engine implements Engineable {
    * @throws {Error} if the start function has already been called.
    */
   start = async (): Promise<void> => {
-    assert(!this.isStarted, "Engine has already been started.");
+    if(!this.isStarted)
+      throw new Error("Engine has already been started.");
 
     this.fixRenderScale();
 
