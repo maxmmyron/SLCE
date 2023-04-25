@@ -4,9 +4,9 @@
 
 import Camera from "@/core/Camera";
 import Engine from "@/core/Engine";
-import Scene from "@/elements/scene";
+import Scene from "@/elements/Scene";
 import Vector2D from "@/math/Vector2D";
-import Actor from "@/elements/actor";
+import Actor from "@/elements/Actor";
 
 import characterSpritemap from "./characterSpritemap.png";
 
@@ -15,9 +15,9 @@ const engine = new Engine(<HTMLCanvasElement>canvas, { isDebugEnabled: false });
 
 const camera = new Camera("camera", engine, { position: new Vector2D(50, 50), zoom: 1 });
 
-const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 10), size: new Vector2D(1000, 1000), background: "#110022" });
+const scene = new Scene("SceneA", engine, camera, { position: new Vector2D(10, 10), scale: new Vector2D(1000, 1000), background: "#110022" });
 
-const actorA = new Actor("actorA", scene, { position: new Vector2D(150, 150), size: new Vector2D(64, 64), isDebugEnabled: true });
+const actorA = new Actor("actorA", scene, { position: new Vector2D(150, 150), scale: new Vector2D(64, 64), isDebugEnabled: true });
 
 actorA.preload = async () => {
   const bitmap = await engine.textureHandler.registerTextureFromPath("character", characterSpritemap);
@@ -60,8 +60,8 @@ camera.registerEventCallback("ontick", (e) => {
   camera.position = camera.position.add(camera.velocity.multiply(e.deltaTime));
 });
 
-engine.registerEventCallback("ontick", (e) => {
-  console.log(engine.eventHandler.getQueuedPayloads("whilekeydown"))
-})
+// engine.registerEventCallback("ontick", (e) => {
+//   console.log(engine.eventHandler.getQueuedPayloads("whilekeydown"))
+// })
 
 engine.start();
