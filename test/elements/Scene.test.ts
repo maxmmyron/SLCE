@@ -10,8 +10,8 @@ describe("Scene", () => {
     it("instantiates new scene", () => {
       const engine = createMockEngine();
       const camera = new Camera("cam", engine);
-
       const scene = new Scene("test", engine, camera);
+
       expect(scene.name).toBe("test");
     });
 
@@ -24,7 +24,7 @@ describe("Scene", () => {
       expect(scene.camera).toBe(camera);
 
       expect(scene.environment.background).toBe("transparent");
-      expect(scene.environment.gravity.toObject()).toBe({ x: 0, y: 0 });
+      expect(scene.environment.gravity.toObject()).toEqual({ x: 0, y: 0 });
     });
 
     it("can be created with default properties", () => {
@@ -39,7 +39,7 @@ describe("Scene", () => {
       expect(scene.camera).toBe(camera);
 
       expect(scene.environment.background).toBe("black");
-      expect(scene.environment.gravity.toObject()).toBe({ x: 1, y: 2 });
+      expect(scene.environment.gravity.toObject()).toEqual({ x: 1, y: 2 });
     });
   });
 

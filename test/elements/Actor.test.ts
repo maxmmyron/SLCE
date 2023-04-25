@@ -45,9 +45,9 @@ describe("Actor", () => {
 
       expect(actor.isGravityEnabled).toBe(false);
 
-      expect(actor.position.toObject()).toBe({ x: 1, y: 2 });
+      expect(actor.position.toObject()).toEqual({ x: 1, y: 2 });
       expect(actor.rotation).toBe(Math.PI);
-      expect(actor.scale.toObject()).toBe({ x: 4, y: 5 });
+      expect(actor.scale.toObject()).toEqual({ x: 4, y: 5 });
     });
   });
 })
