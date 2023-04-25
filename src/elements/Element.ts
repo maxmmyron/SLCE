@@ -12,33 +12,21 @@ type ElementState = {
  */
 export default class Element {
   readonly name: string;
-
   readonly engine: Engineable;
 
+  position: Vector2D;
+  velocity: Vector2D;
+  scale: Vector2D;
+
+  /**
+   * The rotation of the element in radians.
+   */
+  rotation: number;
+
   isQueuedForDisposal: boolean = false;
-
   isRenderEnabled: boolean = true;
-
   isTickEnabled: boolean = true;
-
-  /**
-   * Whether or not the actor will draw debug information.
-   *
-   * @default false
-   */
-  isDebugEnabled: boolean = false;
-
-  position: Vector2D = new Vector2D();
-
-  velocity: Vector2D = new Vector2D();
-
-  /**
-   * The element rotation in radians.
-   */
-  rotation: number = 0;
-
-  scale: Vector2D = new Vector2D();
-
+  isDebugEnabled: boolean;
   protected isPreloaded: boolean = false;
 
   /**
@@ -68,11 +56,11 @@ export default class Element {
 
     this.engine = engine;
 
-    options.position && (this.position = options.position);
-    options.velocity && (this.velocity = options.velocity);
-    options.rotation && (this.rotation = options.rotation);
-    options.scale && (this.scale = options.scale);
-    options.isDebugEnabled && (this.isDebugEnabled = options.isDebugEnabled);
+    this.position = options.position ?? new Vector2D();
+    this.velocity = options.velocity ?? new Vector2D();
+    this.rotation = options.rotation ?? 0;
+    this.scale = options.scale ?? new Vector2D(1, 1);
+    this.isDebugEnabled = options.isDebugEnabled ?? false;
 
     this.previousState = this.createLastState();
   }

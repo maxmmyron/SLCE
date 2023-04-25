@@ -29,8 +29,8 @@ export default class Scene extends Element {
 
     this.camera = camera;
 
-    this.environment.background = options?.background ?? this.environment.background;
-    this.environment.gravity = options?.gravity ?? this.environment.gravity;
+    this.environment.background = options.background ?? this.environment.background;
+    this.environment.gravity = options.gravity ?? this.environment.gravity;
 
     this.engine.scenes.set(this.ID, this);
 

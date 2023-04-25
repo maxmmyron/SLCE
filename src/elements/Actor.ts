@@ -7,12 +7,6 @@ import Element from "./Element";
 export default class Actor extends Element {
   readonly scene: Sceneable;
 
-  isGravityEnabled: boolean = true;
-
-  isCollisionEnabled: boolean = true;
-
-  isTextureEnabled: boolean = true;
-
   /**
    * The current texture ID to draw for the actor.
    * Overridden by AnimationID if animation is active.
@@ -20,6 +14,10 @@ export default class Actor extends Element {
    * @default ""
    */
   textureID: string = "";
+
+  isGravityEnabled: boolean;
+  isCollisionEnabled: boolean;
+  isTextureEnabled: boolean;
 
   private _textureFrame: number = 0;
 
@@ -55,8 +53,11 @@ export default class Actor extends Element {
 
     this.scene.actors.set(this.ID, this);
 
+    this.isGravityEnabled = options.isGravityEnabled ?? true;
+    this.isCollisionEnabled = options.isCollisionEnabled ?? true;
+    this.isTextureEnabled = options.isTextureEnabled ?? true;
+
     this.previousState = this.createLastState();
-    this.isDebugEnabled = options?.isDebugEnabled || false;
 
     this.engine.parameterGUI.baseSection.getSubsectionByTitle(scene.name)
       .addSubsection(this.name, false)
