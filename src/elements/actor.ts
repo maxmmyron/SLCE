@@ -1,5 +1,5 @@
 import Vector2D from "@/math/Vector2D";
-import Element from "./element";
+import Element from "./Element";
 
 /**
  * An actor that can be added to the engine and manipulated.
