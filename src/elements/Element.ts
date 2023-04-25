@@ -1,5 +1,12 @@
 import Vector2D from "@/math/Vector2D";
 
+type ElementState = {
+  position: Vector2D;
+  velocity: Vector2D;
+  rotation: number;
+  scale: Vector2D;
+};
+
 /**
  * The base class for all engine elements.
  */
@@ -25,9 +32,12 @@ export default class Element {
 
   velocity: Vector2D = new Vector2D();
 
-  rotation: Vector2D = new Vector2D();
+  /**
+   * The element rotation in radians.
+   */
+  rotation: number = 0;
 
-  size: Vector2D = new Vector2D();
+  scale: Vector2D = new Vector2D();
 
   protected isPreloaded: boolean = false;
 
@@ -50,19 +60,19 @@ export default class Element {
    *
    * @param name name of element.
    * @param scene engine reference
-   * @param defaultProperties Element properties to apply on startup
+   * @param options Element properties to apply on startup
    */
-  constructor(name: string, engine: Engineable, defaultProperties: Partial<ElementDefaultProperties>) {
+  constructor(name: string, engine: Engineable, options: ElementOptions = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
 
-    defaultProperties.position && (this.position = defaultProperties.position);
-    defaultProperties.velocity && (this.velocity = defaultProperties.velocity);
-    defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
-    defaultProperties.size && (this.size = defaultProperties.size);
-    defaultProperties.isDebugEnabled && (this.isDebugEnabled = defaultProperties.isDebugEnabled);
+    options.position && (this.position = options.position);
+    options.velocity && (this.velocity = options.velocity);
+    options.rotation && (this.rotation = options.rotation);
+    options.scale && (this.scale = options.scale);
+    options.isDebugEnabled && (this.isDebugEnabled = options.isDebugEnabled);
 
     this.previousState = this.createLastState();
   }
@@ -153,7 +163,8 @@ export default class Element {
     return {
       position: this.position,
       velocity: this.velocity,
-      size: this.size,
+      rotation: this.rotation,
+      scale: this.scale,
     };
   };
 

@@ -25,7 +25,7 @@ export default class Actor extends Element {
 
   private renderPosition: Vector2D = new Vector2D();
 
-  private _textures: { [key: string]: Textureable } = {};
+  private _textures: { [key: string]: Texture } = {};
 
 
   /**
@@ -46,17 +46,17 @@ export default class Actor extends Element {
    *
    * @param name name of actor
    * @param scene scene reference to add actor to
-    * @param defaultProperties default properties to apply at creation
+    * @param options default properties to apply at creation
    */
-  constructor(name: string, scene: Sceneable, defaultProperties: Partial<ElementDefaultProperties> = {}) {
-    super(name, scene.engine, defaultProperties);
+  constructor(name: string, scene: Sceneable, options: ActorOptions = {}) {
+    super(name, scene.engine, options);
 
     this.scene = scene;
 
     this.scene.actors.set(this.ID, this);
 
     this.previousState = this.createLastState();
-    this.isDebugEnabled = defaultProperties?.isDebugEnabled || false;
+    this.isDebugEnabled = options?.isDebugEnabled || false;
 
     this.engine.parameterGUI.baseSection.getSubsectionByTitle(scene.name)
       .addSubsection(this.name, false)
@@ -131,7 +131,7 @@ export default class Actor extends Element {
    * @param delta the current delta time for the update loop
    */
   private updateTexture = (timestep: number): void => {
-    let texture: Textureable = this._textures[this.textureID];
+    let texture: Texture = this._textures[this.textureID];
 
     if ((this.textureDeltaSum += timestep) >= texture.frameDuration) {
       this.textureDeltaSum -= texture.frameDuration;
@@ -152,9 +152,9 @@ export default class Actor extends Element {
    * @param ctx the canvas context to render to
    */
   private renderTexture = (ctx: CanvasRenderingContext2D): void => {
-    const texture: Textureable = this._textures[this.textureID];
+    const texture: Texture = this._textures[this.textureID];
 
-    const renderSize = this.size || texture.frameSize;
+    const renderSize = this.scale || texture.frameSize;
 
     ctx.drawImage(
       texture.bitmap,
@@ -178,12 +178,12 @@ export default class Actor extends Element {
     ctx.save();
 
     ctx.strokeStyle = "red";
-    ctx.strokeRect(this.renderPosition.x, this.renderPosition.y, this.size.x, this.size.y);
+    ctx.strokeRect(this.renderPosition.x, this.renderPosition.y, this.scale.x, this.scale.y);
 
     ctx.restore();
   };
 
-  get textures(): { [key: string]: Textureable } {
+  get textures(): { [key: string]: Texture } {
     return this._textures;
   }
 

@@ -22,15 +22,15 @@ export default class Scene extends Element {
    * @param name name of scene
    * @param engine engine reference to attach scene to
    * @param camera camera to attach to scene
-   * @param defaultProperties optional properties to assign at creation
+   * @param options optional properties to assign at creation
    */
-  constructor(name: string, engine: Engineable, camera: Camerable, defaultProperties: Partial<ElementDefaultProperties> & Partial<SceneEnvironment> = {}) {
-    super(name, engine, defaultProperties);
+  constructor(name: string, engine: Engineable, camera: Camerable, options: SceneOptions = {}) {
+    super(name, engine, options);
 
     this.camera = camera;
 
-    this.environment.background = defaultProperties?.background ?? this.environment.background;
-    this.environment.gravity = defaultProperties?.gravity ?? this.environment.gravity;
+    this.environment.background = options?.background ?? this.environment.background;
+    this.environment.gravity = options?.gravity ?? this.environment.gravity;
 
     this.engine.scenes.set(this.ID, this);
 
@@ -57,12 +57,12 @@ export default class Scene extends Element {
 
   override internalRender = (ctx: CanvasRenderingContext2D, interpolationFactor: number): void => {
     ctx.fillStyle = this.environment.background;
-    ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+    ctx.fillRect(this.position.x, this.position.y, this.scale.x, this.scale.y);
 
     ctx.save();
 
     ctx.beginPath();
-    ctx.rect(this.position.x, this.position.y, this.size.x, this.size.y);
+    ctx.rect(this.position.x, this.position.y, this.scale.x, this.scale.y);
     ctx.clip();
 
     ctx.scale(this.camera.zoom, this.camera.zoom);
