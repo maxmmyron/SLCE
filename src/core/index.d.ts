@@ -10,6 +10,7 @@ interface Engineable {
   preloadedActorCount: number;
 
   isPaused: boolean;
+  isStarted: boolean;
 
   getScenesByName(name: string): Array<(import("../elements/scene").default)>;
 
