@@ -1,4 +1,4 @@
-import { describe, it, expect, vitest } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { createMockEngineInstance } from "../mocks/Engine.mock";
 import Engine from "@/core/Engine";
 
@@ -22,16 +22,15 @@ describe("Engine", () => {
   });
 
   describe("starting", () => {
-    it("preloads actors", () => {
+    it("preloads actors", async () => {
       const { engine, actor } = createMockEngineInstance();
 
-      actor.preload = vitest.fn();
-      const preloadSpy = vitest.spyOn(actor, "preload");
+      actor.preload = vi.fn(() => new Promise<void>((resolve) => resolve()));
+      const preloadSpy = vi.spyOn(actor, "preload");
 
-      engine.start().then(() => {
-        expect(false).toBe(true);
-        expect(preloadSpy).toHaveBeenCalled();
-      })
+      await engine.start();
+
+      expect(preloadSpy).toHaveBeenCalled();
     });
 
     it("throws an error when preloading after engine start", async () => {
@@ -43,16 +42,20 @@ describe("Engine", () => {
     });
   });
 
-  describe("events", () => {
-    describe("custom event callbacks", () => {
-      it("can be registered", () => {});
-      it("can be unregistered", () => {});
+  describe("event callbacks", () => {
+    it("can be registered", () => {
+      const { engine } = createMockEngineInstance();
+      engine.registerEventCallback("onmousedown", () => {});
+
+      expect(engine.eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(1);
     });
+    it("can be unregistered", () => {
+      const { engine } = createMockEngineInstance();
+      let callback = () => {};
+      engine.registerEventCallback("onmousedown", callback);
+      engine.unregisterEventCallback("onmousedown", callback);
 
-    it("of type tick are emitted on tick cycle", () => {});
-
-    it("of type render are emitted on mousedown", () => {});
-
-    it("of type onresize are emitted on resize", () => {});
+      expect(engine.eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(0);
+    });
   });
 });
