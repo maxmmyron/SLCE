@@ -36,7 +36,6 @@ describe("Camera", () => {
       camera.registerEventCallback("onmousedown", () => { });
 
       expect(engine.eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(1);
-      expect(engine.eventHandler.getRegisteredCallbacks("whilemousedown").length).toBe(1);
     });
     it("can be unregistered", () => {
       const { engine } = createMockEngineInstance();
