@@ -65,12 +65,12 @@ interface GUISectionable {
   getSubsectionByTitle: (name: string) => GUISectionable;
 }
 
-type DefaultCameraProperties = {
+type CameraOptions = Partial<{
   position?: Vectorable;
   rotation?: Vectorable;
   zoom?: number;
-}
+}>;
 
-type DefaultEngineProperties = {
+type EngineOptions = Partial<{
   isDebugEnabled?: boolean;
-}
+}>;
