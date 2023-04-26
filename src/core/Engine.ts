@@ -106,10 +106,9 @@ export default class Engine implements Engineable {
    * Whether or not the engine has been initialized. This flag only changes
    * once during the engine's lifetime.
    *
-   * @private
    * @default false
    */
-  private isStarted: boolean = false;
+  isStarted: boolean = false;
 
   /**
    * Whether or not the engine has finished preload operations.
