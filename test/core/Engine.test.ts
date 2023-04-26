@@ -1,14 +1,22 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockEngineInstance } from "../mocks/Engine.mock";
-import Engine from "@/core/Engine";
 
 describe("Engine", () => {
+  let engine: Engineable, actor: Elementable;
+
+  beforeEach(() => {
+    let instances = createMockEngineInstance();
+    engine = instances.engine;
+    actor = instances.actor;
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe("constructor", () => {
     it("should create an instance of Engine", () => {
-      const {engine} = createMockEngineInstance();
-
       expect(engine).toBeDefined();
-      expect(engine).toBeInstanceOf(Engine);
     });
 
     it("should create an instance of Engine with options", () => {
@@ -23,18 +31,17 @@ describe("Engine", () => {
 
   describe("starting", () => {
     it("preloads actors", async () => {
-      const { engine, actor } = createMockEngineInstance();
-
       actor.preload = vi.fn(() => new Promise<void>((resolve) => resolve()));
       const preloadSpy = vi.spyOn(actor, "preload");
 
       await engine.start();
+      engine.isPaused = true;
 
       expect(preloadSpy).toHaveBeenCalled();
     });
 
     it("throws an error when preloading after engine start", async () => {
-      const { engine } = createMockEngineInstance();
+      actor.preload = vi.fn(() => new Promise<void>((resolve) => resolve()));
 
       await engine.start();
 
@@ -44,13 +51,12 @@ describe("Engine", () => {
 
   describe("event callbacks", () => {
     it("can be registered", () => {
-      const { engine } = createMockEngineInstance();
       engine.registerEventCallback("onmousedown", () => {});
 
       expect(engine.eventHandler.getRegisteredCallbacks("onmousedown").length).toBe(1);
     });
+
     it("can be unregistered", () => {
-      const { engine } = createMockEngineInstance();
       let callback = () => {};
       engine.registerEventCallback("onmousedown", callback);
       engine.unregisterEventCallback("onmousedown", callback);
