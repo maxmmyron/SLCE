@@ -1,16 +1,12 @@
 import { describe, it, expect } from "vitest";
 import Actor from "@/elements/Actor";
-import { createMockEngine } from "../mocks/Engine.mock";
-import Camera from "@/core/Camera";
+import { createMockEngineInstance } from "../mocks/Engine.mock";
 import Vector2D from "@/math/Vector2D";
-import Scene from "@/elements/Scene";
 
 describe("Actor", () => {
   describe("constructor", () => {
     it("instantiates new scene", () => {
-      const engine = createMockEngine();
-      const scene = new Scene("scene", engine, new Camera("cam", engine));
-
+      const { engine, scene } = createMockEngineInstance();
       const actor = new Actor("test", scene);
 
       expect(actor.name).toBe("test");
@@ -18,9 +14,7 @@ describe("Actor", () => {
     });
 
     it("has default properties when no properties are passed", () => {
-      const engine = createMockEngine();
-      const scene = new Scene("test", engine, new Camera("cam", engine));
-
+      const { engine, scene } = createMockEngineInstance();
       const actor = new Actor("test", scene);
 
       expect(actor.isGravityEnabled).toBe(true);
@@ -32,10 +26,7 @@ describe("Actor", () => {
     });
 
     it("can be created with default properties", () => {
-      const engine = createMockEngine();
-      const scene = new Scene("test", engine, new Camera("cam", engine));
-
-
+      const { engine, scene } = createMockEngineInstance();
       const actor = new Actor("test", scene, {
         isGravityEnabled: false,
         position: new Vector2D(1, 2),

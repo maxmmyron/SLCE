@@ -9,34 +9,30 @@ import Vector2D from "@/math/Vector2D";
 export default class Camera implements Camerable {
 
   readonly name: string;
-
-  private readonly internalID: string;
-
   readonly engine: Engineable;
 
-  position: Vector2D = new Vector2D();
-
+  position: Vector2D;
   velocity: Vector2D = new Vector2D();
+  rotation: Vector2D;
+  zoom: number;
 
-  rotation: Vector2D = new Vector2D();
-
-  zoom: number = 1;
+  private readonly internalID: string;
 
   /**
    * Creates a new camera instance.
    * @param name unique name of camera
    * @param engine engine to assign to camera
-   * @param defaultProperties optional properties to assign at creation
+   * @param options optional properties to assign at creation
    */
-  constructor(name: string, engine: Engineable, defaultProperties: Partial<DefaultCameraProperties> = {}) {
+  constructor(name: string, engine: Engineable, options: CameraOptions = {}) {
     this.name = name;
     this.internalID = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
     this.engine = engine;
 
-    defaultProperties.position && (this.position = defaultProperties.position);
-    defaultProperties.rotation && (this.rotation = defaultProperties.rotation);
-    defaultProperties.zoom && (this.zoom = defaultProperties.zoom);
+    this.position = options.position ?? new Vector2D();
+    this.rotation = options.rotation ?? new Vector2D();
+    this.zoom = options.zoom ?? 1;
 
     this.engine.parameterGUI.baseSection.addSubsection(this.name, false)
       .addParameter("Position", () => this.position)

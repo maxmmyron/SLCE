@@ -1,18 +1,18 @@
 import { describe, it, expect } from "vitest";
 import Element from "@/elements/Element";
-import { createMockEngine } from "../mocks/Engine.mock";
+import { createMockEngineInstance } from "../mocks/Engine.mock";
 import Vector2D from "@/math/Vector2D";
 
 describe("Element", () => {
   describe("constructor", () => {
     it("instantiates new element", () => {
-      const engine = createMockEngine();
+      const { engine } = createMockEngineInstance();
       const element = new Element("test", engine, {});
       expect(element.name).toBe("test");
     });
 
     it("has default properties when no properties are passed", () => {
-      const engine = createMockEngine();
+      const { engine } = createMockEngineInstance();
       const element = new Element("test", engine, {});
 
       expect(element.position.toObject()).toEqual({ x: 0, y: 0 });
@@ -22,7 +22,7 @@ describe("Element", () => {
     });
 
     it("can be created with default properties", () => {
-      const engine = createMockEngine();
+      const { engine } = createMockEngineInstance();
       const element = new Element("test", engine, {
         position: new Vector2D(1, 2),
         velocity: new Vector2D(3, 4),
@@ -39,7 +39,7 @@ describe("Element", () => {
 
   describe("event callbacks", () => {
     it("can be registered", () => {
-      const engine = createMockEngine();
+      const { engine } = createMockEngineInstance();
       const element = new Element("test", engine, {});
 
       element.registerEventCallback("onmousedown", () => {});
@@ -48,7 +48,7 @@ describe("Element", () => {
     });
 
     it("can be unregistered", () => {
-      const engine = createMockEngine();
+      const { engine } = createMockEngineInstance();
       const element = new Element("test", engine, {});
 
       let callback = () => {};

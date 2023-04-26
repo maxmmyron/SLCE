@@ -106,10 +106,9 @@ export default class Engine implements Engineable {
    * Whether or not the engine has been initialized. This flag only changes
    * once during the engine's lifetime.
    *
-   * @private
    * @default false
    */
-  private isStarted: boolean = false;
+  isStarted: boolean = false;
 
   /**
    * Whether or not the engine has finished preload operations.
@@ -190,25 +189,25 @@ export default class Engine implements Engineable {
    * Creates a new Engine instance.
    *
    * @param canvasElement the canvas element to render to.
-   * @param defaultProperties default properties to apply to the engine.
+   * @param options default properties to apply to the engine.
    */
-  constructor(canvasElement: HTMLCanvasElement, defaultProperties: Partial<DefaultEngineProperties> = {}) {
+  constructor(canvasElement: HTMLCanvasElement, options: EngineOptions = {}) {
     this.canvasElement = canvasElement;
-
     this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
 
+    // instantiate core components
     this.eventHandler = new EventHandler(this.canvasElement);
     this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
-
     this.textureHandler = new TextureHandler();
-
     this._canvasSize = this.fixRenderScale();
-
     this.parameterGUI = new ParameterGUI();
     this.parameterGUI.baseSection
       .addParameter("FPS", () => this._FPS)
       .addParameter("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
       .addParameter("tick lag", () => this.lag);
+
+    // apply options
+    this.parameterGUI.isEnabled = options.isDebugEnabled ?? false;
   }
 
   getScenesByName = (name: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === name);

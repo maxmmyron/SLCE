@@ -2,14 +2,15 @@ interface Engineable {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
   readonly parameterGUI: GUIable;
-  readonly eventHandler: EventHandler;
-  readonly textureHandler: TextureHandler;
+  readonly eventHandler: EventHandlerable;
+  readonly textureHandler: TextureHandlerable;
 
   scenes: Map<string, import("../elements/scene").default>;
 
   preloadedActorCount: number;
 
   isPaused: boolean;
+  isStarted: boolean;
 
   getScenesByName(name: string): Array<(import("../elements/scene").default)>;
 
@@ -65,12 +66,12 @@ interface GUISectionable {
   getSubsectionByTitle: (name: string) => GUISectionable;
 }
 
-type DefaultCameraProperties = {
+type CameraOptions = Partial<{
   position?: Vectorable;
   rotation?: Vectorable;
   zoom?: number;
-}
+}>;
 
-type DefaultEngineProperties = {
+type EngineOptions = Partial<{
   isDebugEnabled?: boolean;
-}
+}>;
