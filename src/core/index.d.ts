@@ -2,8 +2,8 @@ interface Engineable {
   readonly canvasElement: HTMLCanvasElement;
   readonly ctx: CanvasRenderingContext2D;
   readonly parameterGUI: GUIable;
-  readonly eventHandler: EventHandler;
-  readonly textureHandler: TextureHandler;
+  readonly eventHandler: EventHandlerable;
+  readonly textureHandler: TextureHandlerable;
 
   scenes: Map<string, import("../elements/scene").default>;
 
