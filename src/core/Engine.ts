@@ -1,391 +1,212 @@
-import Scene from "@/elements/Scene";
-import EventHandler from "@/util/EventHandler";
-import Vector2D from "@/math/Vector2D";
-import TextureHandler from "@/util/TextureHandler";
-import ParameterGUI from "./gui";
+import { createActor, moveActor } from "../core/actor";
+import { createCamera } from "../core/camera";
+import { addActorToScene, createScene, removeActorFromScene, updateActorInScene } from "../core/scene";
+import { updateById } from "./util";
 
-const TARGET_FPS: number = 60;
-const MAX_UPDATES_PER_FRAME: number = 240;
+const initialEngineState: SLCE.EngineState = {
+  cameras: [],
+  scenes: [],
+  activeCameraId: null,
+  activeSceneId: null,
+  deltaTime: 0, // Time elapsed since last frame
+  lastUpdateTime: 0,
+  isRunning: false,
+  isPaused: true,
+};
 
-/**
- * Engine class. Handles actor management, update game loop, and rendering.
- *
- * @class
- */
-export default class Engine implements Engineable {
+// Reducers (pure functions that take current state and an action, return new state)
 
-  /**
-   * Canvas element on which to attach context and event listeners
-   *
-   * @readonly
-   */
-  readonly canvasElement: HTMLCanvasElement;
-
-  /**
-   * Canvas context to draw to. Initialized on engine start.
-   *
-   * @readonly
-   */
-  readonly ctx: CanvasRenderingContext2D;
-
-  /**
-   * The engine's parameter
-   *
-   * @readonly
-   */
-  readonly parameterGUI: GUIable
-
-  /**
-   * An eventHandler used to manage event listeners.
-   *
-   * @readonly
-   */
-  readonly eventHandler: EventHandler;
-
-  /**
-   * A texture handler used to manage textures.
-   *
-   * @readonly
-   */
-  readonly textureHandler: TextureHandler;
-
-  /**
-   * A map containing string IDs and associated scenes.
-   *
-   * @default new Map()
-   */
-  scenes: Map<string, Scene> = new Map();
-
-  /**
-   * A count of actors that have been successfully preloaded.
-   * Used during engine start to determine preload progress.
-   *
-   * @default 0
-   */
-  preloadedActorCount: number = 0;
-
-  /**
-   * Whether or not the engine has paused ticks and render calls.
-   *
-   * @default false
-   */
-  isPaused: boolean = true;
-
-  /**
-   * The current size of the canvas element.
-   *
-   * @private
-   */
-  private _canvasSize: Vector2D;
-
-  /**
-   * The current engine runtime in milliseconds.
-   *
-   * @private
-   * @default 0
-   */
-  private _engineRuntimeMilliseconds: number = 0;
-
-  /**
-   * High-res timestamp of engine start.
-   *
-   * @private
-   * @default 0
-   */
-  private _engineStartTimestamp: number = 0;
-
-  /**
-   * The current FPS of the engine.
-   *
-   * @private
-   * @default 0
-   */
-  private _FPS: number = 0;
-
-  /**
-   * Whether or not the engine has been initialized. This flag only changes
-   * once during the engine's lifetime.
-   *
-   * @default false
-   */
-  isStarted: boolean = false;
-
-  /**
-   * Whether or not the engine has finished preload operations.
-   *
-   * @private
-   * @default false
-   */
-  private isPreloaded: boolean = false;
-
-  /**
-   * The total number of actors that are currently in the engine.
-   * Used to determine preload progress.
-   *
-   * @private
-   * @default 0
-   */
-  private totalActorCount: number = 0;
-
-  /**
-   * Accumulated lag time between updates in ms. Used to determine how many
-   * updates to perform in a single frame.
-   */
-  private lag: number = 0;
-
-  /**
-   * Maximum number of updates to perform between draw calls. If this number is
-   * exceeded, the engine will panic and reset the lag accumulator.
-   *
-   * @default MAX_UPDATES_PER_FRAME
-   */
-  private readonly maxUpdatesPerFrame: number = MAX_UPDATES_PER_FRAME;
-
-  /**
-   * The previous high-res timestamp of the engine in milliseconds. Used to calculate the
-   * delta time between frames.
-   *
-   * @private
-   * @default 0
-   */
-  private previousUpdateTimestamp: DOMHighResTimeStamp = 0;
-
-  /**
-   * Ideal tick duration in milliseconds. Used for update calculations.
-   *
-   * @default 1000 / TARGET_FPS
-   */
-  private readonly targetTickDurationMilliseconds: number = 1000 / TARGET_FPS;
-
-  /**
-   * Current ID of update loop.
-   *
-   * @private
-   * @default -1
-   * @unused
-   */
-  private updateID: number = -1;
-
-  /**
-   * Number of ticks that have occurred since engine start. Used to calculate
-   * FPS.
-   *
-   * @private
-   * @default 0
-   * @unused
-   */
-  private updatesSinceEngineStart: number = 0;
-
-  /**
-   * The current rendering scale of the canvas. At a low level, this value is
-   * equivalent to the window device pixel ratio.
-   *
-   * @private
-   * @default 1
-   */
-  private canvasScale: number = 1;
-
-  /**
-   * Creates a new Engine instance.
-   *
-   * @param canvasElement the canvas element to render to.
-   * @param options default properties to apply to the engine.
-   */
-  constructor(canvasElement: HTMLCanvasElement, options: EngineOptions = {}) {
-    this.canvasElement = canvasElement;
-    this.ctx = <CanvasRenderingContext2D>canvasElement.getContext("2d");
-
-    // instantiate core components
-    this.eventHandler = new EventHandler(this.canvasElement);
-    this.eventHandler.setEnginePauseStateCallback(() => this.isPaused);
-    this.textureHandler = new TextureHandler();
-    this._canvasSize = this.fixRenderScale();
-    this.parameterGUI = new ParameterGUI();
-    this.parameterGUI.baseSection
-      .addParameter("FPS", () => this._FPS)
-      .addParameter("runtime", () => ((performance.now() - this._engineRuntimeMilliseconds) / 1000))
-      .addParameter("tick lag", () => this.lag);
-
-    // apply options
-    this.parameterGUI.isEnabled = options.isDebugEnabled ?? false;
+export const engineReducer = (state: SLCE.EngineState, action: SLCE.EngineAction): SLCE.EngineState => {
+  switch (action.type) {
+    case 'ADD_CAMERA':
+      return {
+        ...state,
+        cameras: [...state.cameras, createCamera(action.camera)],
+      };
+    case 'SET_ACTIVE_CAMERA':
+      return {
+        ...state,
+        activeCameraId: action.id,
+        cameras: state.cameras.map(cam => ({
+          ...cam,
+          active: cam.id === action.id
+        }))
+      };
+    case 'UPDATE_CAMERA':
+      return {
+        ...state,
+        cameras: updateById(state.cameras, action.payload.cameraId, action.payload.props)
+      };
+    case 'ADD_SCENE':
+      return {
+        ...state,
+        scenes: [...state.scenes, createScene(action.scene)],
+      };
+    case 'SET_ACTIVE_SCENE':
+      return {
+        ...state,
+        activeSceneId: action.id,
+        scenes: state.scenes.map(scene => ({
+          ...scene,
+          active: scene.id === action.id
+        }))
+      };
+    case 'ADD_ACTOR_TO_SCENE':
+      return {
+        ...state,
+        scenes: state.scenes.map(scene =>
+          scene.id === action.payload.sceneId
+            ? addActorToScene(scene, createActor(action.payload.actorProps))
+            : scene
+        )
+      };
+    case 'REMOVE_ACTOR_FROM_SCENE':
+      return {
+        ...state,
+        scenes: state.scenes.map(scene =>
+          scene.id === action.payload.sceneId
+            ? removeActorFromScene(scene, action.payload.actorId)
+            : scene
+        )
+      };
+    case 'UPDATE_ACTOR_IN_SCENE':
+      return {
+        ...state,
+        scenes: state.scenes.map(scene =>
+          scene.id === action.payload.sceneId
+            ? updateActorInScene(scene, action.payload.actorId, action.payload.props)
+            : scene
+        )
+      };
+    case 'SET_RUNNING_STATE':
+      return { ...state, isRunning: action.runningState };
+    case 'UPDATE_TIME':
+      const currentTime = performance.now();
+      const deltaTime = (currentTime - state.lastUpdateTime) / 1000; // in seconds
+      return {
+        ...state,
+        deltaTime: deltaTime,
+        lastUpdateTime: currentTime
+      };
+    default:
+      return state;
   }
+};
 
-  getScenesByName = (name: string): Array<Scene> => Array.from(this.scenes.values()).filter((scene) => scene.name === name);
+// Dispatcher for actions (pure function)
+const dispatch = (currentState: SLCE.EngineState, action: SLCE.EngineAction) => engineReducer(currentState, action);
 
-  /**
-   * Starts engine update loop. Used only once at startup.
-   *
-   * @throws {Error} if the start function has already been called.
-   */
-  start = async (): Promise<void> => {
-    if(this.isStarted)
-      throw new Error("Engine has already been started.");
+// Game Loop (Higher-order function for state management)
+// This is the one place where we manage a mutable 'state' variable
+// to hold the current engine state for the game loop, but
+// each update is still a pure function returning a new state.
 
-    this.fixRenderScale();
+export const createGameEngine = () => {
+  let currentState = initialEngineState;
+  let animationFrameId: number | null = null;
 
-    this.canvasElement.tabIndex = -1;
-    this.canvasElement.focus();
+  const getEngineState = () => currentState; // Pure getter
 
-    this.eventHandler.registerEventCallback("onresize", () => this._canvasSize = this.fixRenderScale());
-
-    this.eventHandler.registerEventCallback("onmousedown", (ev) => {
-      ev = <MouseEventPayload>ev;
-      this.parameterGUI.lastClickPosition = new Vector2D(ev.x, ev.y);
-    });
-
-    this.updateID = requestAnimationFrame(this.update);
-
-    this.totalActorCount = Array.from(this.scenes.values()).reduce((acc, scene) => acc + scene.actors.size, 0);
-
-    await Promise.all(Array.from(this.scenes.values()).map((scene) => scene.start()));
-
-    this._engineStartTimestamp = performance.now();
-
-    this.isPreloaded = true;
-    this.isStarted = true;
-    this.isPaused = false;
+  // Pure function to update the internal state
+  const updateState = (newState: SLCE.EngineState) => {
+    currentState = newState;
   };
 
-  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void {
-    this.eventHandler.registerEventCallback(type, callback);
-  }
-
-  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void {
-    this.eventHandler.unregisterEventCallback(type, callback);
-  }
-
-  /**
-   * Performs general update logic and manages tick cycle.
-   *
-   * @private
-   *
-   * @param timestamp a timestamp provided by the browser to determine the delta
-   * time since the last update.
-   */
-  private update = (timestamp: DOMHighResTimeStamp) => {
-    this.updateID = requestAnimationFrame(this.update);
-
-    if (!this.isPreloaded) {
-      this.render(0);
+  const gameLoop = (timestamp: number) => {
+    if (!currentState.isRunning) {
+      animationFrameId = null;
       return;
     }
 
-    const delta: number = timestamp - this.previousUpdateTimestamp;
-    this.previousUpdateTimestamp = timestamp;
+    // 1. Update time
+    updateState(dispatch(currentState, { type: 'UPDATE_TIME' }));
 
-    this.lag += delta;
-    this._engineRuntimeMilliseconds += delta;
+    // 2. Get active scene and camera
+    const activeScene = currentState.scenes.find(s => s.id === currentState.activeSceneId);
+    const activeCamera = currentState.cameras.find(c => c.id === currentState.activeCameraId);
 
-    this._FPS = 1000 / delta;
+    if (activeScene && activeCamera) {
+      // 3. Process game logic (e.g., actor updates based on rules)
+      // This is where game-specific "systems" or "processors" would operate.
+      // Each system would take the current scene/actors and return a *new*
+      // updated version of them.
+      let updatedActors = activeScene.actors;
 
-    let cycleUpdateCount: number = 0;
+      // Example: Simple actor movement system
+      updatedActors = updatedActors.map(actor => {
+        if (actor.type === 'player') {
+          // Imagine input handling here, this is just an example
+          return moveActor(actor, 1 * currentState.deltaTime, 0); // Move right
+        }
+        return actor;
+      });
 
-    while (this.lag >= this.targetTickDurationMilliseconds && !this.isPaused) {
-      this.eventHandler.queueEvent("ontick", { deltaTime: this.targetTickDurationMilliseconds, type: "ontick" });
-      this.eventHandler.dispatchQueue();
+      // Update the active scene with the new actors
+      const newActiveScene = { ...activeScene, actors: updatedActors };
+      const newScenes = updateById(currentState.scenes, newActiveScene.id, newActiveScene);
+      updateState({ ...currentState, scenes: newScenes });
 
-      Array.from(this.scenes.values())
-        .filter(scene => scene.isTickEnabled)
-        .forEach(scene => scene.tick(this.targetTickDurationMilliseconds));
 
-      this.lag -= this.targetTickDurationMilliseconds;
-
-      this.updatesSinceEngineStart++;
-      if (++cycleUpdateCount >= this.maxUpdatesPerFrame) {
-        this.lag = 0;
-        break;
-      }
+      // 4. Render (separate module would handle this)
+      // The rendering function would be a pure function that takes the activeScene
+      // and activeCamera and draws them to a canvas/DOM.
+      // It *does not* modify the engine state.
+      renderGame(newActiveScene, activeCamera); // Assume renderGame is defined elsewhere
     }
 
-    this.render(this.lag / this.targetTickDurationMilliseconds);
-
-    Array.from(this.scenes.values())
-      .filter(scene => scene.isQueuedForDisposal)
-      .forEach(scene => this.scenes.delete(scene.ID));
+    animationFrameId = requestAnimationFrame(gameLoop);
   };
 
-  /**
-   * Draws relevant elements onto the context
-   *
-   * @private
-   *
-   * @param {number} interpolationFactor interpolation value
-   */
-  private render = (interpolationFactor: number) => {
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-    this.ctx.scale(this.canvasScale, this.canvasScale);
-
-    if (!this.isPreloaded) this.renderPreloadScreen();
-    if (this.isPaused || !this.isPreloaded) return;
-
-    this.ctx.clearRect(0, 0, this._canvasSize.x, this._canvasSize.y);
-
-    Array.from(this.scenes.values()).filter(scene => scene.isRenderEnabled).forEach(scene => scene.render(interpolationFactor));
-
-    this.eventHandler.queueEvent("onrender", { interpolationFactor, type: "onrender" });
-
-    this.parameterGUI.render(this.ctx);
+  const start = () => {
+    if (!currentState.isRunning) {
+      updateState(dispatch(currentState, { type: 'SET_RUNNING_STATE', runningState: true }));
+      updateState({ ...currentState, lastUpdateTime: performance.now() }); // Initialize last update time
+      animationFrameId = requestAnimationFrame(gameLoop);
+      console.log('Engine started.');
+    }
   };
 
-  /**
-   * Renders the preload screen.
-   *
-   * @private
-   */
-  private renderPreloadScreen(): void {
-    this.ctx.fillStyle = "black";
-    this.ctx.fillRect(0, 0, this.canvasSize.x, this.canvasSize.y);
-
-    this.ctx.font = "30px monospace";
-    this.ctx.textAlign = "center";
-    this.ctx.fillStyle = "white";
-    this.ctx.fillText("LOADING...", this.canvasSize.x / 2, this.canvasSize.y / 2);
-
-    this.ctx.strokeStyle = "white";
-    this.ctx.strokeRect(this.canvasSize.x / 2 - 200, this.canvasSize.y / 2 + 32, 400, 16);
-    this.ctx.fillRect(this.canvasSize.x / 2 - 200, this.canvasSize.y / 2 + 32, 400 * this.preloadedActorCount / this.totalActorCount, 16);
-  }
-
-  /**
-   * Normalizes the canvas size towards device DPI
-   *
-   * @private
-   *
-    * @returns the normalized canvas size
-   */
-  private fixRenderScale = (): Vector2D => {
-    this.canvasScale = window.devicePixelRatio;
-
-    let width: number = Number(getComputedStyle(this.canvasElement)
-      .getPropertyValue("width")
-      .slice(0, -2));
-    let height: number = Number(getComputedStyle(this.canvasElement)
-      .getPropertyValue("height")
-      .slice(0, -2));
-
-    width *= this.canvasScale;
-    height *= this.canvasScale;
-
-    this.canvasElement.setAttribute("width", String(width));
-    this.canvasElement.setAttribute("height", String(height));
-
-    return new Vector2D(width, height);
+  const stop = () => {
+    if (currentState.isRunning) {
+      updateState(dispatch(currentState, { type: 'SET_RUNNING_STATE', runningState: false }));
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      console.log('Engine stopped.');
+    }
   };
 
-  get canvasSize(): Vector2D {
-    return this._canvasSize;
-  }
+  // Public API of the engine
+  return {
+    getEngineState,
+    dispatch: (action: SLCE.EngineAction) => updateState(dispatch(currentState, action)), // Dispatch updates the internal state
+    start,
+    stop,
+  };
+};
 
-  get engineRuntimeMilliseconds(): number {
-    return this._engineRuntimeMilliseconds;
+const renderGame = (scene: SLCE.Scene, camera: SLCE.Camera) => {
+  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+  if (!canvas) {
+    // console.warn("Canvas not found!"); // Comment out for cleaner console in this example
+    return;
   }
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-  get engineStartTimestamp(): number {
-    return this._engineStartTimestamp;
-  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  get FPS(): number {
-    return this._FPS;
-  }
-}
+  ctx.save();
+
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.scale(camera.zoom, camera.zoom);
+  ctx.translate(-camera.x, -camera.y);
+
+  scene.actors.forEach(actor => {
+    ctx.fillStyle = actor.color || 'gray';
+    ctx.fillRect(actor.x, actor.y, actor.width, actor.height);
+  });
+
+  ctx.restore();
+};

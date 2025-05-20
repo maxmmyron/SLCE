@@ -1,77 +1,81 @@
-interface Engineable {
-  readonly canvasElement: HTMLCanvasElement;
-  readonly ctx: CanvasRenderingContext2D;
-  readonly parameterGUI: GUIable;
-  readonly eventHandler: EventHandlerable;
-  readonly textureHandler: TextureHandlerable;
+namespace SLCE {
 
-  scenes: Map<string, import("../elements/scene").default>;
+  interface GameObject {
+    id: string;
+  }
 
-  preloadedActorCount: number;
+  // actor
+  export interface Actor extends GameObject {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    color?: string;
+    type?: string;
+    [key: string]: any; // Allow for additional properties
+  }
 
-  isPaused: boolean;
-  isStarted: boolean;
+  export declare function createActor(props: Partial<Actor> & { x: number; y: number; width: number; height: number; }): Actor;
+  export declare function moveActor(actor: Actor, dx: number, dy: number): Actor;
+  export declare function scaleActor(actor: Actor, sx: number, sy: number): Actor;
+  export declare function changeActorColor(actor: Actor, newColor: string): Actor;
 
-  getScenesByName(name: string): Array<(import("../elements/scene").default)>;
+  // camera
+  export interface Camera extends GameObject {
+    x: number;
+    y: number;
+    zoom: number;
+    active: boolean;
+  }
 
-  start(): Promise<void>;
+  export declare function createCamera(props: Partial<Camera> & { x: number; y: number; }): Camera;
+  export declare function setCameraPosition(camera: Camera, x: number, y: number): Camera;
+  export declare function setCameraZoom(camera: Camera, zoom: number): Camera;
+  export declare function activateCamera(camera: Camera): Camera;
+  export declare function deactivateCamera(camera: Camera): Camera;
 
-  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
-  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
+  // scene
+  export interface Scene extends GameObject {
+    name: string;
+    actors: Actor[];
+    active: boolean;
+    [key: string]: any; // Allow for additional properties
+  }
 
-  get canvasSize(): Vectorable;
-  get engineRuntimeMilliseconds(): number;
-  get engineStartTimestamp(): number;
-  get FPS(): number;
+  export declare function createScene(props: Partial<Scene> & { name: string }): Scene;
+  export declare function addActorToScene(scene: Scene, actor: Actor): Scene;
+  export declare function removeActorFromScene(scene: Scene, actorId: string): Scene;
+  export declare function updateActorInScene(scene: Scene, actorId: string, newActorProps: DeepPartial<Actor>): Scene;
+  export declare function activateScene(scene: Scene): Scene;
+  export declare function deactivateScene(scene: Scene): Scene;
+
+  export interface EngineState {
+    cameras: Camera[];
+    scenes: Scene[];
+    activeCameraId: string | null;
+    activeSceneId: string | null;
+    deltaTime: number;
+    lastUpdateTime: number;
+    isRunning: boolean;
+    isPaused: boolean;
+  }
+
+  type EngineAction =
+    | { type: 'ADD_CAMERA'; camera: Partial<Camera> & { x: number; y: number; } }
+    | { type: 'SET_ACTIVE_CAMERA'; id: Camera["id"] }
+    | { type: 'UPDATE_CAMERA'; payload: { cameraId: Camera["id"]; props: DeepPartial<Camera> } }
+    | { type: 'ADD_SCENE'; scene: Partial<Scene> & { name: string } }
+    | { type: 'SET_ACTIVE_SCENE'; id: Scene["id"] }
+    | { type: 'ADD_ACTOR_TO_SCENE'; payload: { sceneId: Scene["id"]; actorProps: Partial<Actor> & { x: number; y: number; width: number; height: number; } } }
+    | { type: 'REMOVE_ACTOR_FROM_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"] } }
+    | { type: 'UPDATE_ACTOR_IN_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"]; props: DeepPartial<Actor> } }
+    | { type: 'SET_RUNNING_STATE'; runningState: boolean }
+    | { type: 'UPDATE_TIME'; delta?: number  }
+
+  declare function createGameEngine(): {
+    getEngineState(): EngineState;
+    dispatch(action: EngineAction): void;
+    start(): void;
+    stop(): void;
+  };
 }
-
-interface Camerable {
-  readonly name: string;
-  readonly engine: Engineable;
-
-  position: Vectorable;
-  velocity: Vectorable;
-  rotation: Vectorable;
-  zoom: number;
-
-  registerEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
-  unregisterEventCallback<Type extends keyof EngineEventHandlersEventMap>(type: Type, callback: (payload: EngineEventHandlersEventMap[Type]) => any): void;
-}
-
-interface GUIable {
-  readonly position: Vectorable;
-  readonly baseSection: GUISectionable;
-
-  lastClickPosition: Vectorable;
-
-  isEnabled: boolean;
-
-  render(ctx: CanvasRenderingContext2D): void;
-}
-
-interface GUISectionable {
-  name: string;
-  isCollapsed: boolean;
-  subsections: Array<GUISectionable>;
-  parameters: Map<string, () => Object>;
-
-  addParameter: (name: string, callback: () => Object) => GUISectionable;
-  removeParameter: (name: string) => boolean;
-  addSubsection: (name: string, isCollapsed: boolean) => GUISectionable;
-  removeSubsection: (name: string) => boolean;
-
-  clear: () => void;
-  render: (ctx: CanvasRenderingContext2D, position: Vectorable, lastClickPosition: Vectorable) => Vectorable;
-
-  getSubsectionByTitle: (name: string) => GUISectionable;
-}
-
-type CameraOptions = Partial<{
-  position?: Vectorable;
-  rotation?: Vectorable;
-  zoom?: number;
-}>;
-
-type EngineOptions = Partial<{
-  isDebugEnabled?: boolean;
-}>;
