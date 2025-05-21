@@ -1,3 +1,5 @@
+import { GameObject } from "./index";
+
 export const deepMerge = <T>(obj1: T, obj2: T) => {
   const result = {...obj1};
   for (const key in obj2) {
@@ -15,8 +17,8 @@ export const deepMerge = <T>(obj1: T, obj2: T) => {
 };
 
 // Function for immutably updating an array of objects
-export const updateById = <T extends SLCE.GameObject>(arr: T[], id: SLCE.GameObject['id'], newProps: T) =>
+export const updateById = <T extends GameObject>(arr: T[], id: GameObject['id'], newProps: T) =>
   arr.map(item => (item.id === id ? deepMerge(item, newProps) : item));
 
 // Function for immutably removing an item from an array by id
-export const removeById = <T extends SLCE.GameObject>(arr: T[], id: SLCE.GameObject['id']) => arr.filter(item => item.id !== id);
+export const removeById = <T extends GameObject>(arr: T[], id: GameObject['id']) => arr.filter(item => item.id !== id);

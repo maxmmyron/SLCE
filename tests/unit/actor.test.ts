@@ -1,6 +1,6 @@
 // tests/unit/actor.test.js
 import { describe, it, expect } from 'vitest';
-import { createActor, moveActor, scaleActor, changeActorColor } from '../../src/core/actor';
+import { createActor, moveActor, scaleActor, changeActorColor } from '../../src/actor';
 
 describe('Actor Unit Tests', () => {
   it('should create an actor with default and provided properties', () => {

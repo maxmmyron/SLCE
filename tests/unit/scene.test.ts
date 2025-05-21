@@ -1,7 +1,7 @@
 // tests/unit/scene.test.js
 import { describe, it, expect } from 'vitest';
-import { createScene, addActorToScene, removeActorFromScene, updateActorInScene, activateScene, deactivateScene } from '../../src/core/scene';
-import { createActor } from '../../src/core/actor';
+import { createScene, addActorToScene, removeActorFromScene, updateActorInScene, activateScene, deactivateScene } from '../../src/scene';
+import { createActor } from '../../src/actor';
 
 describe('Scene Unit Tests', () => {
   it('should create a scene with default and provided properties', () => {

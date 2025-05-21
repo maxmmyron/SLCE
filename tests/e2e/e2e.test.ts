@@ -1,14 +1,28 @@
 // tests/e2e/engine.e2e.test.js
-import { describe, it, expect, vi } from 'vitest';
-import { createGameEngine } from '../../src/core/engine';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { createGameEngine, Engine } from '../../src/engine';
 import { advanceTimeAndFrames } from '../vitest.setup';
 
 // This file relies heavily on vitest.setup.js for mocking time and rAF
 
-describe('Engine E2E Tests (State Evolution)', () => {
-  it('should run game loop and update actor position over time', async () => {
-    const engine = createGameEngine();
+const createMockContext = () => ({});
 
+describe('Engine E2E Tests (State Evolution)', () => {
+  let engine: Engine;
+  let mockContext;
+
+  beforeEach(() => {
+    mockContext = createMockContext();
+
+    engine = createGameEngine(mockContext as CanvasRenderingContext2D);
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  })
+
+  it('should run game loop and update actor position over time', async () => {
     engine.dispatch({ type: 'ADD_CAMERA', camera: { id: 'e2eCam', x: 0, y: 0 } });
     engine.dispatch({ type: 'SET_ACTIVE_CAMERA', id: 'e2eCam' });
     engine.dispatch({ type: 'ADD_SCENE', scene: { id: 'e2eScene', name: 'E2E Test Scene' } });
@@ -56,8 +70,6 @@ describe('Engine E2E Tests (State Evolution)', () => {
   });
 
   it('should correctly set active camera and scene within the loop', async () => {
-    const engine = createGameEngine();
-
     engine.dispatch({ type: 'ADD_CAMERA', camera: { id: 'cam1', x: 0, y: 0 } });
     engine.dispatch({ type: 'ADD_CAMERA', camera: { id: 'cam2', x: 100, y: 100 } });
     engine.dispatch({ type: 'ADD_SCENE', scene: { id: 'sceneA', name: 'Scene A' } });
@@ -99,7 +111,7 @@ describe('Engine E2E Tests (State Evolution)', () => {
   });
 
   it('should pause and resume correctly', async () => {
-    const engine = createGameEngine();
+    const engine = createGameEngine(new CanvasRenderingContext2D());
     engine.dispatch({ type: 'ADD_CAMERA', camera: { id: 'testCam', x: 0, y: 0 } });
     engine.dispatch({ type: 'SET_ACTIVE_CAMERA', id: 'testCam' });
     engine.dispatch({ type: 'ADD_SCENE', scene: { id: 'testScene', name: 'Test Scene' } });

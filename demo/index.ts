@@ -1,12 +1,19 @@
 /// <reference types="vite/client" />
 
-import {createCamera} from "../src/core/camera";
-import {createGameEngine} from "../src/core/engine";
-import {createScene} from "../src/core/scene";
-import { createActor } from "../src/core/actor";
+import {createCamera} from "../src/camera";
+import {createGameEngine} from "../src/engine";
+import {createScene} from "../src/scene";
+import { createActor } from "../src/actor";
 import characterSpritemap from "./characterSpritemap.png";
 
-// const canvas = document.getElementById("c");
+const canvas = document.getElementById("c") as HTMLCanvasElement;
+const context = canvas.getContext("2d");
+
+const engine = createGameEngine(context!);
+
+engine.start();
+
+
 // const engine = new Engine(<HTMLCanvasElement>canvas, { isDebugEnabled: false });
 
 // const camera = new Camera("camera", engine, { position: new Vector2D(50, 50), zoom: 1 });

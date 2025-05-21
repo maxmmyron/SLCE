@@ -1,9 +1,48 @@
-import { createActor, moveActor } from "../core/actor";
-import { createCamera } from "../core/camera";
-import { addActorToScene, createScene, removeActorFromScene, updateActorInScene } from "../core/scene";
+import { Actor, createActor, moveActor } from "./actor";
+import { Camera, createCamera } from "./camera";
+import { addActorToScene, createScene, removeActorFromScene, Scene, updateActorInScene } from "./scene";
 import { updateById } from "./util";
 
-const initialEngineState: SLCE.EngineState = {
+export interface Engine {
+  getEngineState(): EngineState;
+  dispatch(action: EngineAction): void;
+  start(): void;
+  stop(): void;
+  addEventListener<T extends keyof EngineEvent>(type: T, callback: EngineEvent[T]): void;
+  removeEventListener<T extends keyof EngineEvent>(type: T, callback: EngineEvent[T]): void;
+};
+
+export interface EngineState {
+  context: CanvasRenderingContext2D;
+  cameras: Camera[];
+  scenes: Scene[];
+  activeCameraId: string | null;
+  activeSceneId: string | null;
+  deltaTime: number;
+  lastUpdateTime: number;
+  isRunning: boolean;
+  isPaused: boolean;
+}
+
+type EngineAction =
+  | { type: 'ADD_CAMERA'; camera: Partial<Camera> & { id: string } }
+  | { type: 'SET_ACTIVE_CAMERA'; id: Camera["id"] }
+  | { type: 'UPDATE_CAMERA'; payload: { cameraId: Camera["id"]; props: Partial<Camera> } }
+  | { type: 'ADD_SCENE'; scene: Partial<Scene> & { id: string; name: string; } }
+  | { type: 'SET_ACTIVE_SCENE'; id: Scene["id"] }
+  | { type: 'ADD_ACTOR_TO_SCENE'; payload: { sceneId: Scene["id"]; actorProps: Partial<Actor> & { id:string; } } }
+  | { type: 'REMOVE_ACTOR_FROM_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"] } }
+  | { type: 'UPDATE_ACTOR_IN_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"]; props: Partial<Actor> } }
+  | { type: 'SET_RUNNING_STATE'; runningState: boolean }
+  | { type: 'UPDATE_TIME'; delta?: number };
+
+interface EngineEvent {
+  "tick": (delta: number) => void;
+  "render": (delta: number) => void;
+}
+
+const createInitialState = (context: CanvasRenderingContext2D): EngineState => ({
+  context,
   cameras: [],
   scenes: [],
   activeCameraId: null,
@@ -12,11 +51,11 @@ const initialEngineState: SLCE.EngineState = {
   lastUpdateTime: 0,
   isRunning: false,
   isPaused: true,
-};
+});
 
 // Reducers (pure functions that take current state and an action, return new state)
 
-export const engineReducer = (state: SLCE.EngineState, action: SLCE.EngineAction): SLCE.EngineState => {
+export const engineReducer = (state: EngineState, action: EngineAction): EngineState => {
   switch (action.type) {
     case 'ADD_CAMERA':
       return {
@@ -33,9 +72,15 @@ export const engineReducer = (state: SLCE.EngineState, action: SLCE.EngineAction
         }))
       };
     case 'UPDATE_CAMERA':
+      let cam = state.cameras.find(c => c.id === action.payload.cameraId);
+      if(!cam) {
+        console.warn("Couldn't find camera to update");
+        return state;
+      }
+
       return {
         ...state,
-        cameras: updateById(state.cameras, action.payload.cameraId, action.payload.props)
+        cameras: updateById(state.cameras, action.payload.cameraId, {...cam, ...action.payload.props })
       };
     case 'ADD_SCENE':
       return {
@@ -70,11 +115,16 @@ export const engineReducer = (state: SLCE.EngineState, action: SLCE.EngineAction
         )
       };
     case 'UPDATE_ACTOR_IN_SCENE':
+      const scene = state.scenes.find(s => s.id === action.payload.sceneId);
+      if(!scene) return state;
+      const actor = scene.actors.find(s => s.id === action.payload.actorId);
+      if(!actor) return state;
+
       return {
         ...state,
         scenes: state.scenes.map(scene =>
           scene.id === action.payload.sceneId
-            ? updateActorInScene(scene, action.payload.actorId, action.payload.props)
+            ? updateActorInScene(scene, action.payload.actorId, {...actor, ...action.payload.props} )
             : scene
         )
       };
@@ -94,23 +144,44 @@ export const engineReducer = (state: SLCE.EngineState, action: SLCE.EngineAction
 };
 
 // Dispatcher for actions (pure function)
-const dispatch = (currentState: SLCE.EngineState, action: SLCE.EngineAction) => engineReducer(currentState, action);
+const dispatch = (currentState: EngineState, action: EngineAction) => engineReducer(currentState, action);
 
 // Game Loop (Higher-order function for state management)
 // This is the one place where we manage a mutable 'state' variable
 // to hold the current engine state for the game loop, but
 // each update is still a pure function returning a new state.
 
-export const createGameEngine = () => {
-  let currentState = initialEngineState;
+export const createGameEngine = (context: CanvasRenderingContext2D): Engine => {
+  let currentState = createInitialState(context);
+  let eventListeners: { [K in keyof EngineEvent]: Array<EngineEvent[K]> } = {
+    render: [],
+    tick: []
+  }
   let animationFrameId: number | null = null;
 
   const getEngineState = () => currentState; // Pure getter
 
   // Pure function to update the internal state
-  const updateState = (newState: SLCE.EngineState) => {
+  const updateState = (newState: EngineState) => {
     currentState = newState;
   };
+
+  const addEventListener = <T extends keyof EngineEvent>(type: T, callback: EngineEvent[T]) => {
+    // refuse to add duplicate of the same callback (i.e. same referenced object, this doesn't apply for anonymous fns).
+    if(eventListeners[type].find((cb) => cb === callback)) return;
+
+    eventListeners = {
+      ...eventListeners,
+      [type]: [...eventListeners[type], callback],
+    };
+  };
+
+  const removeEventListener =  <T extends keyof EngineEvent>(type: T, callback: EngineEvent[T]) => {
+    eventListeners = {
+      ...eventListeners,
+      [type]: eventListeners[type].filter(cb => cb !== callback),
+    }
+  }
 
   const gameLoop = (timestamp: number) => {
     if (!currentState.isRunning) {
@@ -180,13 +251,15 @@ export const createGameEngine = () => {
   // Public API of the engine
   return {
     getEngineState,
-    dispatch: (action: SLCE.EngineAction) => updateState(dispatch(currentState, action)), // Dispatch updates the internal state
+    dispatch: (action: EngineAction) => updateState(dispatch(currentState, action)), // Dispatch updates the internal state
     start,
     stop,
+    addEventListener,
+    removeEventListener,
   };
-};
+}
 
-const renderGame = (scene: SLCE.Scene, camera: SLCE.Camera) => {
+const renderGame = (scene: Scene, camera: Camera) => {
   const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
   if (!canvas) {
     // console.warn("Canvas not found!"); // Comment out for cleaner console in this example

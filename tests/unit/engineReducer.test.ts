@@ -1,9 +1,9 @@
 // tests/unit/engineReducer.test.js
 import { describe, it, expect, vi } from 'vitest';
-import { engineReducer } from '../../src/core/engine';
-import { createActor } from '../../src/core/actor'; // Mocked or imported
-import { createCamera } from '../../src/core/camera'; // Mocked or imported
-import { createScene } from '../../src/core/scene';   // Mocked or imported
+import { engineReducer, EngineState } from '../../src/engine';
+import { createActor } from '../../src/actor'; // Mocked or imported
+import { createCamera } from '../../src/camera'; // Mocked or imported
+import { createScene } from '../../src/scene';   // Mocked or imported
 
 // Mock IDs for consistent testing
 vi.mock('../../src/core/Actor', async (importOriginal) => {
@@ -34,6 +34,7 @@ vi.mock('../../src/scene', async (importOriginal) => {
 
 describe('Engine Reducer Unit Tests', () => {
   const initial = {
+    context: {} as CanvasRenderingContext2D,
     cameras: [],
     scenes: [],
     activeCameraId: null,
@@ -42,11 +43,12 @@ describe('Engine Reducer Unit Tests', () => {
     lastUpdateTime: 0,
     isRunning: false,
     isPaused: true
-  } as SLCE.EngineState;
+  } as EngineState;
 
   it('should handle ADD_CAMERA action', () => {
     const camID = crypto.randomUUID();
     const state = engineReducer(initial, { type: 'ADD_CAMERA', camera: { id: camID, x: 0, y: 0 } });
+    console.log(state.cameras[0]);
     expect(state.cameras).toHaveLength(1);
     expect(state.cameras[0].id).toBe(camID);
     expect(state.cameras[0].x).toBe(0);

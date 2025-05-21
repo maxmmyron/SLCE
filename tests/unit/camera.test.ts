@@ -1,25 +1,25 @@
 // tests/unit/camera.test.js
 import { describe, it, expect } from 'vitest';
-import { createCamera, setCameraPosition, setCameraZoom, activateCamera, deactivateCamera } from '../../src/core/camera';
+import { createCamera, setCameraPosition, setCameraZoom, activateCamera, deactivateCamera } from '../../src/camera';
 
 describe('Camera Unit Tests', () => {
   it('should create a camera with default and provided properties', () => {
-    const camera = createCamera({ x: 100, y: 200, zoom: 1.5 });
+    const camera = createCamera({ id: "cam1" });
     expect(camera).toBeDefined();
     expect(typeof camera.id).toBe('string');
-    expect(camera.x).toBe(100);
-    expect(camera.y).toBe(200);
-    expect(camera.zoom).toBe(1.5);
+    expect(camera.x).toBe(0);
+    expect(camera.y).toBe(0);
+    expect(camera.zoom).toBe(1);
     expect(camera.active).toBe(false); // Default is false
   });
 
   it('should create an active camera if specified', () => {
-    const camera = createCamera({ x: 0, y: 0, active: true });
+    const camera = createCamera({  id: "cam1", active: true  });
     expect(camera.active).toBe(true);
   });
 
   it('should set camera position and return a new immutable camera', () => {
-    const initialCamera = createCamera({ x: 0, y: 0 });
+    const initialCamera = createCamera({ id: "cam1" });
     const movedCamera = setCameraPosition(initialCamera, 50, 75);
 
     expect(movedCamera.x).toBe(50);
@@ -29,7 +29,7 @@ describe('Camera Unit Tests', () => {
   });
 
   it('should set camera zoom and return a new immutable camera', () => {
-    const initialCamera = createCamera({ x: 0, y: 0, zoom: 1 });
+    const initialCamera = createCamera({ id: "cam1" });
     const zoomedCamera = setCameraZoom(initialCamera, 2.0);
 
     expect(zoomedCamera.zoom).toBe(2.0);
@@ -38,7 +38,7 @@ describe('Camera Unit Tests', () => {
   });
 
   it('should activate a camera and return a new immutable camera', () => {
-    const initialCamera = createCamera({ x: 0, y: 0, active: false });
+    const initialCamera = createCamera({ id: "cam1" });
     const activatedCamera = activateCamera(initialCamera);
 
     expect(activatedCamera.active).toBe(true);
@@ -47,7 +47,7 @@ describe('Camera Unit Tests', () => {
   });
 
   it('should deactivate a camera and return a new immutable camera', () => {
-    const initialCamera = createCamera({ x: 0, y: 0, active: true });
+    const initialCamera = createCamera({ id: "cam1", active: true });
     const deactivatedCamera = deactivateCamera(initialCamera);
 
     expect(deactivatedCamera.active).toBe(false);

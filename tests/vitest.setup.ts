@@ -29,6 +29,8 @@ export function advanceTimeAndFrames (ms: number): void {
   callbacksToRun.forEach(callback => callback(mockTime));
 };
 
+
+
 // Reset mocks before each test
 beforeEach(() => {
   mockTime = 0;
@@ -43,6 +45,7 @@ beforeEach(() => {
   vi.mocked(window.cancelAnimationFrame).mockImplementation((id) => {
     delete rAFCallbacks[id];
   });
+  vi.mocked(window.CanvasRenderingContext2D)
 });
 
 // Mock console.warn to suppress it during tests
