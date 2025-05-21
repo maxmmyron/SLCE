@@ -46,6 +46,7 @@ describe('Engine Reducer Unit Tests', () => {
   } as EngineState;
 
   it('should handle ADD_CAMERA action', () => {
+    console.log(initial);
     const camID = crypto.randomUUID();
     const state = engineReducer(initial, { type: 'ADD_CAMERA', camera: { id: camID, x: 0, y: 0 } });
     console.log(state.cameras[0]);

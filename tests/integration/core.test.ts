@@ -1,13 +1,19 @@
 // tests/integration/core.test.js
-import { describe, it, expect, beforeEach, vi, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { createGameEngine, Engine } from '../../src/engine';
 import { createActor } from '../../src/actor'; // Not mocked for integration, actual import
 import { createCamera } from '../../src/camera'; // Not mocked for integration, actual import
 import { createScene } from '../../src/scene';   // Not mocked for integration, actual import
 
 describe('Core Engine Integration Tests', () => {
+  let engine: Engine;
+
+  beforeEach(() => {
+    let canvas = document.createElement("canvas");
+    engine = createGameEngine(canvas.getContext("2d")!);
+  })
+
   it('should dispatch actions and update engine state correctly', () => {
-    const engine = createGameEngine({} as CanvasRenderingContext2D);
     let state = engine.getEngineState();
 
     // 1. Add Camera
@@ -55,7 +61,6 @@ describe('Core Engine Integration Tests', () => {
   });
 
   it('should correctly handle activation/deactivation of cameras/scenes', () => {
-    const engine = createGameEngine({} as CanvasRenderingContext2D);
     const [cId1, cId2, sId1, sId2] = [crypto.randomUUID(),crypto.randomUUID(),crypto.randomUUID(),crypto.randomUUID()];
 
     engine.dispatch({ type: 'ADD_CAMERA', camera: { id: cId1, x: 0, y: 0 } });

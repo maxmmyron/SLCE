@@ -34,7 +34,8 @@ type EngineAction =
   | { type: 'REMOVE_ACTOR_FROM_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"] } }
   | { type: 'UPDATE_ACTOR_IN_SCENE'; payload: { sceneId: Scene["id"]; actorId: Actor["id"]; props: Partial<Actor> } }
   | { type: 'SET_RUNNING_STATE'; runningState: boolean }
-  | { type: 'UPDATE_TIME'; delta?: number };
+  | { type: 'UPDATE_TIME'; delta?: number }
+  | { type: 'SET_PAUSE_STATE'; pauseState: boolean };
 
 interface EngineEvent {
   "tick": (delta: number) => void;
@@ -130,6 +131,8 @@ export const engineReducer = (state: EngineState, action: EngineAction): EngineS
       };
     case 'SET_RUNNING_STATE':
       return { ...state, isRunning: action.runningState };
+    case 'SET_PAUSE_STATE':
+      return { ...state, isPaused: action.pauseState };
     case 'UPDATE_TIME':
       const currentTime = performance.now();
       const deltaTime = (currentTime - state.lastUpdateTime) / 1000; // in seconds
@@ -189,6 +192,13 @@ export const createGameEngine = (context: CanvasRenderingContext2D): Engine => {
       return;
     }
 
+    console.log('u');
+
+    animationFrameId = requestAnimationFrame(gameLoop);
+    if(currentState.isPaused) {
+      return;
+    }
+
     // 1. Update time
     updateState(dispatch(currentState, { type: 'UPDATE_TIME' }));
 
@@ -197,6 +207,7 @@ export const createGameEngine = (context: CanvasRenderingContext2D): Engine => {
     const activeCamera = currentState.cameras.find(c => c.id === currentState.activeCameraId);
 
     if (activeScene && activeCamera) {
+      console.log("u2")
       // 3. Process game logic (e.g., actor updates based on rules)
       // This is where game-specific "systems" or "processors" would operate.
       // Each system would take the current scene/actors and return a *new*
@@ -222,10 +233,8 @@ export const createGameEngine = (context: CanvasRenderingContext2D): Engine => {
       // The rendering function would be a pure function that takes the activeScene
       // and activeCamera and draws them to a canvas/DOM.
       // It *does not* modify the engine state.
-      renderGame(newActiveScene, activeCamera); // Assume renderGame is defined elsewhere
+      renderGame(currentState.context, newActiveScene, activeCamera); // Assume renderGame is defined elsewhere
     }
-
-    animationFrameId = requestAnimationFrame(gameLoop);
   };
 
   const start = () => {
@@ -259,20 +268,15 @@ export const createGameEngine = (context: CanvasRenderingContext2D): Engine => {
   };
 }
 
-const renderGame = (scene: Scene, camera: Camera) => {
-  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-  if (!canvas) {
-    // console.warn("Canvas not found!"); // Comment out for cleaner console in this example
-    return;
-  }
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+const renderGame = (ctx: CanvasRenderingContext2D, scene: Scene, camera: Camera) => {
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, 1000, 1000);
+
+  console.log('a');
 
   ctx.save();
 
-  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.translate(1000 / 2, 1000 / 2);
   ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-camera.x, -camera.y);
 

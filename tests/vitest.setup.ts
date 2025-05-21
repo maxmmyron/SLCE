@@ -1,5 +1,6 @@
 // tests/vitest.setup.js
 import { beforeEach, vi } from 'vitest';
+import 'vitest-canvas-mock'
 
 // Mock performance.now() to control time in tests
 let mockTime = 0;
@@ -45,7 +46,6 @@ beforeEach(() => {
   vi.mocked(window.cancelAnimationFrame).mockImplementation((id) => {
     delete rAFCallbacks[id];
   });
-  vi.mocked(window.CanvasRenderingContext2D)
 });
 
 // Mock console.warn to suppress it during tests

@@ -5,16 +5,12 @@ import { advanceTimeAndFrames } from '../vitest.setup';
 
 // This file relies heavily on vitest.setup.js for mocking time and rAF
 
-const createMockContext = () => ({});
-
 describe('Engine E2E Tests (State Evolution)', () => {
   let engine: Engine;
-  let mockContext;
 
   beforeEach(() => {
-    mockContext = createMockContext();
-
-    engine = createGameEngine(mockContext as CanvasRenderingContext2D);
+    let canvas = document.createElement("canvas");
+    engine = createGameEngine(canvas.getContext("2d")!);
   })
 
   afterEach(() => {
